@@ -1,0 +1,41 @@
+/**
+ * Shared xterm.js scrollbar styles
+ * Used by LocalTerminal and RemoteTerminal components
+ * xterm v6 uses VS Code's scrollbar system
+ */
+
+/* Base xterm sizing */
+:global(.xterm) {
+	width: 100%;
+	height: 100%;
+}
+
+/* Vertical scrollbar - thin 8px container */
+:global(.xterm .xterm-scrollable-element > .scrollbar.vertical) {
+	width: 8px !important;
+}
+
+/* Scrollbar slider/thumb - 4px with rounded corners */
+:global(.xterm .xterm-scrollable-element > .scrollbar.vertical > .slider) {
+	width: 4px !important;
+	left: 2px !important;
+	border-radius: 3px;
+}
+
+/* Hide horizontal scrollbar completely */
+:global(.xterm .xterm-scrollable-element > .scrollbar.horizontal) {
+	display: none !important;
+	height: 0 !important;
+	visibility: hidden !important;
+}
+
+/* Disable horizontal overflow on viewport */
+:global(.xterm .xterm-viewport) {
+	overflow-x: hidden !important;
+	background-color: var(--color-bg-primary) !important;
+}
+
+/* Disable horizontal overflow on scrollable element */
+:global(.xterm .xterm-scrollable-element) {
+	overflow-x: hidden !important;
+}

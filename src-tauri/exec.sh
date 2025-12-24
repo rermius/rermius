@@ -1,0 +1,1 @@
+docker compose exec -u www-data app bash

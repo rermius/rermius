@@ -1,0 +1,88 @@
+name: Release Windows
+
+on:
+  push:
+    branches: [build, test, build-only, release-windows]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag (e.g., v1.2.3 or 1.2.3)'
+        required: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    environment: build
+    permissions:
+      contents: write
+    if: ${{ !contains(github.event.head_commit.message, '[skip build]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip win]') && !contains(github.event.head_commit.message, '[skip windows]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get tag and version
+        id: tag-version
+        shell: pwsh
+        run: |
+          # Get tag
+          if ("${{ github.event_name }}" -eq "release") {
+            $TAG = "${{ github.event.release.tag_name }}"
+          } elseif ("${{ github.event_name }}" -eq "workflow_dispatch" -and "${{ github.event.inputs.tag }}") {
+            $TAG = "${{ github.event.inputs.tag }}"
+            if ($TAG -notmatch "^v") {
+              $TAG = "v$TAG"
+            }
+          } else {
+            $TAG = git describe --exact-match --tags HEAD 2>$null
+          }
+
+          # Get version (remove 'v' prefix)
+          if ($TAG) {
+            $VERSION = $TAG -replace '^v', ''
+            echo "tag=$TAG" >> $env:GITHUB_OUTPUT
+            echo "version=$VERSION" >> $env:GITHUB_OUTPUT
+            echo "Using tag: $TAG, version: $VERSION"
+          } else {
+            echo "tag=" >> $env:GITHUB_OUTPUT
+            echo "version=" >> $env:GITHUB_OUTPUT
+            echo "No tag found. Skipping upload."
+          }
+
+      - name: Update version files
+        if: steps.tag-version.outputs.version != ''
+        run: |
+          node scripts/update-version.js "${{ steps.tag-version.outputs.version }}"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app (NSIS)
+        run: npm run tauri build -- --target x86_64-pc-windows-msvc
+
+      - name: Upload Windows artifacts
+        if: steps.tag-version.outputs.tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag-version.outputs.tag }}
+          files: |
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

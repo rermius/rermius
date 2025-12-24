@@ -1,0 +1,298 @@
+@import 'tailwindcss';
+@import 'overlayscrollbars/overlayscrollbars.css';
+@import '@xterm/xterm/css/xterm.css';
+
+/* Disable text selection globally */
+* {
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+/* Allow text selection in inputs and textareas */
+input,
+textarea,
+[contenteditable='true'],
+.select-text,
+.select-text * {
+	user-select: text;
+	-webkit-user-select: text;
+}
+
+@theme {
+	/* Active color - used for focus states and active items */
+	--color-active: #21b568;
+	--color-active-50: #f0fdf4;
+	--color-active-100: #dcfce7;
+	--color-active-200: #bbf7d0;
+	--color-active-300: #86efac;
+	--color-active-400: #4ade80;
+	--color-active-500: #21b568;
+	--color-active-600: #16a34a;
+	--color-active-700: #15803d;
+	--color-active-800: #166534;
+	--color-active-900: #14532d;
+
+	/* Dark theme colors (default) */
+	--color-dark: #1a1d29;
+	--color-dark-50: #2a2f3f;
+	--color-dark-100: #252939;
+	--color-dark-200: #1f2333;
+	--color-dark-300: #1a1d29;
+	--color-dark-400: #15171f;
+	--color-dark-500: #101115;
+	--color-dark-600: #0b0c0f;
+	--color-dark-700: #06070a;
+	--color-dark-800: #010205;
+	--color-dark-900: #000000;
+
+	/* Primary color (blue) */
+	--color-primary: #3b82f6;
+	--color-primary-50: #eff6ff;
+	--color-primary-100: #dbeafe;
+	--color-primary-200: #bfdbfe;
+	--color-primary-300: #93c5fd;
+	--color-primary-400: #60a5fa;
+	--color-primary-500: #3b82f6;
+	--color-primary-600: #2563eb;
+	--color-primary-700: #1d4ed8;
+	--color-primary-800: #1e40af;
+	--color-primary-900: #1e3a8a;
+
+	/* Accent colors */
+	--color-accent-orange: #f97316;
+	--color-accent-blue: #3b82f6;
+
+	/* Border radius */
+	--radius-card: 0.75rem;
+
+	/* Box shadows */
+	--shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+	--shadow-card-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+
+	/* Theme-aware colors - reference CSS variables (set dynamically via JavaScript) */
+	--color-bg-primary: var(--color-bg-primary);
+	--color-bg-secondary: var(--color-bg-secondary);
+	--color-bg-tertiary: var(--color-bg-tertiary);
+	--color-bg-elevated: var(--color-bg-elevated);
+	--color-bg-surface: var(--color-bg-surface);
+	--color-bg-active: var(--color-bg-active);
+	--color-bg-hover: var(--color-bg-hover);
+
+	--color-text-primary: var(--color-text-primary);
+	--color-text-secondary: var(--color-text-secondary);
+	--color-text-tertiary: var(--color-text-tertiary);
+	--color-text-disabled: var(--color-text-disabled);
+
+	--color-border: var(--color-border);
+	--color-primary-hover: var(--color-primary-hover);
+	--color-secondary: var(--color-secondary);
+	--color-secondary-hover: var(--color-secondary-hover);
+	--color-success: var(--color-success);
+	--color-error: var(--color-error);
+	--color-warning: var(--color-warning);
+
+	/* Tab active colors - set dynamically via JavaScript */
+	--color-tab-active-bg: var(--color-tab-active-bg);
+	--color-tab-active-text: var(--color-tab-active-text);
+	--color-tab-active-icon: var(--color-tab-active-icon);
+
+	/* Terminal colors - set dynamically via terminal theme store */
+	--terminal-bg: var(--terminal-bg, var(--color-bg-primary));
+	--terminal-fg: var(--terminal-fg, #cdd6f4);
+	--terminal-cursor: var(--terminal-cursor, #f5e0dc);
+	--terminal-cursor-accent: var(--terminal-cursor-accent, #1e1e2e);
+	--terminal-selection: var(--terminal-selection, #585b7099);
+
+	/* Terminal ANSI colors */
+	--terminal-black: var(--terminal-black, #45475a);
+	--terminal-red: var(--terminal-red, #f38ba8);
+	--terminal-green: var(--terminal-green, #a6e3a1);
+	--terminal-yellow: var(--terminal-yellow, #f9e2af);
+	--terminal-blue: var(--terminal-blue, #89b4fa);
+	--terminal-magenta: var(--terminal-magenta, #f5c2e7);
+	--terminal-cyan: var(--terminal-cyan, #94e2d5);
+	--terminal-white: var(--terminal-white, #bac2de);
+	--terminal-bright-black: var(--terminal-bright-black, #585b70);
+	--terminal-bright-red: var(--terminal-bright-red, #f38ba8);
+	--terminal-bright-green: var(--terminal-bright-green, #a6e3a1);
+	--terminal-bright-yellow: var(--terminal-bright-yellow, #f9e2af);
+	--terminal-bright-blue: var(--terminal-bright-blue, #89b4fa);
+	--terminal-bright-magenta: var(--terminal-bright-magenta, #f5c2e7);
+	--terminal-bright-cyan: var(--terminal-bright-cyan, #94e2d5);
+	--terminal-bright-white: var(--terminal-bright-white, #a6adc8);
+
+	/* Z-index layers - organized by stacking hierarchy */
+	--z-base: 1;
+	--z-content: 5;
+	--z-header: 10;
+	--z-dropdown: 50;
+	--z-modal-backdrop: 100;
+	--z-modal: 110;
+	--z-toast: 150;
+	--z-menu: 200;
+	--z-popover: 250;
+}
+
+/* OverlayScrollbars theme (uses design tokens / CSS vars) */
+.os-scrollbar {
+	/* Thinner scrollbar */
+	--os-size: 3px;
+	/* Rounded track */
+	--os-track-border-radius: 999px;
+	/* Track uses background tertiary color */
+	--os-track-bg: transparent;
+	--os-track-bg-hover: transparent;
+	--os-track-bg-active: transparent;
+	--os-track-border: none;
+	--os-track-border-hover: none;
+	--os-track-border-active: none;
+
+	/* Handle uses text tertiary color so it’s a light gray */
+	--os-handle-border-radius: 999px;
+	--os-handle-bg: var(--color-text-tertiary);
+	--os-handle-bg-hover: var(--color-text-secondary);
+	--os-handle-bg-active: var(--color-text-primary);
+	--os-handle-border: none;
+	--os-handle-border-hover: none;
+	--os-handle-border-active: none;
+
+	/* Size behavior */
+	--os-padding-perpendicular: 0;
+	--os-padding-axis: 0;
+	--os-handle-min-size: 33px;
+	--os-handle-max-size: none;
+	--os-handle-perpendicular-size: 100%;
+	--os-handle-perpendicular-size-hover: 100%;
+	--os-handle-perpendicular-size-active: 100%;
+	--os-handle-interactive-area-offset: 0;
+}
+
+/* Custom Scrollbar Styles - theme-aware */
+* {
+	scrollbar-width: thin;
+	/* thumb color | track color */
+	scrollbar-color: var(--color-text-tertiary) var(--color-bg-tertiary);
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+	background: var(--color-bg-tertiary);
+	border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+	background: var(--color-text-tertiary);
+	border-radius: 4px;
+	transition: background 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background: var(--color-text-secondary);
+}
+
+*::-webkit-scrollbar-thumb:active {
+	background: var(--color-text-primary);
+}
+
+/* Scrollbar corner */
+*::-webkit-scrollbar-corner {
+	background: var(--color-bg-tertiary);
+}
+
+/* Remove default drag & drop styles from svelte-dnd-action */
+[aria-grabbed='true'] {
+	outline: none !important;
+	border: none !important;
+	box-shadow: none !important;
+	opacity: 0.7;
+}
+
+.dragged {
+	outline: none !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+/* Remove border from dndzone container during drag */
+[aria-dropeffect] {
+	outline: none !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+/* Remove any transition borders */
+.dnd-action-dragged-el {
+	outline: none !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+/* Custom class to ensure no borders on dnd zone */
+.dnd-zone-no-border,
+.dnd-zone-no-border * {
+	outline: none !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+/* Hide number input spinners globally */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	appearance: none;
+	margin: 0;
+}
+
+input[type='number'] {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+/* Tab active utility classes */
+.text-tab-active-text {
+	color: var(--color-tab-active-text);
+}
+
+.text-tab-active-icon {
+	color: var(--color-tab-active-icon);
+}
+
+.xterm {
+	width: 100%;
+	height: 100%;
+}
+
+/* Vertical scrollbar - thin 8px container */
+.xterm .xterm-scrollable-element > .scrollbar.vertical {
+	width: 8px !important;
+}
+
+/* Scrollbar slider/thumb - 4px with rounded corners */
+.xterm .xterm-scrollable-element > .scrollbar.vertical > .slider {
+	width: 4px !important;
+	left: 2px !important;
+	border-radius: 3px;
+}
+
+/* Hide horizontal scrollbar completely */
+.xterm .xterm-scrollable-element > .scrollbar.horizontal {
+	display: none !important;
+	height: 0 !important;
+	visibility: hidden !important;
+}
+
+/* Disable horizontal overflow on viewport */
+.xterm .xterm-viewport {
+	overflow-x: hidden !important;
+	background-color: var(--color-bg-primary) !important;
+}
+
+/* Disable horizontal overflow on scrollable element */
+.xterm .xterm-scrollable-element {
+	overflow-x: hidden !important;
+}
