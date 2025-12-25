@@ -4,6 +4,9 @@ version = "1.0.2"
 description = "A SSH/SFTP/FTP in one"
 authors = ["hayho"]
 edition = "2021"
+repository = "https://github.com/rermius/rermius"
+homepage = "https://github.com/rermius/rermius"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
