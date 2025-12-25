@@ -211,7 +211,7 @@
 			<div
 				class="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"
 			></div>
-			<p class="text-text-secondary text-sm">Loading rerminus...</p>
+			<p class="text-text-secondary text-sm">Loading rermius...</p>
 		</div>
 	</div>
 {:else}

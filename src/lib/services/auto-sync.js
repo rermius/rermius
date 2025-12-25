@@ -55,7 +55,7 @@ async function performSync() {
 			hostsData,
 			syncOptions: settings.syncOptions,
 			snippetsData,
-			source: 'rerminus-autosync'
+			source: 'rermius-autosync'
 		});
 
 		if (result.success) {

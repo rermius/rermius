@@ -10,7 +10,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { statusBarStore } from '$lib/stores/status-bar';
 
-const TEMP_FILE_PREFIX = 'rerminus-temp-';
+const TEMP_FILE_PREFIX = 'rermius-temp-';
 const CLEANUP_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 // Track active temp files: Map<tempFilePath, { remotePath, sessionId, createdAt, timeoutId, unlistenFn, onUploadProgress }>

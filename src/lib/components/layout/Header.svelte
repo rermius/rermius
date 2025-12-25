@@ -178,10 +178,10 @@
 		// Open external link to GitHub repo or docs
 		try {
 			const { open } = await import('@tauri-apps/plugin-opener');
-			await open('https://github.com/your-repo/rerminus');
+			await open('https://github.com/your-repo/rermius');
 		} catch (error) {
 			// Fallback to window.open if plugin not available
-			window.open('https://github.com/your-repo/rerminus', '_blank');
+			window.open('https://github.com/your-repo/rermius', '_blank');
 		}
 	}
 

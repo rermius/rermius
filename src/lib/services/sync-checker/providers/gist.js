@@ -105,7 +105,7 @@ export class GithubGistDriver extends BaseSyncDriver {
 		syncOptions,
 		snippetsData = null,
 		keychainData = null,
-		source = 'rerminus',
+		source = 'rermius',
 		onLog = () => {}
 	}) {
 		if (!this.token) {

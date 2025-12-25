@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-This document provides context and guidelines for working with the rerminus codebase.
+This document provides context and guidelines for working with the rermius codebase.
 
 ## Project Overview
 
-**rerminus** is a desktop SSH terminal management application built with:
+**rermius** is a desktop SSH terminal management application built with:
 
 - **Frontend**: SvelteKit 5 + Tailwind CSS 4
 - **Backend**: Tauri 2 (Rust)
@@ -14,7 +14,7 @@ This document provides context and guidelines for working with the rerminus code
 ## Project Structure
 
 ```
-rerminus/
+rermius/
 ├── src/                    # Frontend SvelteKit application
 │   ├── lib/
 │   │   ├── components/     # Reusable Svelte components

@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>Terminal - Rerminus</title>
+	<title>Terminal - Rermius</title>
 </svelte:head>
 
 <LocalTerminalView />

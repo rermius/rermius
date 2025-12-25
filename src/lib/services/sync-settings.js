@@ -710,7 +710,7 @@ export async function buildEncryptedParts(
  * @param {string} options.token - GitHub personal access token
  * @param {string} options.gistId - Gist ID (optional - creates new if empty)
  * @param {Object} options.encryptedParts - Object with encrypted data parts (hosts, groups, settings)
- * @param {string} options.source - Source identifier (e.g. 'rerminus', 'rerminus-autosync')
+ * @param {string} options.source - Source identifier (e.g. 'rermius', 'rermius-autosync')
  * @param {Function} options.onLog - Callback for logging progress (optional)
  * @returns {Promise<{success: boolean, gistId: string|null, message: string}>}
  */
@@ -718,7 +718,7 @@ export async function uploadToGitHub({
 	token,
 	gistId,
 	encryptedParts,
-	source = 'rerminus',
+	source = 'rermius',
 	onLog = () => {}
 }) {
 	try {
@@ -758,7 +758,7 @@ export async function uploadToGitHub({
 		}
 
 		const gistData = {
-			description: 'Rerminus SSH Sync (Encrypted, multi-part)',
+			description: 'Rermius SSH Sync (Encrypted, multi-part)',
 			public: false,
 			files
 		};

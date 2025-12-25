@@ -37,7 +37,7 @@
 		<div class="flex items-center justify-between mb-2">
 			<div class="flex items-center gap-2">
 				<Rocket size={16} class="text-(--color-active) fill-(--color-active)" />
-                <h3 class="font-bold text-[13px] tracking-wide text-text-primary">New Rerminus version</h3>
+                <h3 class="font-bold text-[13px] tracking-wide text-text-primary">New Rermius version</h3>
 			</div>
 			<div class="flex items-center gap-2">
 				<span class="text-xs text-text-tertiary font-medium">{manifest?.date || 'Today'}</span>

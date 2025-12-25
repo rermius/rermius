@@ -410,7 +410,7 @@
 				keychainData,
 				syncOptions,
 				onLog: uploadAddLog,
-				source: 'rerminus'
+				source: 'rermius'
 			});
 
 			await handleUploadResult(result, uploadAddLog);
