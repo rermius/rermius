@@ -2,7 +2,6 @@
 	import { fade, slide } from 'svelte/transition';
 	import { updateStore } from '$lib/stores';
 	import { Rocket, ExternalLink, X } from 'lucide-svelte';
-	import { PUBLIC_UPDATE_REPO_URL } from '$env/static/public';
 
 	let status = $derived($updateStore.status);
 	let manifest = $derived($updateStore.manifest);
@@ -21,9 +20,7 @@
 	}
 
 	function openChangelog() {
-		if (PUBLIC_UPDATE_REPO_URL) {
-			window.open(PUBLIC_UPDATE_REPO_URL, '_blank');
-		}
+		window.open('https://github.com/rermius/rermius/releases', '_blank');
 	}
 </script>
 
