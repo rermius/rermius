@@ -66,36 +66,37 @@ function createUpdateStore() {
 
     /**
      * Download and install the update
+     * @param {boolean} autoRestart - Whether to automatically relaunch after download
      */
-    async downloadAndInstall() {
+    async downloadAndInstall(autoRestart = false) {
+      let currentUpdateObj = null;
+      
       update(s => {
         if (s.status !== 'available' || !s.updateObj) return s;
-
-        // Start download in background
-        (async () => {
-          try {
-            update(inner => ({ ...inner, status: 'downloading', progress: 0 }));
-
-            await s.updateObj.downloadAndInstall((progress) => {
-              if (progress.event === 'Started') {
-                update(inner => ({ ...inner, progress: 0 }));
-              } else if (progress.event === 'Progress') {
-                // Some versions might provide actual progress
-                // update(inner => ({ ...inner, progress: progress.data.chunkLength }));
-              } else if (progress.event === 'Finished') {
-                update(inner => ({ ...inner, status: 'ready', progress: 100 }));
-              }
-            });
-
-            update(inner => ({ ...inner, status: 'ready' }));
-          } catch (err) {
-            console.error('[UpdateStore] Failed to download/install update:', err);
-            update(inner => ({ ...inner, status: 'error', error: err.message || String(err) }));
-          }
-        })();
-
-        return s;
+        currentUpdateObj = s.updateObj;
+        return { ...s, status: 'downloading', progress: 0 };
       });
+
+      if (!currentUpdateObj) return;
+
+      try {
+        await currentUpdateObj.downloadAndInstall((progress) => {
+          if (progress.event === 'Started') {
+            update(inner => ({ ...inner, progress: 0 }));
+          } else if (progress.event === 'Finished') {
+            update(inner => ({ ...inner, status: 'ready', progress: 100 }));
+          }
+        });
+
+        update(inner => ({ ...inner, status: 'ready' }));
+
+        if (autoRestart) {
+          await relaunch();
+        }
+      } catch (err) {
+        console.error('[UpdateStore] Failed to download/install update:', err);
+        update(inner => ({ ...inner, status: 'error', error: err.message || String(err) }));
+      }
     },
 
     /**

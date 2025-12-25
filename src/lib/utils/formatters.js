@@ -32,7 +32,7 @@ export function formatDate(date, options = {}) {
 }
 
 /**
- * Format date to relative time (e.g., "2 hours ago")
+ * Format date to relative time (e.g., "2 hours ago", "Today", "Yesterday")
  * @param {Date|string|number} date - Date to format
  * @returns {string} Relative time string
  */
@@ -50,12 +50,27 @@ export function formatRelativeTime(date) {
 		const diffHours = Math.floor(diffMins / 60);
 		const diffDays = Math.floor(diffHours / 24);
 
-		if (diffSecs < 60) return 'just now';
-		if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-		if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+		// Check if it's today
+		const isToday = d.toDateString() === now.toDateString();
+		if (isToday) {
+			if (diffSecs < 60) return 'just now';
+			if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+			if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+			return 'Today';
+		}
+
+		// Check if it's yesterday
+		const yesterday = new Date(now);
+		yesterday.setDate(yesterday.getDate() - 1);
+		if (d.toDateString() === yesterday.toDateString()) {
+			return 'Yesterday';
+		}
+
+		// Within a week
 		if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 
-		return formatDate(d, { year: 'numeric', month: 'short', day: 'numeric' });
+		// Older than a week - show formatted date
+		return formatDate(d, { month: 'short', day: 'numeric' });
 	} catch (error) {
 		console.error('Failed to format relative time:', error);
 		return '';
