@@ -131,6 +131,7 @@ textarea,
 	--z-toast: 150;
 	--z-menu: 200;
 	--z-popover: 250;
+	--z-notification: 300;
 }
 
 /* OverlayScrollbars theme (uses design tokens / CSS vars) */

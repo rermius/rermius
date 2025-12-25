@@ -1,8 +1,8 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "Rerminus",
+	"productName": "Rermius",
 	"version": "1.0.0",
-	"identifier": "com.rerminus.app",
+	"identifier": "com.rermius.app",
 	"build": {
 		"beforeDevCommand": "npm run dev",
 		"devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "Rerminus",
+				"title": "Rermius",
 				"width": 1111,
 				"height": 800,
 				"center": true,
@@ -81,10 +81,21 @@
 							]
 						},
 						"opener:allow-open-url",
-						"opener:default"
+						"opener:default",
+						"updater:allow-check",
+						"updater:allow-download-and-install",
+						"process:allow-restart"
 					]
 				}
 			]
+		}
+	},
+	"plugins": {
+		"updater": {
+			"endpoints": [
+				"https://github.com/rermius/rermius/releases/latest/download/latest.json"
+			],
+			"pubkey": "dW51c2VkX3B1YmtleV9mb3JfZGV2ZWxvcG1lbnRfMTIzNDU2Nzg5MA=="
 		}
 	},
 	"bundle": {

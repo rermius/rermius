@@ -1,7 +1,6 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
-	import { ToastContainer } from '$lib/components/ui';
 	import { initSyncChecker } from '$lib/composables';
 
 	const { children } = $props();
@@ -25,6 +24,3 @@
 		{@render children()}
 	</div>
 </div>
-
-<!-- Toast notifications -->
-<ToastContainer position="top-right" />

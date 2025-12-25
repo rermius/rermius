@@ -15,3 +15,4 @@ export { syncVersionStore, hasNewSyncVersion, lastCheckTimeAgo } from './sync-ve
 export { panelStore } from './panel.store.js';
 export { snippetsStore } from './snippets.store.js';
 export { workspaceStore } from './workspace.store.js';
+export { updateStore } from './update.store.js';

@@ -7,8 +7,11 @@
 	import { connectFileTransfer } from '$lib/services/file-connection';
 	import { ToastContainer, ScrollArea } from '$lib/components/ui';
 	import StatusBar from '$lib/components/ui/StatusBar.svelte';
-import { RemoteTerminalContainer } from '$lib/components/features/terminal/containers';
-import FileBrowserTabContainer from './FileBrowserTabContainer.svelte';
+	import UpdateNotification from '$lib/components/features/update/UpdateNotification.svelte';
+	import { RemoteTerminalContainer } from '$lib/components/features/terminal/containers';
+	import FileBrowserTabContainer from './FileBrowserTabContainer.svelte';
+	import { updateStore } from '$lib/stores';
+	import { onMount } from 'svelte';
 
 	const tabs = $derived($tabsStore.tabs);
 	const activeTabId = $derived($tabsStore.activeTabId);
@@ -192,6 +195,10 @@ import FileBrowserTabContainer from './FileBrowserTabContainer.svelte';
 		// Remove tab after session is closed
 		tabsStore.removeTab(tab.id);
 	}
+	onMount(() => {
+		// Check for app updates
+		updateStore.checkForUpdates();
+	});
 </script>
 
 <div
@@ -257,6 +264,7 @@ import FileBrowserTabContainer from './FileBrowserTabContainer.svelte';
 
 	<!-- Toast notifications -->
 	<ToastContainer position="top-right" />
+	<UpdateNotification />
 
 	<!-- Status Bar -->
 	<StatusBar />

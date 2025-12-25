@@ -8,7 +8,7 @@
 	import { createLocalTerminal, hostsStore } from '$lib/services';
 	import { closeFileSession } from '$lib/services/file-browser';
 	import { Menu, Minus, Square, X, Plus, Files, Sun, Moon } from 'lucide-svelte';
-	import { themeStore } from '$lib/stores';
+	import { themeStore, updateStore } from '$lib/stores';
 	import AppMenu from './AppMenu.svelte';
 	import { SettingsModal } from '$lib/components/features/settings';
 
@@ -186,8 +186,7 @@
 	}
 
 	async function checkUpdate() {
-		// TODO: Implement update check
-		console.log('Check for updates - TODO: implement');
+		updateStore.checkForUpdates(false);
 	}
 
 	async function showInfo() {
