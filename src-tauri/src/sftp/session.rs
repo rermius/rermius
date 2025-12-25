@@ -255,7 +255,7 @@ impl FileTransferSession for SftpSession {
             }
         };
 
-        let files: Vec<FileInfo> = entries
+        let mut files: Vec<FileInfo> = entries
             .into_iter()
             .filter(|entry| entry.file_name() != "." && entry.file_name() != "..")
             .map(|entry| {
@@ -266,7 +266,7 @@ impl FileTransferSession for SftpSession {
                 } else {
                     format!("{}/{}", actual_path.trim_end_matches('/'), file_name)
                 };
-                
+
                 let owner = if let Some(uid) = attrs.uid {
                     // Try to resolve uid to username, fallback to uid string
                     // Note: We can't await in map closure, so resolve synchronously or use default
@@ -275,18 +275,25 @@ impl FileTransferSession for SftpSession {
                 } else {
                     None
                 };
-                
+
                 let group = if let Some(gid) = attrs.gid {
                     Some(gid.to_string())
                 } else {
                     None
                 };
 
+                // Detect symlink from permissions: bit 0o120000 = symlink (S_IFLNK)
+                let is_symlink = attrs.permissions
+                    .map(|p| (p & 0o170000) == 0o120000)
+                    .unwrap_or(false);
+
                 FileInfo {
                     name: file_name.to_string(),
                     path: file_path,
                     size: attrs.size.unwrap_or(0),
                     is_directory: attrs.is_dir(),
+                    is_symlink,
+                    symlink_target: None, // Will be resolved below
                     permissions: attrs.permissions.map(|p| format!("{:o}", p)),
                     modified: attrs.mtime.map(|t| t.to_string()),
                     owner,
@@ -294,6 +301,33 @@ impl FileTransferSession for SftpSession {
                 }
             })
             .collect();
+
+        // Resolve symlink targets for symlinks
+        for file in &mut files {
+            if file.is_symlink {
+                match sftp.read_link(&file.path).await {
+                    Ok(target) => {
+                        // read_link returns the target path as String
+                        file.symlink_target = Some(target.clone());
+
+                        // Stat the target to determine if it's a directory
+                        // Use metadata (follows symlinks) to get the target type
+                        match sftp.metadata(&target).await {
+                            Ok(target_attrs) => {
+                                file.is_directory = target_attrs.is_dir();
+                            }
+                            Err(_) => {
+                                // Broken symlink - target doesn't exist, keep is_directory as false
+                                log::debug!("[SFTP] Symlink target {} doesn't exist (broken symlink)", target);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        log::warn!("[SFTP] Failed to read symlink target for {}: {}", file.path, e);
+                    }
+                }
+            }
+        }
 
         Ok(files)
     }
@@ -526,7 +560,7 @@ impl FileTransferSession for SftpSession {
 
     async fn stat(&self, path: &str) -> Result<FileInfo, ConnectionError> {
         let sftp = self.sftp.lock().await;
-        
+
         let attrs = sftp
             .metadata(path)
             .await
@@ -553,11 +587,36 @@ impl FileTransferSession for SftpSession {
             None
         };
 
+        // Detect symlink from permissions
+        let is_symlink = attrs.permissions
+            .map(|p| (p & 0o170000) == 0o120000)
+            .unwrap_or(false);
+
+        // Get symlink target and determine target type
+        let (symlink_target, target_is_directory) = if is_symlink {
+            match sftp.read_link(path).await {
+                Ok(target) => {
+                    // Stat the target to determine if it's a directory
+                    let is_dir = sftp.metadata(&target).await
+                        .map(|a| a.is_dir())
+                        .unwrap_or(false);
+                    (Some(target), is_dir)
+                }
+                Err(_) => (None, false)
+            }
+        } else {
+            (None, attrs.is_dir())
+        };
+
+        let is_directory = if is_symlink { target_is_directory } else { attrs.is_dir() };
+
         Ok(FileInfo {
             name,
             path: path.to_string(),
             size: attrs.size.unwrap_or(0),
-            is_directory: attrs.is_dir(),
+            is_directory,
+            is_symlink,
+            symlink_target,
             permissions: attrs.permissions.map(|p| format!("{:o}", p)),
             modified: attrs.mtime.map(|t| t.to_string()),
             owner,

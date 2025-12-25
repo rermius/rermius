@@ -35,6 +35,8 @@ pub struct FileInfo {
     pub path: String,
     pub size: u64,
     pub is_directory: bool,
+    pub is_symlink: bool,
+    pub symlink_target: Option<String>,
     pub permissions: Option<String>,
     pub modified: Option<String>,
     pub owner: Option<String>,

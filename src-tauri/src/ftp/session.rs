@@ -445,16 +445,25 @@ fn parse_ftp_list_line(line: &str, base_path: &str) -> Option<FileInfo> {
     }
     
     let is_directory = permissions.starts_with('d');
-    
+    let is_symlink = permissions.starts_with('l');
+
     // Parse size (usually at index 4)
     let size: u64 = parts.get(4)
         .and_then(|s| s.parse().ok())
         .unwrap_or(0);
-    
+
     // Name starts from index 8 onwards (may contain spaces)
     // IMPORTANT: Keep name exactly as returned by FTP server - don't normalize separators
-    let name = parts[8..].join(" ");
-    
+    let raw_name = parts[8..].join(" ");
+
+    // For symlinks, parse "name -> target" format
+    let (name, symlink_target) = if is_symlink && raw_name.contains(" -> ") {
+        let parts_split: Vec<&str> = raw_name.splitn(2, " -> ").collect();
+        (parts_split[0].to_string(), Some(parts_split[1].to_string()))
+    } else {
+        (raw_name, None)
+    };
+
     if name.is_empty() || name == "." || name == ".." {
         return None;
     }
@@ -498,6 +507,8 @@ fn parse_ftp_list_line(line: &str, base_path: &str) -> Option<FileInfo> {
         path: file_path,
         size,
         is_directory,
+        is_symlink,
+        symlink_target,
         permissions: Some(permissions.to_string()),
         modified,
         owner,

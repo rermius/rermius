@@ -49,7 +49,7 @@
 	});
 
 	function getIconComponent(file) {
-		const iconName = getFileIcon(file.name, file.isDirectory);
+		const iconName = getFileIcon(file.name, file.isDirectory, file.isSymlink);
 		if (file.name === '..') {
 			return LucideIcons.ArrowUp;
 		}
@@ -57,6 +57,8 @@
 		const iconMap = {
 			Folder: LucideIcons.Folder,
 			FolderOpen: LucideIcons.FolderOpen,
+			FolderSymlink: LucideIcons.FolderSymlink,
+			FileSymlink: LucideIcons.FileSymlink,
 			FileText: LucideIcons.FileText,
 			FileCode: LucideIcons.FileCode,
 			FileJson: LucideIcons.FileJson,

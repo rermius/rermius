@@ -86,6 +86,7 @@ pub fn run() {
             commands::file_transfer::chmod_remote,
             // File operations
             commands::file_operations::get_local_file_stat,
+            commands::file_operations::get_local_file_info,
             commands::file_operations::get_remote_file_stat,
             commands::file_operations::list_windows_drives,
             commands::file_operations::open_file_with_system,

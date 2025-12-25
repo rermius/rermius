@@ -95,9 +95,13 @@ const fileIconMap = {
  * Get icon component name for a file
  * @param {string} filename - File name
  * @param {boolean} isDirectory - Whether it's a directory
+ * @param {boolean} isSymlink - Whether it's a symlink
  * @returns {string} - Lucide icon component name
  */
-export function getFileIcon(filename, isDirectory) {
+export function getFileIcon(filename, isDirectory, isSymlink = false) {
+	if (isSymlink) {
+		return isDirectory ? 'FolderSymlink' : 'FileSymlink';
+	}
 	if (isDirectory) {
 		return 'Folder';
 	}

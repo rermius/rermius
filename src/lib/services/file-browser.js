@@ -133,7 +133,7 @@ export async function listLocalDirectory(path) {
 		}
 	}
 
-	const { readDir, stat } = await import('@tauri-apps/plugin-fs');
+	const { readDir } = await import('@tauri-apps/plugin-fs');
 
 	try {
 		// Platform-specific path separator
@@ -157,7 +157,8 @@ export async function listLocalDirectory(path) {
 						? `${normalizedPath}${entry.name}`
 						: `${normalizedPath}${pathSep}${entry.name}`;
 
-				const info = await stat(fullPath);
+				// Use custom command for symlink detection
+				const info = await invoke('get_local_file_info', { path: fullPath });
 
 				// Normalize path for display (use forward slashes for consistency)
 				const displayPath = fullPath.replace(/\\/g, '/');
@@ -166,9 +167,11 @@ export async function listLocalDirectory(path) {
 					name: entry.name,
 					path: displayPath,
 					isDirectory: info.isDirectory,
+					isSymlink: info.isSymlink || false,
+					symlinkTarget: info.symlinkTarget || null,
 					size: info.size || 0,
-					modified: info.mtime ? Math.floor(info.mtime.getTime() / 1000).toString() : null,
-					permissions: null // Local fs doesn't provide permissions
+					modified: info.modified ? info.modified.toString() : null,
+					permissions: info.permissions || null
 				});
 			} catch (e) {
 				// Skip files we can't stat

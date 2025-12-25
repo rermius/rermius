@@ -41,6 +41,60 @@ pub async fn get_local_file_stat(path: String) -> Result<serde_json::Value, Stri
     }))
 }
 
+/// Get local file info including symlink detection
+/// Uses symlink_metadata to detect symlinks without following them
+#[tauri::command]
+pub async fn get_local_file_info(path: String) -> Result<serde_json::Value, String> {
+    use std::fs;
+    use std::time::UNIX_EPOCH;
+
+    // Use symlink_metadata to not follow symlinks
+    let metadata = fs::symlink_metadata(&path)
+        .map_err(|e| format!("Failed to get file info: {}", e))?;
+
+    let is_symlink = metadata.file_type().is_symlink();
+
+    // Get symlink target if applicable
+    let symlink_target = if is_symlink {
+        fs::read_link(&path)
+            .ok()
+            .map(|p| p.to_string_lossy().to_string())
+    } else {
+        None
+    };
+
+    // For symlinks, also get the target's metadata to determine if it points to a directory
+    let target_is_directory = if is_symlink {
+        fs::metadata(&path).map(|m| m.is_dir()).unwrap_or(false)
+    } else {
+        metadata.is_dir()
+    };
+
+    let modified = metadata.modified()
+        .ok()
+        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+        .map(|d| d.as_secs());
+
+    #[cfg(unix)]
+    let permissions: Option<u32> = {
+        use std::os::unix::fs::PermissionsExt;
+        Some(metadata.permissions().mode())
+    };
+
+    #[cfg(not(unix))]
+    let permissions: Option<u32> = None;
+
+    Ok(serde_json::json!({
+        "size": metadata.len(),
+        "isDirectory": target_is_directory,
+        "isFile": metadata.is_file(),
+        "isSymlink": is_symlink,
+        "symlinkTarget": symlink_target,
+        "modified": modified,
+        "permissions": permissions.map(|p| format!("{:o}", p))
+    }))
+}
+
 /// Convert Unix permissions string (e.g., "drwxr-xr-x") to octal mode
 fn parse_permissions_string(perm_str: &str) -> Option<u32> {
     log::debug!("[get_remote_file_stat] Parsing permissions string: {}", perm_str);
