@@ -48,6 +48,9 @@ tauri-plugin-process = "2"
 # FTP/FTPS
 suppaftp = { version = "6", features = ["async-rustls"] }
 futures-lite = "2.6"
+futures-rustls = "0.26"
+rustls = "0.23"
+rustls-pki-types = "1"
 
 # System file operations
 open = "5"

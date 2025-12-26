@@ -4580,6 +4580,7 @@ version = "1.0.5"
 dependencies = [
  "async-trait",
  "futures-lite",
+ "futures-rustls",
  "log",
  "notify",
  "open",
@@ -4587,6 +4588,8 @@ dependencies = [
  "russh",
  "russh-keys",
  "russh-sftp",
+ "rustls",
+ "rustls-pki-types",
  "serde",
  "serde_json",
  "suppaftp",
