@@ -1,5 +1,6 @@
 use crate::ssh::config::SshConfig;
 use crate::ssh::terminal::SshTerminalSession;
+use crate::telnet::{TelnetConfig, TelnetTerminalSession};
 use crate::core::error::SessionError;
 use crate::core::session::TerminalSession;
 use crate::pty::session::LocalPtySession;
@@ -14,6 +15,7 @@ pub enum SessionConfig {
         rows: u16,
     },
     Ssh(SshConfig),
+    Telnet(TelnetConfig),
 }
 
 /// Factory for creating terminal sessions (Factory Pattern)
@@ -32,6 +34,10 @@ impl SessionFactory {
             }
             SessionConfig::Ssh(ssh_config) => {
                 let session = SshTerminalSession::connect(ssh_config, app_handle).await?;
+                Ok(Box::new(session))
+            }
+            SessionConfig::Telnet(telnet_config) => {
+                let session = TelnetTerminalSession::connect(telnet_config, app_handle).await?;
                 Ok(Box::new(session))
             }
         }

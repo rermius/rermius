@@ -9,6 +9,9 @@ pub enum SessionError {
     #[error("SSH error: {0}")]
     SshError(#[from] crate::ssh::error::SshError),
 
+    #[error("Telnet error: {0}")]
+    TelnetError(#[from] crate::telnet::TelnetError),
+
     #[error("PTY error: {0}")]
     PtyError(String),
 

@@ -6,4 +6,5 @@ use serde::{Deserialize, Serialize};
 pub enum SessionType {
     Local,
     Ssh,
+    Telnet,
 }

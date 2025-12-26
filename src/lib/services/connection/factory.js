@@ -1,5 +1,6 @@
 import { SSHConnectionHandler } from './handlers/ssh-handler.js';
 import { FileTransferConnectionHandler } from './handlers/file-transfer-handler.js';
+import { TelnetConnectionHandler } from './handlers/telnet-handler.js';
 
 /**
  * Connection Factory
@@ -7,7 +8,11 @@ import { FileTransferConnectionHandler } from './handlers/file-transfer-handler.
  */
 class ConnectionFactory {
 	constructor() {
-		this.handlers = [new SSHConnectionHandler(), new FileTransferConnectionHandler()];
+		this.handlers = [
+			new SSHConnectionHandler(),
+			new FileTransferConnectionHandler(),
+			new TelnetConnectionHandler()
+		];
 	}
 
 	/**

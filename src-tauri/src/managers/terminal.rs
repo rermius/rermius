@@ -5,6 +5,7 @@ use crate::pty::session::LocalPtySession;
 use crate::ssh::terminal::SshTerminalSession;
 use crate::ssh::config::{SshAuth, SshConfig, HostConfig};
 use crate::ssh::error::SshError;
+use crate::telnet::TelnetConfig;
 use crate::terminal::factory::SessionFactory;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -124,6 +125,41 @@ impl TerminalManager {
 
         let session = SessionFactory::create(
             crate::terminal::factory::SessionConfig::Ssh(config),
+            app_handle,
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+
+        let session_id = session.id().to_string();
+
+        let mut sessions = self.sessions.write().await;
+        sessions.insert(session_id.clone(), session);
+
+        Ok(session_id)
+    }
+
+    /// Create a new Telnet terminal session
+    pub async fn create_telnet_session(
+        &self,
+        hostname: String,
+        port: u16,
+        username: Option<String>,
+        password: Option<String>,
+        cols: u16,
+        rows: u16,
+        app_handle: AppHandle,
+    ) -> Result<String, String> {
+        let config = TelnetConfig {
+            hostname,
+            port,
+            cols,
+            rows,
+            username,
+            password,
+        };
+
+        let session = SessionFactory::create(
+            crate::terminal::factory::SessionConfig::Telnet(config),
             app_handle,
         )
         .await

@@ -3,6 +3,7 @@ mod pty;
 mod ssh;
 mod sftp;
 mod ftp;
+mod telnet;
 mod managers;
 mod terminal;
 mod file_watcher;
@@ -72,6 +73,8 @@ pub fn run() {
             // SSH commands
             commands::ssh::create_ssh_session,
             commands::ssh::create_chained_ssh_session,
+            // Telnet commands
+            commands::telnet::create_telnet_session,
             // Shell detection
             detect_available_shells,
             // File transfer commands

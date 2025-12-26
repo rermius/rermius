@@ -61,6 +61,7 @@ export {
 	incrementSnippetClickCount
 } from './snippets.js';
 export { connectSSH, retrySSHConnection } from './ssh-connection.js';
+export { connectTelnet, retryTelnetConnection } from './telnet-connection.js';
 export { connectionFactory } from './connection/index.js';
 export { loadSyncSettings, saveSyncSettings, clearSyncSettings } from './sync-settings.js';
 export {
