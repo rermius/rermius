@@ -15,6 +15,8 @@
 	import { hostsStore } from '$lib/services/hosts';
 	import { getDropFileList } from '$lib/utils/file-drop';
 	import { statusBarStore } from '$lib/stores/status-bar';
+	import { generateUniqueRemotePath, generateUniqueLocalPath } from '$lib/utils/path/unique-path';
+	import { toastStore } from '$lib/stores/toast.store';
 
 	let {
 		// Left panel (Local)
@@ -182,34 +184,9 @@
 		const [{ downloadFile, uploadFile, joinPath: joinPathFn }, { join, downloadDir }] =
 			await Promise.all([import('$lib/services/file-browser'), import('@tauri-apps/api/path')]);
 
-		// Show transfer immediately in status bar (after imports)
+		// Get paths for transfer
 		const localPath = file.path;
 		const remoteDir = remoteCurrentPath || '/';
-		const localDir = localCurrentPath || '';
-
-		if (isUpload) {
-			// Show upload immediately with original filename (will update with unique name later)
-			statusBarStore.showUpload({
-				id: transferId,
-				fileName: file.name,
-				progress: 0,
-				status: 'uploading',
-				fromPath: localPath,
-				toPath: joinPathFn(remoteDir, file.name),
-				onCancel
-			});
-		} else {
-			// Show download immediately with original filename
-			statusBarStore.showDownload({
-				id: transferId,
-				fileName: file.name,
-				progress: 0,
-				status: 'downloading',
-				fromPath: file.path,
-				toPath: '',
-				onCancel
-			});
-		}
 
 		if (abortController.signal.aborted) {
 			cleanupTransfer(transferId);
@@ -232,26 +209,53 @@
 				return;
 			}
 
-			// Backend will handle duplicate check and rename automatically
-			const remotePath = joinPathFn(remoteDir, file.name);
+			// Check for duplicate and generate unique path if needed
+			let uniqueRemotePath;
+			let actualFileName = file.name;
+			try {
+				const result = await generateUniqueRemotePath(sessionId, remoteDir, file.name);
+				uniqueRemotePath = result.path;
+				actualFileName = result.newName;
 
-			console.log('[Transfer] Starting upload:', {
-				fileName: file.name,
+				// Show toast if file was renamed
+				if (result.renamed) {
+					toastStore.info(`"${result.originalName}" already exists, using "${result.newName}"`);
+				}
+			} catch (error) {
+				console.error('[Transfer] Failed to check duplicate:', error);
+				// Fallback to original path
+				uniqueRemotePath = joinPathFn(remoteDir, file.name);
+			}
+
+			// Update status bar with actual filename
+			statusBarStore.showUpload({
+				id: transferId,
+				fileName: actualFileName,
+				progress: 0,
+				status: 'uploading',
 				fromPath: localPath,
-				toPath: remotePath
+				toPath: uniqueRemotePath,
+				onCancel
 			});
 
-			// Start upload immediately - backend will check for duplicates and rename if needed
-			uploadFile(sessionId, localPath, remotePath, transferId)
+			console.log('[Transfer] Starting upload:', {
+				fileName: actualFileName,
+				originalName: file.name,
+				fromPath: localPath,
+				toPath: uniqueRemotePath
+			});
+
+			// Start upload with unique path
+			uploadFile(sessionId, localPath, uniqueRemotePath, transferId)
 				.then(() => {
-					console.log('[Transfer] Upload completed:', file.name);
+					console.log('[Transfer] Upload completed:', actualFileName);
 					cleanupTransfer(transferId);
 				})
 				.catch(error => {
 					console.error('[Transfer] Upload error caught:', {
-						fileName: file.name,
+						fileName: actualFileName,
 						fromPath: localPath,
-						toPath: remotePath,
+						toPath: uniqueRemotePath,
 						error: error?.message || String(error),
 						stack: error?.stack
 					});
@@ -259,9 +263,9 @@
 						transferId,
 						abortController,
 						true,
-						file.name,
+						actualFileName,
 						file.path,
-						remotePath,
+						uniqueRemotePath,
 						error
 					);
 				});
@@ -278,12 +282,27 @@
 			}
 
 			let uniqueFileName = file.name; // Track uniqueFileName for error handling
+			let uniqueLocalPath = ''; // Track uniqueLocalPath for error handling
 
 			downloadDir()
 				.then(async downloadsFolder => {
-					// Download directly to the target path (overwrites if exists)
-					uniqueFileName = file.name;
-					const localPath = await join(downloadsFolder, uniqueFileName);
+					// Check for duplicate and generate unique path if needed
+					try {
+						const result = await generateUniqueLocalPath(downloadsFolder, file.name);
+						uniqueLocalPath = result.path;
+						uniqueFileName = result.newName;
+
+						// Show toast if file was renamed
+						if (result.renamed) {
+							toastStore.info(`"${result.originalName}" already exists, using "${result.newName}"`);
+						}
+					} catch (error) {
+						console.error('[Transfer] Failed to check duplicate:', error);
+						// Fallback to original path
+						uniqueLocalPath = await join(downloadsFolder, file.name);
+						uniqueFileName = file.name;
+					}
+
 					const remotePath = file.path;
 
 					if (abortController.signal.aborted) {
@@ -291,14 +310,14 @@
 						return;
 					}
 
-					// Use transferId as unique ID (generated by frontend, echoed by backend)
+					// Update status bar with actual filename
 					statusBarStore.showDownload({
 						id: transferId,
 						fileName: uniqueFileName,
 						progress: 0,
 						status: 'downloading',
 						fromPath: remotePath,
-						toPath: localPath,
+						toPath: uniqueLocalPath,
 						onCancel
 					});
 
@@ -306,9 +325,9 @@
 						fileName: uniqueFileName,
 						originalName: file.name,
 						fromPath: remotePath,
-						toPath: localPath
+						toPath: uniqueLocalPath
 					});
-					return downloadFile(sessionId, remotePath, localPath, transferId);
+					return downloadFile(sessionId, remotePath, uniqueLocalPath, transferId);
 				})
 				.then(() => {
 					console.log('[Transfer] Download completed:', uniqueFileName);
@@ -318,7 +337,7 @@
 					console.error('[Transfer] Download error caught:', {
 						fileName: uniqueFileName,
 						fromPath: file.path,
-						toPath: 'downloads folder',
+						toPath: uniqueLocalPath || 'downloads folder',
 						error: error?.message || String(error),
 						stack: error?.stack
 					});
@@ -328,7 +347,7 @@
 						false,
 						uniqueFileName,
 						file.path,
-						'',
+						uniqueLocalPath,
 						error
 					);
 				});
