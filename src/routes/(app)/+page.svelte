@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { ItemCard } from '$lib/components/ui/Card';
 	import { FileText, LayoutGrid, List } from 'lucide-svelte';
-	import { Button, SearchInput, TagFilterIcon } from '$lib/components/ui';
+	import { Button, SearchInput, TagFilterIcon, SortIcon } from '$lib/components/ui';
 	import {
 		ConfirmRemoveModal,
 		HostManagementLayout,
@@ -34,12 +34,18 @@
 		featureKey: 'hosts'
 	});
 
-	// Get data from hostsStore (reactive)
+	// Get data from hostsStore (reactive) - sorted by newest first
 	const groups = $derived(
-		($hostsStore.groups || []).map(group => ({
-			...group,
-			hostCount: ($hostsStore.hosts || []).filter(h => h.groupId === group.id).length
-		}))
+		($hostsStore.groups || [])
+			.map(group => ({
+				...group,
+				hostCount: ($hostsStore.hosts || []).filter(h => h.groupId === group.id).length
+			}))
+			.sort((a, b) => {
+				const dateA = new Date(a.updatedAt || a.createdAt || 0);
+				const dateB = new Date(b.updatedAt || b.createdAt || 0);
+				return dateB - dateA;
+			})
 	);
 
 	const hosts = $derived($hostsStore.hosts || []);
@@ -55,10 +61,41 @@
 
 	// Layout mode for hosts list in sidebar home: 'grid' | 'list' (own setting)
 	let layoutMode = $state(getUiSettings().hostLayoutMode || 'grid');
+	let sortMode = $state(getUiSettings().hostSortMode || 'newest');
 	let isLayoutMenuOpen = $state(false);
 	let layoutMenuEl;
 
-	// Filter hosts based on search and tags
+	// Save sort mode when changed
+	$effect(() => {
+		updateUiSettings({ hostSortMode: sortMode }).catch(e =>
+			console.warn('Failed to save sort mode:', e)
+		);
+	});
+
+	// Sort function based on sortMode
+	function sortItems(items, mode) {
+		return [...items].sort((a, b) => {
+			switch (mode) {
+				case 'a-z':
+					return (a.label || '').localeCompare(b.label || '');
+				case 'z-a':
+					return (b.label || '').localeCompare(a.label || '');
+				case 'oldest': {
+					const dateA = new Date(a.metadata?.createdAt || 0);
+					const dateB = new Date(b.metadata?.createdAt || 0);
+					return dateA - dateB;
+				}
+				case 'newest':
+				default: {
+					const dateA = new Date(a.metadata?.updatedAt || a.metadata?.createdAt || 0);
+					const dateB = new Date(b.metadata?.updatedAt || b.metadata?.createdAt || 0);
+					return dateB - dateA;
+				}
+			}
+		});
+	}
+
+	// Filter and sort hosts based on search, tags and sortMode
 	const filteredHosts = $derived.by(() => {
 		let filtered = hosts;
 
@@ -81,7 +118,8 @@
 			});
 		}
 
-		return filtered;
+		// Sort based on sortMode
+		return sortItems(filtered, sortMode);
 	});
 
 	const handleAddHost = openAddHost;
@@ -205,6 +243,7 @@
 						{/if}
 					</div>
 
+					<SortIcon bind:sortMode />
 					<TagFilterIcon {allTags} bind:selectedTags />
 				</div>
 			</div>

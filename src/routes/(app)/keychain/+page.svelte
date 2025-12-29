@@ -2,7 +2,7 @@
 	import { ContentWithPanel } from '$lib/components/layout';
 	import { ItemCard } from '$lib/components/ui/Card';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
-	import { Button, SearchInput, TagFilterIcon } from '$lib/components/ui';
+	import { Button, SearchInput, TagFilterIcon, SortIcon } from '$lib/components/ui';
 	import { KeyPanel, KeyScanModal } from '$lib/components/features/keychain';
 	import { keychainStore, deleteKey } from '$lib/services';
 	import { panelStore } from '$lib/stores';
@@ -25,7 +25,30 @@
 		return [...new Set(allLabels)].sort();
 	});
 
-	// Filter keys based on search and tags
+	// Sort function based on sortMode
+	function sortItems(items, mode) {
+		return [...items].sort((a, b) => {
+			switch (mode) {
+				case 'a-z':
+					return (a.label || '').localeCompare(b.label || '');
+				case 'z-a':
+					return (b.label || '').localeCompare(a.label || '');
+				case 'oldest': {
+					const dateA = new Date(a.metadata?.createdAt || 0);
+					const dateB = new Date(b.metadata?.createdAt || 0);
+					return dateA - dateB;
+				}
+				case 'newest':
+				default: {
+					const dateA = new Date(a.metadata?.updatedAt || a.metadata?.createdAt || 0);
+					const dateB = new Date(b.metadata?.updatedAt || b.metadata?.createdAt || 0);
+					return dateB - dateA;
+				}
+			}
+		});
+	}
+
+	// Filter and sort keys based on search, tags and sortMode
 	const filteredKeys = $derived.by(() => {
 		let filtered = keys;
 
@@ -47,7 +70,8 @@
 			});
 		}
 
-		return filtered;
+		// Sort based on sortMode
+		return sortItems(filtered, sortMode);
 	});
 
 	// Get panel state from panelStore
@@ -125,8 +149,16 @@
 
 	// Layout mode for key list (grid/list), own setting
 	let layoutMode = $state(getUiSettings().keychainLayoutMode || 'grid');
+	let sortMode = $state(getUiSettings().keychainSortMode || 'newest');
 	let isLayoutMenuOpen = $state(false);
 	let layoutMenuEl;
+
+	// Save sort mode when changed
+	$effect(() => {
+		updateUiSettings({ keychainSortMode: sortMode }).catch(e =>
+			console.warn('Failed to save sort mode:', e)
+		);
+	});
 
 	function handleLayoutButtonClick() {
 		isLayoutMenuOpen = !isLayoutMenuOpen;
@@ -204,6 +236,7 @@
 						{/if}
 					</div>
 
+					<SortIcon bind:sortMode />
 					<TagFilterIcon {allTags} bind:selectedTags />
 				</div>
 			</div>

@@ -5,7 +5,7 @@
 	import { deleteSnippet, snippetsStore } from '$lib/services';
 	import { useToast } from '$lib/composables';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
-	import { Button, SearchInput, TagFilterIcon, ScrollArea } from '$lib/components/ui';
+	import { Button, SearchInput, TagFilterIcon, SortIcon, ScrollArea } from '$lib/components/ui';
 	import { LayoutGrid, List } from 'lucide-svelte';
 	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
 
@@ -18,6 +18,7 @@
 	let showRemoveModal = $state(false);
 	let searchQuery = $state('');
 	let selectedLabels = $state([]);
+	let sortMode = $state(getUiSettings().snippetsSortMode || 'newest');
 
 	// Get snippets from store (reactive)
 	const snippets = $derived($snippetsStore.snippets || []);
@@ -52,6 +53,13 @@
 			isLayoutMenuOpen = false;
 		}
 	}
+
+	// Save sort mode when changed
+	$effect(() => {
+		updateUiSettings({ snippetsSortMode: sortMode }).catch(e =>
+			console.warn('Failed to save sort mode:', e)
+		);
+	});
 
 	function handleAdd() {
 		editingSnippet = null;
@@ -174,6 +182,7 @@
 							{/if}
 						</div>
 
+						<SortIcon bind:sortMode />
 						<TagFilterIcon {allTags} bind:selectedTags={selectedLabels} />
 					</div>
 				</div>
@@ -187,6 +196,7 @@
 						{searchQuery}
 						{selectedLabels}
 						{layoutMode}
+						{sortMode}
 						onadd={handleAdd}
 						onedit={handleEdit}
 						onremove={handleRemove}

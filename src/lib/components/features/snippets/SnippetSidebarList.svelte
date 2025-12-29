@@ -5,14 +5,22 @@
 
 	let { snippets = [], selectedTags = [], onRun, onPaste } = $props();
 
-	// Filter snippets by selected tags
+	// Filter and sort snippets by selected tags (newest first)
 	const filteredSnippets = $derived.by(() => {
-		if (selectedTags.length === 0) {
-			return snippets;
+		let filtered = snippets;
+
+		if (selectedTags.length > 0) {
+			filtered = filtered.filter(s => {
+				const snippetLabels = s.labels || [];
+				return selectedTags.some(tag => snippetLabels.includes(tag));
+			});
 		}
-		return snippets.filter(s => {
-			const snippetLabels = s.labels || [];
-			return selectedTags.some(tag => snippetLabels.includes(tag));
+
+		// Sort by newest first (using updatedAt or createdAt)
+		return [...filtered].sort((a, b) => {
+			const dateA = new Date(a.metadata?.updatedAt || a.metadata?.createdAt || 0);
+			const dateB = new Date(b.metadata?.updatedAt || b.metadata?.createdAt || 0);
+			return dateB - dateA;
 		});
 	});
 </script>

@@ -9,12 +9,36 @@
 		onadd,
 		onedit,
 		onremove,
-		layoutMode = 'grid'
+		layoutMode = 'grid',
+		sortMode = 'newest'
 	} = $props();
 
 	const snippets = $derived($snippetsStore.snippets || []);
 
-	// Filter logic
+	// Sort function based on sortMode
+	function sortItems(items, mode) {
+		return [...items].sort((a, b) => {
+			switch (mode) {
+				case 'a-z':
+					return (a.name || '').localeCompare(b.name || '');
+				case 'z-a':
+					return (b.name || '').localeCompare(a.name || '');
+				case 'oldest': {
+					const dateA = new Date(a.metadata?.createdAt || 0);
+					const dateB = new Date(b.metadata?.createdAt || 0);
+					return dateA - dateB;
+				}
+				case 'newest':
+				default: {
+					const dateA = new Date(a.metadata?.updatedAt || a.metadata?.createdAt || 0);
+					const dateB = new Date(b.metadata?.updatedAt || b.metadata?.createdAt || 0);
+					return dateB - dateA;
+				}
+			}
+		});
+	}
+
+	// Filter and sort logic
 	const filteredSnippets = $derived.by(() => {
 		let filtered = snippets;
 
@@ -34,7 +58,8 @@
 			});
 		}
 
-		return filtered;
+		// Sort based on sortMode
+		return sortItems(filtered, sortMode);
 	});
 </script>
 

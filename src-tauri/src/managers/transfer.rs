@@ -262,45 +262,7 @@ impl FileTransferManager {
         Ok(())
     }
     
-    /// Upload file
-    /// Generate unique filename by appending (N) if duplicate exists
-    fn generate_unique_filename(base_name: &str, existing_files: &[FileInfo]) -> String {
-        let existing_names: std::collections::HashSet<String> = existing_files
-            .iter()
-            .filter(|f| !f.is_directory)
-            .map(|f| f.name.to_lowercase())
-            .collect();
-        
-        let base_lower = base_name.to_lowercase();
-        if !existing_names.contains(&base_lower) {
-            return base_name.to_string();
-        }
-        
-        // Extract name and extension
-        let (name_without_ext, ext) = if let Some(dot_pos) = base_name.rfind('.') {
-            (&base_name[..dot_pos], &base_name[dot_pos..])
-        } else {
-            (base_name, "")
-        };
-        
-        // Find unique name by appending (N)
-        let mut counter = 1;
-        loop {
-            let new_name = format!("{}{} ({}){}", name_without_ext, "", counter, ext);
-            if !existing_names.contains(&new_name.to_lowercase()) {
-                return new_name;
-            }
-            counter += 1;
-            if counter > 1000 {
-                // Fallback: use timestamp
-                return format!("{}_{}{}", name_without_ext, std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs(), ext);
-            }
-        }
-    }
-
+    /// Upload file (overwrites existing file if present)
     pub async fn upload_file(
         &self,
         app_handle: &AppHandle,
@@ -316,42 +278,20 @@ impl FileTransferManager {
             .await
             .map_err(|e| ConnectionError::IoError(format!("Failed to stat local file: {}", e)))?;
         let total_bytes = meta.len();
-        let original_file_name = std::path::Path::new(remote_path)
+        let file_name = std::path::Path::new(remote_path)
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or(remote_path)
             .to_string();
-        
-        // Check for duplicates and generate unique filename
-        let remote_dir = std::path::Path::new(remote_path)
-            .parent()
-            .and_then(|p| p.to_str())
-            .unwrap_or("/");
-        
-        let existing_files = session.list_directory(remote_dir).await.unwrap_or_default();
-        let unique_file_name = Self::generate_unique_filename(&original_file_name, &existing_files);
-        
-        // Build final remote path with unique filename
+
         // Normalize path to use forward slashes (Unix-style) for remote paths
         use crate::core::normalize_remote_path;
-        let final_remote_path = if unique_file_name != original_file_name {
-            let joined = if remote_dir == "/" {
-                format!("/{}", unique_file_name)
-            } else {
-                format!("{}/{}", remote_dir.trim_end_matches('/'), unique_file_name)
-            };
-            normalize_remote_path(&joined)
-        } else {
-            normalize_remote_path(remote_path)
-        };
-        
-        let file_name_for_final = unique_file_name.clone();
-        let file_name_for_cb = unique_file_name.clone();
-        
-        if final_remote_path != remote_path {
-            log::info!("[FileTransfer] Renamed due to duplicate: {} -> {}", original_file_name, file_name_for_final.clone());
-        }
-        log::info!("[FileTransfer] Starting upload: {}", file_name_for_final.clone());
+        let final_remote_path = normalize_remote_path(remote_path);
+
+        let file_name_for_final = file_name.clone();
+        let file_name_for_cb = file_name.clone();
+
+        log::info!("[FileTransfer] Starting upload: {} -> {}", file_name, final_remote_path);
 
         let session_id_str = session_id.to_string();
         let remote = final_remote_path.clone();

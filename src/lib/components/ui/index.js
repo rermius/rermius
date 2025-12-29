@@ -53,6 +53,9 @@ export * from './SearchInput/index.js';
 // TagFilterIcon component
 export * from './TagFilterIcon/index.js';
 
+// SortIcon component
+export * from './SortIcon/index.js';
+
 // ScanListHeader component
 export * from './ScanListHeader/index.js';
 

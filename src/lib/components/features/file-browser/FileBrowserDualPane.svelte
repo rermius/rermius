@@ -15,7 +15,6 @@
 	import { hostsStore } from '$lib/services/hosts';
 	import { getDropFileList } from '$lib/utils/file-drop';
 	import { statusBarStore } from '$lib/stores/status-bar';
-	import { generateUniqueFileName } from '$lib/utils/filename-utils';
 
 	let {
 		// Left panel (Local)
@@ -282,19 +281,8 @@
 
 			downloadDir()
 				.then(async downloadsFolder => {
-					// Check for duplicate and get unique filename
-					let localFiles = [];
-					try {
-						localFiles = await localFileService.listLocalDirectory(downloadsFolder);
-					} catch (listError) {
-						console.warn('[Transfer] Failed to list local directory for duplicate check:', {
-							downloadsFolder,
-							error: listError?.message || String(listError)
-						});
-						// Continue anyway - duplicate check will just use empty list
-					}
-
-					uniqueFileName = generateUniqueFileName(file.name, localFiles);
+					// Download directly to the target path (overwrites if exists)
+					uniqueFileName = file.name;
 					const localPath = await join(downloadsFolder, uniqueFileName);
 					const remotePath = file.path;
 
