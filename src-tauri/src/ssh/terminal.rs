@@ -48,7 +48,9 @@ impl SshTerminalSession {
         let channel = handle.channel_open_session().await?;
         debug!("SSH session channel opened, id: {:?}", channel.id());
 
-        // Request PTY
+        // Request PTY with TTY operation settings
+        // TTY_OP_ISPEED and TTY_OP_OSPEED are critical for interactive programs like vi/vim
+        // Without these, the remote shell may not properly configure raw mode
         debug!("SSH requesting PTY {}x{}", config.terminal.cols, config.terminal.rows);
         channel.request_pty(
             false,
@@ -57,12 +59,16 @@ impl SshTerminalSession {
             config.terminal.rows as u32,
             0,
             0,
-            &[],
+            &[
+                (russh::Pty::TTY_OP_ISPEED, 38400),  // Input baud rate
+                (russh::Pty::TTY_OP_OSPEED, 38400),  // Output baud rate
+            ],
         ).await?;
 
-        // Start shell
+        // Start shell (false = non-blocking, don't wait for server response)
+        // This matches Kerminal's approach and may improve responsiveness
         debug!("SSH requesting shell");
-        channel.request_shell(true).await?;
+        channel.request_shell(false).await?;
         info!("SSH shell started");
         
         // Create channels for write and resize commands
@@ -111,7 +117,11 @@ impl SshTerminalSession {
         
         loop {
             tokio::select! {
-                // Handle write requests from FE
+                // Use biased to prioritize writes (user input) over reads
+                // This ensures responsive input handling for interactive programs like vi
+                biased;
+
+                // Handle write requests from FE (prioritized)
                 Some(data) = write_rx.recv() => {
                     if let Err(e) = channel.data(&data[..]).await {
                         warn!("SSH[{}] write error: {:?}", session_id, e);
@@ -131,7 +141,7 @@ impl SshTerminalSession {
                     match msg {
                         Some(ChannelMsg::Data { data }) => {
                             let output = String::from_utf8_lossy(&data).to_string();
-                            
+
                             if streaming_started.load(Ordering::SeqCst) {
                                 // Flush pending buffer first
                                 if !pending_buffer.is_empty() {
