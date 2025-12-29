@@ -30,6 +30,9 @@ Features:
 	// Note: Terminal creation is now handled by terminal-manager service
 	// This component just renders the initial terminal on mount
 	let terminalInstances = $state([{ key: crypto.randomUUID() }]);
+
+	// Snippet panel collapse state
+	let snippetCollapsed = $state(false);
 </script>
 
 <div class="flex flex-col h-full overflow-hidden" style="background-color: var(--terminal-bg)">
@@ -51,6 +54,10 @@ Features:
 			{/each}
 		</div>
 		<!-- Snippet Sidebar -->
-		<SnippetSidebar sessionId={activeSessionId} />
+		<SnippetSidebar
+			sessionId={activeSessionId}
+			collapsed={snippetCollapsed}
+			ontoggle={() => (snippetCollapsed = !snippetCollapsed)}
+		/>
 	</div>
 </div>

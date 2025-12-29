@@ -6,10 +6,15 @@
 	import { Modal, TagFilter } from '$lib/components/ui';
 	import SnippetSidebarHeader from './SnippetSidebarHeader.svelte';
 	import SnippetSidebarList from './SnippetSidebarList.svelte';
+	import SnippetToggleBar from './SnippetToggleBar.svelte';
 	import HistoryList from './HistoryList.svelte';
 	import SnippetPanel from './SnippetPanel.svelte';
 
-	const { sessionId: propSessionId = null } = $props();
+	let {
+		sessionId: propSessionId = null,
+		collapsed = false,
+		ontoggle = () => {}
+	} = $props();
 
 	let activeTab = $state(SNIPPET_TABS.CODE);
 	let showSnippetModal = $state(false);
@@ -52,19 +57,23 @@
 	}
 </script>
 
-<div
-	class="flex flex-col h-full bg-bg-secondary rounded-xl shrink-0 mr-2"
-	style="width: {SNIPPET_SIDEBAR_WIDTH}px;"
->
-	<SnippetSidebarHeader bind:activeTab />
+{#if collapsed}
+	<SnippetToggleBar onexpand={ontoggle} />
+{:else}
+	<div
+		class="flex flex-col h-full bg-bg-secondary rounded-xl shrink-0 mr-2"
+		style="width: {SNIPPET_SIDEBAR_WIDTH}px;"
+	>
+		<SnippetSidebarHeader bind:activeTab oncollapse={ontoggle} />
 
-	{#if activeTab === SNIPPET_TABS.CODE}
-		<!-- Tag Filter -->
-		<div class="px-3 py-2 border-b border-border">
-			<TagFilter {allTags} bind:selectedTags showClearButton={true} />
-		</div>
-		<SnippetSidebarList {snippets} {selectedTags} onRun={run} onPaste={paste} />
-	{:else if activeTab === SNIPPET_TABS.CLOCK}
-		<HistoryList sessionId={activeSessionId} onPaste={paste} />
-	{/if}
-</div>
+		{#if activeTab === SNIPPET_TABS.CODE}
+			<!-- Tag Filter -->
+			<div class="px-3 py-2 border-b border-border">
+				<TagFilter {allTags} bind:selectedTags showClearButton={true} />
+			</div>
+			<SnippetSidebarList {snippets} {selectedTags} onRun={run} onPaste={paste} />
+		{:else if activeTab === SNIPPET_TABS.CLOCK}
+			<HistoryList sessionId={activeSessionId} onPaste={paste} />
+		{/if}
+	</div>
+{/if}

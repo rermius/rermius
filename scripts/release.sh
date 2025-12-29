@@ -111,7 +111,7 @@ else
     sleep 0.5
     
     print_info "Committing version changes..."
-    if git commit -m "Bump version to $VERSION"; then
+    if git commit -m "release: version to $VERSION"; then
         print_success "Changes committed"
     else
         print_error "Failed to commit changes"

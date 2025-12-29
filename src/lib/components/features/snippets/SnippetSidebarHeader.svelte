@@ -1,12 +1,24 @@
 <script>
-	import { Code, Clock } from 'lucide-svelte';
+	import { Code, Clock, PanelRightClose } from 'lucide-svelte';
 	import { SNIPPET_TABS } from '$lib/constants/snippet-ui.js';
 
-	let { activeTab = $bindable(SNIPPET_TABS.CODE) } = $props();
+	let { activeTab = $bindable(SNIPPET_TABS.CODE), oncollapse = () => {} } = $props();
 </script>
 
-<div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-border">
-	<div class="flex items-center gap-2">
+<div class="flex items-center justify-between gap-2 px-2 py-2 border-b border-border">
+	<div class="flex items-center gap-1">
+		<!-- Collapse button -->
+		<button
+			type="button"
+			onclick={oncollapse}
+			class="p-1.5 rounded transition-colors text-text-tertiary hover:text-text-primary hover:bg-bg-hover"
+			title="Hide panel"
+		>
+			<PanelRightClose size={16} />
+		</button>
+
+		<div class="w-px h-4 bg-border mx-1"></div>
+
 		<button
 			type="button"
 			onclick={() => (activeTab = SNIPPET_TABS.CODE)}

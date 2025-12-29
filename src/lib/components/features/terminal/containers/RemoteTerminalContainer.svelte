@@ -79,6 +79,9 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 	let isDragging = $state(false);
 	let saveTimeout = null;
 
+	// Snippet panel collapse state
+	let snippetCollapsed = $state(false);
+
 	// Debounced save function (persists to app settings and localStorage)
 	function saveWidth(width) {
 		// Clear existing timeout
@@ -184,8 +187,12 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 					isLocal={tab.isLocal || false}
 				/>
 			</div>
-			<!-- Snippet Sidebar - luôn hiển thị bên cạnh terminal -->
-			<SnippetSidebar sessionId={tab.sessionId} />
+			<!-- Snippet Sidebar -->
+			<SnippetSidebar
+				sessionId={tab.sessionId}
+				collapsed={snippetCollapsed}
+				ontoggle={() => (snippetCollapsed = !snippetCollapsed)}
+			/>
 		</div>
 		{#if tab.showFileManager}
 			<!-- Resizer -->
@@ -229,7 +236,11 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 			/>
 		</div>
 		<!-- Snippet Sidebar -->
-		<SnippetSidebar sessionId={tab.sessionId} />
+		<SnippetSidebar
+			sessionId={tab.sessionId}
+			collapsed={snippetCollapsed}
+			ontoggle={() => (snippetCollapsed = !snippetCollapsed)}
+		/>
 	</div>
 {/if}
 
