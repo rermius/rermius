@@ -113,7 +113,7 @@
 {#snippet content()}
 	<div class="flex flex-col gap-4">
 		<!-- General Section -->
-		<div class="text-xs text-white/50 uppercase tracking-wider">General</div>
+		<div class="text-xs text-text-tertiary uppercase tracking-wider">General</div>
 
 		<!-- Name -->
 		<div class="flex flex-col gap-1">
@@ -127,7 +127,7 @@
 				required
 			/>
 			{#if nameError}
-				<span class="text-xs text-red-500 pl-10">{nameError}</span>
+				<span class="text-xs text-error pl-10">{nameError}</span>
 			{/if}
 		</div>
 

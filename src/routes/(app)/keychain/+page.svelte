@@ -2,7 +2,7 @@
 	import { ContentWithPanel } from '$lib/components/layout';
 	import { ItemCard } from '$lib/components/ui/Card';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
-	import { Button, SearchInput, TagFilterIcon, SortIcon } from '$lib/components/ui';
+	import { Button, SearchInput, TagFilterIcon, SortIcon, ScrollArea } from '$lib/components/ui';
 	import { KeyPanel, KeyScanModal } from '$lib/components/features/keychain';
 	import { keychainStore, deleteKey } from '$lib/services';
 	import { panelStore } from '$lib/stores';
@@ -184,96 +184,98 @@
 <svelte:window onclick={handleLayoutClickOutside} />
 
 <ContentWithPanel showPanel={showNewKeyPanel} onclose={handleClosePanel} onremove={handleRemove}>
-	{#snippet header()}
-		<div class="flex flex-col gap-3 w-full">
-			<!-- Search Input -->
-			<SearchInput bind:value={searchQuery} placeholder="Find a key" class="w-full" />
+	{#snippet content()}
+		<div class="flex flex-col h-full">
+			<!-- Header Section -->
+			<div class="flex flex-col gap-3 items-start bg-bg-secondary p-3">
+				<!-- Search Input -->
+				<SearchInput bind:value={searchQuery} placeholder="Find a key" class="w-full" />
 
-			<!-- Scan Button, Layout Toggle, and Tag Filter Icon -->
-			<div class="flex items-center justify-between w-full">
-				<Button onclick={handleScanFolder} variant="secondary" size="sm">
-					<FolderOpen size={14} />
-					<span>Scan Folder</span>
-				</Button>
+				<!-- Scan Button, Layout Toggle, and Tag Filter Icon -->
+				<div class="flex items-center justify-between w-full">
+					<Button onclick={handleScanFolder} variant="secondary" size="sm">
+						<FolderOpen size={14} />
+						<span>Scan Folder</span>
+					</Button>
 
-				<div class="flex items-center gap-2">
-					<!-- Layout toggle icon (grid/list) - same row with tag filter, same behavior as hosts/snippets -->
-					<div class="relative" bind:this={layoutMenuEl}>
-						<button
-							type="button"
-							onclick={handleLayoutButtonClick}
-							class="p-2 rounded-lg transition-colors border border-transparent hover:border-tab-active-text bg-bg-secondary hover:bg-bg-hover text-text-primary hover:text-tab-active-text flex items-center justify-center gap-1.5"
-							title="Switch layout"
-						>
-							{#if layoutMode === 'grid'}
-								<LayoutGrid size={16} />
-							{:else}
-								<List size={16} />
-							{/if}
-						</button>
-
-						{#if isLayoutMenuOpen}
-							<div
-								class="absolute right-0 top-full mt-2 z-50 w-40 bg-bg-secondary border border-border rounded-lg shadow-xl py-1"
+					<div class="flex items-center gap-2">
+						<!-- Layout toggle icon (grid/list) - same row with tag filter, same behavior as hosts/snippets -->
+						<div class="relative" bind:this={layoutMenuEl}>
+							<button
+								type="button"
+								onclick={handleLayoutButtonClick}
+								class="p-2 rounded-lg transition-colors border border-transparent hover:border-tab-active-text bg-bg-secondary hover:bg-bg-hover text-text-primary hover:text-tab-active-text flex items-center justify-center gap-1.5"
+								title="Switch layout"
 							>
-								<button
-									type="button"
-									onclick={() => handleSelectLayout('grid')}
-									class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-hover text-text-secondary"
-								>
-									<LayoutGrid size={14} class="text-text-secondary" />
-									<span>Grid view</span>
-								</button>
-								<button
-									type="button"
-									onclick={() => handleSelectLayout('list')}
-									class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-hover text-text-secondary"
-								>
-									<List size={14} class="text-text-secondary" />
-									<span>List view</span>
-								</button>
-							</div>
-						{/if}
-					</div>
+								{#if layoutMode === 'grid'}
+									<LayoutGrid size={16} />
+								{:else}
+									<List size={16} />
+								{/if}
+							</button>
 
-					<SortIcon bind:sortMode />
-					<TagFilterIcon {allTags} bind:selectedTags />
+							{#if isLayoutMenuOpen}
+								<div
+									class="absolute right-0 top-full mt-2 z-50 w-40 bg-bg-secondary border border-border rounded-lg shadow-xl py-1"
+								>
+									<button
+										type="button"
+										onclick={() => handleSelectLayout('grid')}
+										class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-hover text-text-secondary"
+									>
+										<LayoutGrid size={14} class="text-text-secondary" />
+										<span>Grid view</span>
+									</button>
+									<button
+										type="button"
+										onclick={() => handleSelectLayout('list')}
+										class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-hover text-text-secondary"
+									>
+										<List size={14} class="text-text-secondary" />
+										<span>List view</span>
+									</button>
+								</div>
+							{/if}
+						</div>
+
+						<SortIcon bind:sortMode />
+						<TagFilterIcon {allTags} bind:selectedTags />
+					</div>
 				</div>
 			</div>
-		</div>
-	{/snippet}
 
-	{#snippet content()}
-		<div class="p-6">
-			<h1 class="text-2xl font-bold text-white mb-6">Keychain</h1>
-
-			<!-- Key Cards layout (grid/list) -->
-			<div class={layoutMode === 'grid' ? 'flex flex-wrap gap-2' : 'flex flex-col gap-1'}>
-				<!-- Add New Key Card -->
-				<ItemCard
-					label="Add a label..."
-					subtitle=""
-					icon="key-filled"
-					isAddNew
-					variant={layoutMode === 'list' ? 'list' : 'card'}
-					onclick={handleAddKey}
-				/>
-
-				<!-- Existing Keys -->
-				{#each filteredKeys as key (key.id)}
-					<div class={layoutMode === 'grid' ? '' : 'w-full'}>
+			<!-- Content Section -->
+			<ScrollArea class="flex-1">
+				<div class="p-6">
+					<!-- Key Cards layout (grid/list) -->
+					<div class={layoutMode === 'grid' ? 'flex flex-wrap gap-2' : 'flex flex-col gap-1'}>
+						<!-- Add New Key Card -->
 						<ItemCard
-							label={key.label}
-							subtitle={key.keyType}
+							label="Add a label..."
+							subtitle=""
 							icon="key-filled"
-							showEdit={true}
+							isAddNew
 							variant={layoutMode === 'list' ? 'list' : 'card'}
-							isActive={editingKey?.id === key.id}
-							onedit={() => handleEditKey(key)}
+							onclick={handleAddKey}
 						/>
+
+						<!-- Existing Keys -->
+						{#each filteredKeys as key (key.id)}
+							<div class={layoutMode === 'grid' ? '' : 'w-full'}>
+								<ItemCard
+									label={key.label}
+									subtitle={key.keyType}
+									icon="key-filled"
+									showEdit={true}
+									variant={layoutMode === 'list' ? 'list' : 'card'}
+									isActive={editingKey?.id === key.id}
+									onedit={() => handleEditKey(key)}
+								/>
+							</div>
+						{/each}
 					</div>
-				{/each}
-			</div>
+				</div>
+			</ScrollArea>
 		</div>
 	{/snippet}
 

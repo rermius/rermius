@@ -264,7 +264,7 @@
 {#snippet content()}
 	<div class="flex flex-col gap-4">
 		<!-- General Section -->
-		<div class="text-xs text-white/50 uppercase tracking-wider">General</div>
+		<div class="text-xs text-text-tertiary uppercase tracking-wider">General</div>
 
 		<!-- Label -->
 		<div class="flex flex-col gap-1">
@@ -278,16 +278,16 @@
 				required
 			/>
 			{#if labelError}
-				<span class="text-xs text-red-500 pl-10">{labelError}</span>
+				<span class="text-xs text-error pl-10">{labelError}</span>
 			{/if}
 		</div>
 
 		<!-- Key Type Display -->
 		{#if formData.keyType}
 			<div class="flex items-center gap-2 bg-border px-3 py-2 rounded-lg">
-				<Key size={16} class="text-[#4A9FFF]" />
-				<span class="text-xs text-white/70">
-					Key Type: <span class="text-white font-semibold">{formData.keyType}</span>
+				<Key size={16} class="text-primary" />
+				<span class="text-xs text-text-secondary">
+					Key Type: <span class="text-text-primary font-semibold">{formData.keyType}</span>
 				</span>
 			</div>
 		{/if}
@@ -306,11 +306,11 @@
 		{/if}
 
 		<!-- Keys Section -->
-		<div class="text-xs text-white/50 uppercase tracking-wider mt-2">Keys</div>
+		<div class="text-xs text-text-tertiary uppercase tracking-wider mt-2">Keys</div>
 
 		<!-- Private Key Textarea -->
 		<div class="flex flex-col gap-1">
-			<label class="text-xs text-white/50" for="privateKey">Private key</label>
+			<label class="text-xs text-text-tertiary" for="privateKey">Private key</label>
 			<Textarea
 				id="privateKey"
 				bind:value={formData.privateKey}
@@ -323,7 +323,7 @@
 
 		<!-- Public Key Textarea -->
 		<div class="flex flex-col gap-1">
-			<label class="text-xs text-white/50" for="publicKey">Public key</label>
+			<label class="text-xs text-text-tertiary" for="publicKey">Public key</label>
 			<Textarea
 				id="publicKey"
 				bind:value={formData.publicKey}
@@ -335,7 +335,7 @@
 
 		<!-- Certificate Textarea -->
 		<div class="flex flex-col gap-1">
-			<label class="text-xs text-white/50" for="certificate">Certificate (optional)</label>
+			<label class="text-xs text-text-tertiary" for="certificate">Certificate (optional)</label>
 			<Textarea
 				id="certificate"
 				bind:value={formData.certificate}
@@ -359,10 +359,10 @@
 				}}
 				role="button"
 				tabindex="0"
-				class="border-2 border-dashed bg-bg-secondary rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-[#4A9FFF] transition-colors cursor-pointer"
+				class="border-2 border-dashed bg-bg-secondary rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-primary transition-colors cursor-pointer"
 			>
-				<Upload size={24} class="text-white/50" />
-				<p class="text-sm text-white/70 text-center">
+				<Upload size={24} class="text-text-tertiary" />
+				<p class="text-sm text-text-secondary text-center">
 					Click to browse or drag and drop a private key file
 				</p>
 			</div>
