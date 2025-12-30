@@ -79,7 +79,6 @@
 	function handleSnippetSave(savedSnippet) {
 		showPanel = false;
 		editingSnippet = null;
-		toast.success(`Snippet "${savedSnippet.name}" saved successfully`);
 		// Store is reactive, so list will update automatically
 	}
 

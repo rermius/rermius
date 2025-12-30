@@ -872,7 +872,7 @@
 						<div class="flex flex-col gap-1">
 							<span class="text-sm text-white">Auto sync on data change</span>
 							<span class="text-xs text-white/50"
-								>Automatically upload when hosts/settings change (1 min debounce)</span
+								>Automatically upload when hosts/settings change</span
 							>
 						</div>
 						<Switch

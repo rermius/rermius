@@ -2,7 +2,6 @@
 	import { Input, Textarea, Button, IconInput, TagInput } from '$lib/components/ui';
 	import { Tag, Terminal } from 'lucide-svelte';
 	import { addSnippet, updateSnippet, isSnippetNameDuplicate, snippetsStore } from '$lib/services';
-	import { triggerSyncOnSave } from '$lib/services/auto-sync';
 	import { debounce } from '$lib/utils';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
 
@@ -128,7 +127,6 @@
 			: await addSnippet(formData);
 
 		onsave?.(savedSnippet);
-		triggerSyncOnSave('snippet');
 
 		return savedSnippet;
 	}

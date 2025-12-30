@@ -31,7 +31,6 @@ import { debounce } from '$lib/utils';
 import { addHost, updateHost, isHostLabelDuplicate, hostsStore } from '$lib/services';
 import { hostDraftStore } from '$lib/stores';
 import { handleHostConnect } from '$lib/composables';
-import { triggerSyncOnSave } from '$lib/services/auto-sync';
 import { parseChain, serializeChain, getChainSummary } from '$lib/utils/host-chaining.js';
 
 const HOST_FORM_CTX = Symbol('host-form');
@@ -295,7 +294,6 @@ export function createHostFormContext(options) {
 
 		hostDraftStore.clear();
 		onsave?.(savedHost);
-		triggerSyncOnSave('host');
 
 		return savedHost;
 	}

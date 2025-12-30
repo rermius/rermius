@@ -7,7 +7,6 @@
 	import { addKey, updateKey, isLabelDuplicate, findDuplicateKey } from '$lib/services';
 	import { debounce } from '$lib/utils';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
-	import { triggerSyncOnSave } from '$lib/services/auto-sync';
 
 	const dispatch = createEventDispatcher();
 
@@ -169,9 +168,6 @@
 
 			// Dispatch success event
 			dispatch('import', savedKey);
-
-			// Trigger auto sync
-			triggerSyncOnSave('key');
 
 			// Reset form
 			formData = {

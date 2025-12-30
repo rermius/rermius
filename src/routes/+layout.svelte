@@ -9,7 +9,7 @@
 		loadSnippets,
 		loadSettings
 	} from '$lib/services';
-	import { initAutoSync, stopAutoSync } from '$lib/services/auto-sync.js';
+	import { initAutoSync, stopAutoSync, markLoadingStart, markLoadingComplete } from '$lib/services/auto-sync.js';
 	import { initFileTransferProgressListener } from '$lib/services/file-transfer-events';
 	import { themeStore, workspaceStore, tabsStore } from '$lib/stores';
 	import {
@@ -36,13 +36,20 @@
 	 * Load workspace-specific data
 	 */
 	async function loadWorkspaceData(workspaceId) {
-		await Promise.all([
-			loadKeychain(workspaceId),
-			loadHosts(workspaceId),
-			loadSyncSettings(workspaceId),
-			loadSnippets(workspaceId),
-			loadSettings(workspaceId)
-		]);
+		markLoadingStart(); // Signal start of data loading
+
+		try {
+			await Promise.all([
+				loadKeychain(workspaceId),
+				loadHosts(workspaceId),
+				loadSyncSettings(workspaceId),
+				loadSnippets(workspaceId),
+				loadSettings(workspaceId)
+			]);
+		} finally {
+			// Always mark complete, even if loading fails
+			markLoadingComplete();
+		}
 	}
 
 	/**

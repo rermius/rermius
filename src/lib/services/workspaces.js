@@ -548,33 +548,44 @@ export async function switchWorkspace(targetWorkspaceId) {
 		console.log('[switchWorkspace] Target workspace found:', targetWorkspace.name);
 		console.log('[switchWorkspace] Loading workspace data...');
 
-		// Import load functions dynamically to avoid circular dependencies
-		const { loadKeychain } = await import('./keychain.js');
-		const { loadHosts } = await import('./hosts.js');
-		const { loadSyncSettings } = await import('./sync-settings.js');
-		const { loadSnippets } = await import('./snippets.js');
-		const { loadSettings } = await import('./app-settings.js');
+		// Import auto-sync markers
+		const { markLoadingStart, markLoadingComplete } = await import('./auto-sync.js');
 
-		// Load all workspace-specific data
-		console.log('[switchWorkspace] Loading keychain...');
-		await loadKeychain(targetWorkspaceId);
-		console.log('[switchWorkspace] ✓ Keychain loaded');
+		// Mark loading start BEFORE loading data
+		markLoadingStart();
 
-		console.log('[switchWorkspace] Loading hosts...');
-		await loadHosts(targetWorkspaceId);
-		console.log('[switchWorkspace] ✓ Hosts loaded');
+		try {
+			// Import load functions dynamically to avoid circular dependencies
+			const { loadKeychain } = await import('./keychain.js');
+			const { loadHosts } = await import('./hosts.js');
+			const { loadSyncSettings } = await import('./sync-settings.js');
+			const { loadSnippets } = await import('./snippets.js');
+			const { loadSettings } = await import('./app-settings.js');
 
-		console.log('[switchWorkspace] Loading sync settings...');
-		await loadSyncSettings(targetWorkspaceId);
-		console.log('[switchWorkspace] ✓ Sync settings loaded');
+			// Load all workspace-specific data
+			console.log('[switchWorkspace] Loading keychain...');
+			await loadKeychain(targetWorkspaceId);
+			console.log('[switchWorkspace] ✓ Keychain loaded');
 
-		console.log('[switchWorkspace] Loading snippets...');
-		await loadSnippets(targetWorkspaceId);
-		console.log('[switchWorkspace] ✓ Snippets loaded');
+			console.log('[switchWorkspace] Loading hosts...');
+			await loadHosts(targetWorkspaceId);
+			console.log('[switchWorkspace] ✓ Hosts loaded');
 
-		console.log('[switchWorkspace] Loading app settings...');
-		await loadSettings(targetWorkspaceId);
-		console.log('[switchWorkspace] ✓ App settings loaded');
+			console.log('[switchWorkspace] Loading sync settings...');
+			await loadSyncSettings(targetWorkspaceId);
+			console.log('[switchWorkspace] ✓ Sync settings loaded');
+
+			console.log('[switchWorkspace] Loading snippets...');
+			await loadSnippets(targetWorkspaceId);
+			console.log('[switchWorkspace] ✓ Snippets loaded');
+
+			console.log('[switchWorkspace] Loading app settings...');
+			await loadSettings(targetWorkspaceId);
+			console.log('[switchWorkspace] ✓ App settings loaded');
+		} finally {
+			// Always mark complete, even if loading fails
+			markLoadingComplete();
+		}
 
 		// Set current workspace after data is loaded
 		console.log('[switchWorkspace] Setting current workspace...');

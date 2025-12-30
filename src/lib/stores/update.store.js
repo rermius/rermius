@@ -30,7 +30,6 @@ function createUpdateStore() {
 
       try {
         const updateObj = await check();
-        console.log(updateObj);
 
         if (updateObj) {
           set({

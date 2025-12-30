@@ -2,7 +2,6 @@
 	import { Input, Textarea, Button, IconInput } from '$lib/components/ui';
 	import { addGroup, updateGroup, isGroupNameDuplicate, hostsStore } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
-	import { triggerSyncOnSave } from '$lib/services/auto-sync';
 
 	const { editingGroup = null, onsave } = $props();
 
@@ -71,9 +70,6 @@
 
 			// Call success callback
 			onsave?.(savedGroup);
-
-			// Trigger auto sync
-			triggerSyncOnSave('group');
 
 			// Reset form
 			formData = {
