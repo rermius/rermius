@@ -1,6 +1,6 @@
 [package]
 name = "rermius"
-version = "1.0.7"
+version = "1.0.8"
 description = "A SSH/SFTP/FTP in one"
 authors = ["hayho"]
 edition = "2021"
