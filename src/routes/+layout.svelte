@@ -172,11 +172,27 @@
 		});
 
 		keyboardShortcutManager.register('nextTab', () => {
-			// TODO: Implement tab cycling logic
+			const tabs = get(tabsStore).tabs;
+			const activeTabId = get(tabsStore).activeTabId;
+
+			if (!tabs || tabs.length <= 1) return;
+
+			const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+			const nextIndex = (currentIndex + 1) % tabs.length;
+
+			tabsStore.setActiveTab(tabs[nextIndex].id);
 		});
 
 		keyboardShortcutManager.register('prevTab', () => {
-			// TODO: Implement tab cycling logic
+			const tabs = get(tabsStore).tabs;
+			const activeTabId = get(tabsStore).activeTabId;
+
+			if (!tabs || tabs.length <= 1) return;
+
+			const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+			const prevIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1;
+
+			tabsStore.setActiveTab(tabs[prevIndex].id);
 		});
 
 		keyboardShortcutManager.register('openSettings', () => {
@@ -188,6 +204,35 @@
 			window.dispatchEvent(
 				new CustomEvent('app:toggle-file-manager', { detail: { tabId: activeTabId } })
 			);
+		});
+
+		// Register file browser shortcuts
+		keyboardShortcutManager.registerWithContext('copyFile', (event, context) => {
+			window.dispatchEvent(new CustomEvent('app:copy-file', { detail: {} }));
+		});
+
+		keyboardShortcutManager.registerWithContext('cutFile', (event, context) => {
+			window.dispatchEvent(new CustomEvent('app:cut-file', { detail: {} }));
+		});
+
+		keyboardShortcutManager.registerWithContext('pasteFile', (event, context) => {
+			window.dispatchEvent(new CustomEvent('app:paste-file', { detail: {} }));
+		});
+
+		keyboardShortcutManager.registerWithContext('selectAllFiles', (event, context) => {
+			window.dispatchEvent(new CustomEvent('app:select-all-files', { detail: {} }));
+		});
+
+		keyboardShortcutManager.registerWithContext('deleteFile', (event, context) => {
+			window.dispatchEvent(new CustomEvent('app:delete-file', { detail: {} }));
+		});
+
+		keyboardShortcutManager.registerWithContext('renameFile', (event, context) => {
+			window.dispatchEvent(new CustomEvent('app:rename-file', { detail: {} }));
+		});
+
+		keyboardShortcutManager.registerWithContext('refreshFileList', (event, context) => {
+			window.dispatchEvent(new CustomEvent('app:refresh-file-list', { detail: {} }));
 		});
 
 		// Global keydown listener

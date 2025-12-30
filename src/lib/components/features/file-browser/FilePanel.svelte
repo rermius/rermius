@@ -30,7 +30,6 @@
 		handleGoToHome,
 		handlePathNavigation
 	} from '$lib/utils/file-browser/navigation-handlers';
-	import { createKeyboardShortcutsHandler } from '$lib/utils/file-browser/keyboard-shortcuts';
 
 	let {
 		// Session info
@@ -428,89 +427,6 @@
 			}
 		}
 	}
-
-	// Keyboard shortcuts handler
-	function handleGlobalKeyDown(e) {
-		// Only handle if no input is focused (including rename input)
-		if (
-			document.activeElement?.tagName === 'INPUT' ||
-			document.activeElement?.tagName === 'TEXTAREA' ||
-			document.activeElement?.contentEditable === 'true'
-		) {
-			return;
-		}
-
-		const selectedFiles = files.filter(f => selectedIds.includes(f.path));
-
-		// Ctrl/Cmd + C: Copy
-		if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-			e.preventDefault();
-			if (selectedFiles.length > 0) {
-				handleFileAction('copy', selectedFiles[0]);
-			}
-			return;
-		}
-
-		// Ctrl/Cmd + X: Cut
-		if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
-			e.preventDefault();
-			if (selectedFiles.length > 0) {
-				handleFileAction('cut', selectedFiles[0]);
-			}
-			return;
-		}
-
-		// Ctrl/Cmd + V: Paste
-		if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-			e.preventDefault();
-			handleFileAction('paste', null);
-			return;
-		}
-
-		// Ctrl/Cmd + A: Select All
-		if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-			e.preventDefault();
-			selectedIds = files.map(f => f.path);
-			return;
-		}
-
-		// F2: Rename - trigger edit mode in FileRow
-		if (e.key === 'F2') {
-			e.preventDefault();
-			if (selectedFiles.length === 1 && selectedFiles[0].path && selectedFiles[0].name !== '..') {
-				// Set fileToRename to trigger edit mode in FileRow
-				fileToRename = selectedFiles[0].path;
-				// Reset after a tick to allow FileRow to react
-				setTimeout(() => {
-					fileToRename = null;
-				}, 0);
-			}
-			return;
-		}
-
-		// F5: Refresh
-		if (e.key === 'F5') {
-			e.preventDefault();
-			handleRefresh();
-			return;
-		}
-
-		// Delete: Delete selected files
-		if (e.key === 'Delete' || e.key === 'Backspace') {
-			if (selectedFiles.length > 0) {
-				e.preventDefault();
-				e.stopPropagation();
-				e.stopImmediatePropagation();
-				handleAction('delete');
-				return;
-			} else {
-				e.preventDefault();
-				e.stopPropagation();
-				return;
-			}
-		}
-	}
-
 	function handleSort(key, order) {
 		sortBy = key;
 		sortOrder = order;
@@ -922,11 +838,89 @@
 		onFileSelect?.(selectedFiles);
 	});
 
-	// Add global keyboard listener
+	// File browser shortcut event listeners
 	$effect(() => {
-		window.addEventListener('keydown', handleGlobalKeyDown);
+		const handleCopyFile = () => {
+			// Only handle if FilePanel is in focus
+			if (!document.activeElement?.closest('.file-panel')) return;
+
+			const selectedFiles = files.filter(f => selectedIds.includes(f.path));
+			if (selectedFiles.length > 0) {
+				handleFileAction('copy', selectedFiles[0]);
+			}
+		};
+
+		const handleCutFile = () => {
+			// Only handle if FilePanel is in focus
+			if (!document.activeElement?.closest('.file-panel')) return;
+
+			const selectedFiles = files.filter(f => selectedIds.includes(f.path));
+			if (selectedFiles.length > 0) {
+				handleFileAction('cut', selectedFiles[0]);
+			}
+		};
+
+		const handlePasteFile = () => {
+			// Only handle if FilePanel is in focus
+			if (!document.activeElement?.closest('.file-panel')) return;
+
+			handleFileAction('paste', null);
+		};
+
+		const handleSelectAllFiles = () => {
+			// Only handle if FilePanel is in focus
+			if (!document.activeElement?.closest('.file-panel')) return;
+
+			selectedIds = files.map(f => f.path);
+		};
+
+		const handleDeleteFile = () => {
+			// Only handle if FilePanel is in focus
+			if (!document.activeElement?.closest('.file-panel')) return;
+
+			handleAction('delete');
+		};
+
+		const handleRenameFile = () => {
+			// Only handle if FilePanel is in focus
+			if (!document.activeElement?.closest('.file-panel')) return;
+
+			const selectedFiles = files.filter(f => selectedIds.includes(f.path));
+			if (selectedFiles.length === 1 && selectedFiles[0].path && selectedFiles[0].name !== '..') {
+				// Set fileToRename to trigger edit mode in FileRow
+				fileToRename = selectedFiles[0].path;
+				// Reset after a tick to allow FileRow to react
+				setTimeout(() => {
+					fileToRename = null;
+				}, 0);
+			}
+		};
+
+		const handleRefreshFileList = () => {
+			// Only handle if FilePanel is in focus
+			if (!document.activeElement?.closest('.file-panel')) return;
+
+			handleRefresh();
+		};
+
+		// Register event listeners
+		window.addEventListener('app:copy-file', handleCopyFile);
+		window.addEventListener('app:cut-file', handleCutFile);
+		window.addEventListener('app:paste-file', handlePasteFile);
+		window.addEventListener('app:select-all-files', handleSelectAllFiles);
+		window.addEventListener('app:delete-file', handleDeleteFile);
+		window.addEventListener('app:rename-file', handleRenameFile);
+		window.addEventListener('app:refresh-file-list', handleRefreshFileList);
+
 		return () => {
-			window.removeEventListener('keydown', handleGlobalKeyDown);
+			// Cleanup
+			window.removeEventListener('app:copy-file', handleCopyFile);
+			window.removeEventListener('app:cut-file', handleCutFile);
+			window.removeEventListener('app:paste-file', handlePasteFile);
+			window.removeEventListener('app:select-all-files', handleSelectAllFiles);
+			window.removeEventListener('app:delete-file', handleDeleteFile);
+			window.removeEventListener('app:rename-file', handleRenameFile);
+			window.removeEventListener('app:refresh-file-list', handleRefreshFileList);
 		};
 	});
 </script>

@@ -27,6 +27,7 @@ import { connectionHeartbeat } from '$lib/services/connection-heartbeat.js';
 import { terminalStore, tabsStore, workspaceStore } from '$lib/stores';
 import { useToast } from './useToast.svelte.js';
 import * as appSettingsService from '$lib/services/app-settings';
+import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
 
 export function useXtermTerminal(config = {}) {
 	const {
@@ -144,6 +145,20 @@ export function useXtermTerminal(config = {}) {
 			// Mount terminal
 			terminal.open(container);
 			fitAddon.fit();
+
+			// Intercept keyboard events for app shortcuts (Ctrl+T, Ctrl+W, etc.)
+			terminal.attachCustomKeyEventHandler((event) => {
+				// Check if this is an app shortcut using dynamic shortcuts from settings
+				const isAppShortcut = keyboardShortcutManager.isAppShortcut(event);
+
+				// If it's an app shortcut, don't send to terminal (let it bubble to global handler)
+				if (isAppShortcut) {
+					return false; // Block terminal from processing, let global handler work
+				}
+
+				// Otherwise, let terminal process the key normally
+				return true;
+			});
 
 			// Setup IME interception for Vietnamese, Chinese, Japanese, etc.
 			setupIMEInterception(container);

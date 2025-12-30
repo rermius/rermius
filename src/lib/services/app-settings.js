@@ -48,10 +48,11 @@ const defaultSettings = {
 		prevTab: 'Ctrl+Shift+Tab',
 		openSettings: 'Ctrl+,',
 		toggleFileManager: 'Ctrl+B',
-		// File browser shortcuts
-		copyFile: 'Ctrl+C',
-		cutFile: 'Ctrl+X',
-		pasteFile: 'Ctrl+V',
+		// File browser shortcuts (use Shift modifier to avoid conflict with text editing)
+		copyFile: 'Ctrl+Shift+C',
+		cutFile: 'Ctrl+Shift+X',
+		pasteFile: 'Ctrl+Shift+V',
+		selectAllFiles: 'Ctrl+Shift+A',
 		deleteFile: 'Delete',
 		renameFile: 'F2',
 		refreshFileList: 'F5'
@@ -112,11 +113,23 @@ export async function loadSettings(workspaceId = null) {
 		const filePath = await getSettingsFilePath(workspaceId);
 		const content = await tauriFs.readFile(filePath);
 		const data = JSON.parse(content);
-		appSettingsStore.set(data);
+
+		// Migration: Merge with defaults if shortcuts are missing or empty
+		if (!data.shortcuts || Object.keys(data.shortcuts).length === 0) {
+			data.shortcuts = { ...defaultSettings.shortcuts };
+			// Save the migrated data
+			appSettingsStore.set(data);
+			await saveSettings(workspaceId);
+		} else {
+			appSettingsStore.set(data);
+		}
+
 		return data;
 	} catch (error) {
 		console.warn('Failed to load app settings, using default:', error);
-		// Initialize with default if file doesn't exist
+		// Initialize store with default settings before saving
+		appSettingsStore.set(defaultSettings);
+		// Save default settings to file
 		await saveSettings(workspaceId);
 		return defaultSettings;
 	}

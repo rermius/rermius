@@ -31,11 +31,49 @@ class KeyboardShortcutManager {
 	}
 
 	/**
+	 * Register a handler that needs context (e.g., file browser actions)
+	 * @param {string} actionName - Name of the action
+	 * @param {Function} handler - Handler that receives (event, context)
+	 */
+	registerWithContext(actionName, handler) {
+		this.activeHandlers.set(actionName, handler);
+	}
+
+	/**
 	 * Unregister a handler for a specific action
 	 * @param {string} actionName - Name of the action
 	 */
 	unregister(actionName) {
 		this.activeHandlers.delete(actionName);
+	}
+
+	/**
+	 * Check if event matches any APP shortcut (not file browser shortcuts)
+	 * @param {KeyboardEvent} event - Keyboard event
+	 * @returns {boolean} True if it's an app shortcut
+	 */
+	isAppShortcut(event) {
+		const key = this.formatKeyCombo(event);
+
+		// App shortcuts (not file browser shortcuts)
+		const appShortcutActions = [
+			'newTerminal',
+			'closeTab',
+			'nextTab',
+			'prevTab',
+			'openSettings',
+			'toggleFileManager'
+		];
+
+		// Check if any app shortcut matches this key combo
+		for (const actionName of appShortcutActions) {
+			const shortcut = this.shortcuts.get(actionName);
+			if (shortcut && this.normalizeShortcut(shortcut) === key) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -46,6 +84,41 @@ class KeyboardShortcutManager {
 	handleKeyDown(event) {
 		const key = this.formatKeyCombo(event);
 
+		// Allow basic editing shortcuts in input/textarea elements
+		const target = event.target;
+		const isEditableElement =
+			target.tagName === 'INPUT' ||
+			target.tagName === 'TEXTAREA' ||
+			target.isContentEditable;
+
+		// Basic editing shortcuts that should always work in editable elements
+		const basicEditingShortcuts = [
+			'Ctrl+C',  // Copy
+			'Ctrl+V',  // Paste
+			'Ctrl+X',  // Cut
+			'Ctrl+A',  // Select All
+			'Ctrl+Z',  // Undo
+			'Ctrl+Y',  // Redo
+			'Ctrl+Shift+Z'  // Redo (alternative)
+		];
+
+		// Always allow basic editing shortcuts in editable elements
+		if (isEditableElement && basicEditingShortcuts.includes(key)) {
+			return false; // Let browser handle it
+		}
+
+		// For non-editable elements, allow basic shortcuts unless explicitly registered
+		if (basicEditingShortcuts.includes(key)) {
+			// Only prevent if we have a registered handler for this specific shortcut
+			const hasRegisteredHandler = Array.from(this.shortcuts.entries()).some(
+				([actionName, shortcut]) =>
+					this.normalizeShortcut(shortcut) === key && this.activeHandlers.has(actionName)
+			);
+			if (!hasRegisteredHandler) {
+				return false; // Let browser handle it
+			}
+		}
+
 		// Find matching action
 		for (const [actionName, shortcut] of this.shortcuts.entries()) {
 			if (this.normalizeShortcut(shortcut) === key) {
@@ -53,7 +126,8 @@ class KeyboardShortcutManager {
 				if (handler) {
 					event.preventDefault();
 					event.stopPropagation();
-					handler(event);
+					// Pass event details for context-aware handlers
+					handler(event, { actionName, originalEvent: event });
 					return true;
 				}
 			}

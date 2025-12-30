@@ -6,6 +6,7 @@
 	import { workspaceStore } from '$lib/stores';
 	import { toastStore } from '$lib/stores/toast.store';
 	import { get } from 'svelte/store';
+	import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
 
 	let shortcuts = $state({
 		newTerminal: '',
@@ -17,6 +18,7 @@
 		copyFile: '',
 		cutFile: '',
 		pasteFile: '',
+		selectAllFiles: '',
 		deleteFile: '',
 		renameFile: '',
 		refreshFileList: ''
@@ -35,6 +37,7 @@
 		copyFile: 'Copy File',
 		cutFile: 'Cut File',
 		pasteFile: 'Paste File',
+		selectAllFiles: 'Select All Files',
 		deleteFile: 'Delete File',
 		renameFile: 'Rename File',
 		refreshFileList: 'Refresh File List'
@@ -49,7 +52,15 @@
 			'openSettings',
 			'toggleFileManager'
 		],
-		'File Browser': ['copyFile', 'cutFile', 'pasteFile', 'deleteFile', 'renameFile', 'refreshFileList']
+		'File Browser': [
+			'copyFile',
+			'cutFile',
+			'pasteFile',
+			'selectAllFiles',
+			'deleteFile',
+			'renameFile',
+			'refreshFileList'
+		]
 	};
 
 	onMount(async () => {
@@ -91,6 +102,8 @@
 			try {
 				const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
 				await appSettingsService.updateShortcuts(workspaceId, { [actionName]: newValue });
+				// Reload shortcuts in keyboard manager
+				await keyboardShortcutManager.init();
 				toastStore.success('Shortcut updated');
 			} catch (error) {
 				console.error('Failed to save shortcut:', error);
@@ -106,7 +119,7 @@
 		try {
 			const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
 
-			// Reset to default shortcuts from app-settings.js
+			// Reset to default shortcuts from app-settings.js (updated to avoid conflicts)
 			const defaultShortcuts = {
 				newTerminal: 'Ctrl+T',
 				closeTab: 'Ctrl+W',
@@ -114,15 +127,18 @@
 				prevTab: 'Ctrl+Shift+Tab',
 				openSettings: 'Ctrl+,',
 				toggleFileManager: 'Ctrl+B',
-				copyFile: 'Ctrl+C',
-				cutFile: 'Ctrl+X',
-				pasteFile: 'Ctrl+V',
+				copyFile: 'Ctrl+Shift+C',
+				cutFile: 'Ctrl+Shift+X',
+				pasteFile: 'Ctrl+Shift+V',
+				selectAllFiles: 'Ctrl+Shift+A',
 				deleteFile: 'Delete',
 				renameFile: 'F2',
 				refreshFileList: 'F5'
 			};
 
 			await appSettingsService.updateShortcuts(workspaceId, defaultShortcuts);
+			// Reload shortcuts in keyboard manager
+			await keyboardShortcutManager.init();
 			shortcuts = defaultShortcuts;
 			errors = {};
 			toastStore.success('Shortcuts reset to defaults');
