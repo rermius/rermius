@@ -1,9 +1,10 @@
 <script>
 	import { Input, Textarea, Button, IconInput } from '$lib/components/ui';
-	import { addGroup, updateGroup, hostsStore } from '$lib/services';
+	import { addGroup, updateGroup } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
+	import { useSaveQueue } from '$lib/composables';
 
-	const { editingGroup = null, onsave } = $props();
+	const { editingGroup = null, onsave, onclose, onmenu } = $props();
 
 	let formData = $state({
 		name: '',
@@ -14,6 +15,56 @@
 
 	let nameError = $state('');
 	let isEditMode = $state(false);
+
+	// NEW: Track created entity to prevent duplicates
+	let createdGroup = $state(null);
+
+	// Computed: effective editing entity (from prop or created)
+	const effectiveEditingGroup = $derived(editingGroup || createdGroup);
+
+	// Setup save queue - Single Save Queue Pattern
+	const saveQueue = useSaveQueue(
+		async (data) => {
+			// Check if we have an entity to update (from prop or created)
+			if (effectiveEditingGroup) {
+				return await updateGroup(effectiveEditingGroup.id, data);
+			} else {
+				return await addGroup(data);
+			}
+		},
+		{
+			onAutoSave: (result) => {
+				// NEW: If this was a create (no editing entity), switch to edit mode
+				if (!effectiveEditingGroup) {
+					createdGroup = result; // Store created entity
+					isEditMode = true; // Switch to edit mode
+					onsave?.(result); // Notify parent about created group
+				}
+			},
+			onManualSave: (result) => {
+				// Manual save success: trigger callback and reset form
+				onsave?.(result);
+
+				// Reset to create mode
+				formData = {
+					name: '',
+					description: '',
+					color: '#4A9FFF',
+					icon: 'server-filled'
+				};
+				nameError = '';
+				createdGroup = null; // Clear created entity
+				isEditMode = false; // Back to create mode
+				saveQueue.reset();
+			},
+			onError: (error) => {
+				console.error('Save failed:', error);
+				if (error.message?.includes('already exists')) {
+					nameError = error.message;
+				}
+			}
+		}
+	);
 
 	// Color options
 	const colorOptions = [
@@ -30,7 +81,9 @@
 	// Load editing group data when editingGroup changes
 	$effect(() => {
 		if (editingGroup) {
+			// User clicked edit existing entity
 			isEditMode = true;
+			createdGroup = null; // Clear any created entity
 			formData = {
 				name: editingGroup.name,
 				description: editingGroup.description || '',
@@ -38,9 +91,11 @@
 				icon: editingGroup.icon || 'server-filled'
 			};
 			nameError = '';
-		} else {
+			saveQueue.reset();
+		} else if (!createdGroup) {
+			// Only reset if no created entity
+			// (don't reset after auto-create)
 			isEditMode = false;
-			// Reset form when switching from edit to add mode
 			formData = {
 				name: '',
 				description: '',
@@ -48,9 +103,19 @@
 				icon: 'server-filled'
 			};
 			nameError = '';
+			saveQueue.reset();
 		}
 	});
 
+	// Auto-save on form changes - Debounced
+	$effect(() => {
+		// Watch formData for changes
+		if (formData.name || formData.description || formData.color !== '#4A9FFF') {
+			saveQueue.save(formData); // Debounced auto-save
+		}
+	});
+
+	// Manual save button - Immediate save (callback handled by onManualSave)
 	async function handleSave() {
 		// Validate name
 		if (!formData.name.trim()) {
@@ -58,36 +123,8 @@
 			return;
 		}
 
-		try {
-			let savedGroup;
-			if (isEditMode) {
-				// Update existing group
-				savedGroup = await updateGroup(editingGroup.id, formData);
-			} else {
-				// Add new group
-				savedGroup = await addGroup(formData);
-			}
-
-			// Call success callback
-			onsave?.(savedGroup);
-
-			// Reset form
-			formData = {
-				name: '',
-				description: '',
-				color: '#4A9FFF',
-				icon: 'server-filled'
-			};
-			nameError = '';
-		} catch (error) {
-			console.error('Failed to save group:', error);
-			// Show error based on type
-			if (error.message.includes('already exists')) {
-				nameError = error.message;
-			} else {
-				console.error('Failed to save group:', error.message);
-			}
-		}
+		// Save immediately - onManualSave callback will handle onsave + reset
+		await saveQueue.save(formData, { immediate: true });
 	}
 
 	function handleNameChange() {
@@ -96,7 +133,16 @@
 	}
 </script>
 
-<PanelLayout title={isEditMode ? 'Edit Group' : 'Group'} {content} {footer} />
+<PanelLayout
+	title={isEditMode ? 'Edit Group' : 'Group'}
+	saveStatus={saveQueue.status}
+	showMenu={!!onmenu}
+	showClose={!!onclose}
+	{onmenu}
+	{onclose}
+	{content}
+	{footer}
+/>
 
 {#snippet content()}
 	<div class="flex flex-col gap-4">

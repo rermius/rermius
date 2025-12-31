@@ -214,7 +214,7 @@
 			<div
 				class="absolute inset-0"
 				style:visibility={activeTab?.type === 'home' ? 'visible' : 'hidden'}
-				style="z-index: {activeTab?.type === 'home' ? 'var(--z-content)' : '0'};"
+				style="z-index: {activeTab?.type === 'home' ? 'var(--z-content)' : '-1'};"
 				style:pointer-events={activeTab?.type === 'home' ? 'auto' : 'none'}
 			>
 				<ScrollArea class="h-full">
@@ -227,7 +227,7 @@
 				<div
 					class="absolute inset-0"
 					style:visibility={terminalTab.id === activeTabId ? 'visible' : 'hidden'}
-					style="z-index: {terminalTab.id === activeTabId ? 'var(--z-content)' : '0'};"
+					style="z-index: {terminalTab.id === activeTabId ? 'var(--z-content)' : '-1'};"
 					style:pointer-events={terminalTab.id === activeTabId ? 'auto' : 'none'}
 				>
 					<RemoteTerminalContainer
@@ -246,7 +246,7 @@
 				<div
 					class="absolute inset-0"
 					style:visibility={fbTab.id === activeTabId ? 'visible' : 'hidden'}
-					style="z-index: {fbTab.id === activeTabId ? 'var(--z-content)' : '0'};"
+					style="z-index: {fbTab.id === activeTabId ? 'var(--z-content)' : '-1'};"
 					style:pointer-events={fbTab.id === activeTabId ? 'auto' : 'none'}
 				>
 					<FileBrowserTabContainer

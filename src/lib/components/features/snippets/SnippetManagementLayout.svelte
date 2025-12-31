@@ -206,7 +206,13 @@
 	{/snippet}
 
 	{#snippet panel()}
-		<SnippetPanel {editingSnippet} onsave={handleSnippetSave} ondelete={handleSnippetDelete} />
+		<SnippetPanel
+			{editingSnippet}
+			onsave={handleSnippetSave}
+			ondelete={handleSnippetDelete}
+			onclose={handleClosePanel}
+			onmenu={handleRemove}
+		/>
 	{/snippet}
 </ContentWithPanel>
 

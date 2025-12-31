@@ -6,10 +6,11 @@
 	import { tauriFs } from '$lib/services/tauri/fs';
 	import { addKey, updateKey, findDuplicateKey } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
+	import { useSaveQueue } from '$lib/composables';
 
 	const dispatch = createEventDispatcher();
 
-	const { editingKey = null } = $props();
+	const { editingKey = null, onclose, onmenu } = $props();
 
 	let formData = $state({
 		label: '',
@@ -24,10 +25,67 @@
 	let keyWarning = $state('');
 	let isEditMode = $state(false);
 
+	// NEW: Track created entity to prevent duplicates
+	let createdKey = $state(null);
+
+	// Computed: effective editing entity (from prop or created)
+	const effectiveEditingKey = $derived(editingKey || createdKey);
+
+	// Setup save queue - Single Save Queue Pattern
+	const saveQueue = useSaveQueue(
+		async (data) => {
+			// Check if we have an entity to update (from prop or created)
+			if (effectiveEditingKey) {
+				return await updateKey(effectiveEditingKey.id, data);
+			} else {
+				return await addKey(data);
+			}
+		},
+		{
+			onAutoSave: (result) => {
+				// NEW: If this was a create (no editing entity), switch to edit mode
+				if (!effectiveEditingKey) {
+					createdKey = result; // Store created entity
+					isEditMode = true; // Switch to edit mode
+					dispatch('import', result); // Notify parent about created key
+				}
+			},
+			onManualSave: (result) => {
+				// Manual save success: dispatch event and reset form
+				dispatch('import', result);
+
+				// Reset to create mode
+				formData = {
+					label: '',
+					privateKey: '',
+					publicKey: '',
+					certificate: '',
+					keyType: '',
+					tags: []
+				};
+				labelError = '';
+				keyWarning = '';
+				createdKey = null; // Clear created entity
+				isEditMode = false; // Back to create mode
+				saveQueue.reset();
+			},
+			onError: (error) => {
+				console.error('Save failed:', error);
+				if (error.message.startsWith('A key with label')) {
+					labelError = error.message;
+				} else if (error.message.startsWith('This key already exists')) {
+					keyWarning = '⚠️ ' + error.message;
+				}
+			}
+		}
+	);
+
 	// Load editing key data when component mounts or editingKey changes
 	$effect(() => {
 		if (editingKey) {
+			// User clicked edit existing entity
 			isEditMode = true;
+			createdKey = null; // Clear any created entity
 			formData = {
 				label: editingKey.label,
 				privateKey: editingKey.privateKey,
@@ -38,9 +96,11 @@
 			};
 			labelError = '';
 			keyWarning = '';
-		} else {
+			saveQueue.reset();
+		} else if (!createdKey) {
+			// Only reset if no created entity
+			// (don't reset after auto-create)
 			isEditMode = false;
-			// Reset form when switching from edit to add mode
 			formData = {
 				label: '',
 				privateKey: '',
@@ -51,6 +111,15 @@
 			};
 			labelError = '';
 			keyWarning = '';
+			saveQueue.reset();
+		}
+	});
+
+	// Auto-save on form changes - Debounced
+	$effect(() => {
+		// Watch formData for changes
+		if (formData.label || formData.privateKey) {
+			saveQueue.save(formData); // Debounced auto-save
 		}
 	});
 
@@ -155,44 +224,8 @@
 			return;
 		}
 
-		try {
-			let savedKey;
-			if (isEditMode) {
-				// Update existing key
-				savedKey = await updateKey(editingKey.id, formData);
-			} else {
-				// Add new key
-				savedKey = await addKey(formData);
-			}
-
-			// Dispatch success event
-			dispatch('import', savedKey);
-
-			// Reset form
-			formData = {
-				label: '',
-				privateKey: '',
-				publicKey: '',
-				certificate: '',
-				keyType: '',
-				tags: []
-			};
-			labelError = '';
-			keyWarning = '';
-		} catch (error) {
-			console.error('Failed to save key:', error);
-			// Show error based on type
-			if (error.message.startsWith('A key with label')) {
-				// Label duplicate error
-				labelError = error.message;
-			} else if (error.message.startsWith('This key already exists')) {
-				// Private key duplicate error
-				keyWarning = '⚠️ ' + error.message;
-			} else {
-				// Other errors
-				console.error('Failed to save key:', error.message);
-			}
-		}
+		// Save immediately - onManualSave callback handles dispatch + reset
+		await saveQueue.save(formData, { immediate: true });
 	}
 
 	function handleDrop(event) {
@@ -241,7 +274,16 @@
 	}
 </script>
 
-<PanelLayout title={isEditMode ? 'Edit Key' : 'Key'} {content} {footer} />
+<PanelLayout
+	title={isEditMode ? 'Edit Key' : 'Key'}
+	saveStatus={saveQueue.status}
+	showMenu={!!onmenu && isEditMode}
+	showClose={!!onclose}
+	{onmenu}
+	{onclose}
+	{content}
+	{footer}
+/>
 
 {#snippet content()}
 	<div class="flex flex-col gap-4">

@@ -3,11 +3,61 @@
 	import { Tag, Terminal } from 'lucide-svelte';
 	import { addSnippet, updateSnippet, snippetsStore } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
+	import { useSaveQueue } from '$lib/composables';
 
-	const { editingSnippet = null, onsave, ondelete } = $props();
+	const { editingSnippet = null, onsave, ondelete, onclose, onmenu } = $props();
 
 	let nameError = $state('');
 	let isEditMode = $state(false);
+
+	// NEW: Track created entity to prevent duplicates
+	let createdSnippet = $state(null);
+
+	// Computed: effective editing entity (from prop or created)
+	const effectiveEditingSnippet = $derived(editingSnippet || createdSnippet);
+
+	// Setup save queue - Single Save Queue Pattern
+	const saveQueue = useSaveQueue(
+		async (data) => {
+			// Check if we have an entity to update (from prop or created)
+			if (effectiveEditingSnippet) {
+				return await updateSnippet(effectiveEditingSnippet.id, data);
+			} else {
+				return await addSnippet(data);
+			}
+		},
+		{
+			onAutoSave: (result) => {
+				// NEW: If this was a create (no editing entity), switch to edit mode
+				if (!effectiveEditingSnippet) {
+					createdSnippet = result; // Store created entity
+					isEditMode = true; // Switch to edit mode
+					onsave?.(result); // Notify parent about created snippet
+				}
+			},
+			onManualSave: (result) => {
+				// Manual save success: trigger callback and reset form
+				onsave?.(result);
+
+				// Reset to create mode
+				formData = {
+					name: '',
+					command: '',
+					labels: []
+				};
+				nameError = '';
+				createdSnippet = null; // Clear created entity
+				isEditMode = false; // Back to create mode
+				saveQueue.reset();
+			},
+			onError: (error) => {
+				console.error('Save failed:', error);
+				if (error.message?.includes('name') && error.message?.includes('already exists')) {
+					nameError = error.message;
+				}
+			}
+		}
+	);
 
 	// Get all tags for autocomplete (reactive)
 	const allTags = $derived.by(() => {
@@ -29,7 +79,9 @@
 	// Load editing snippet data when component mounts or editingSnippet changes
 	$effect(() => {
 		if (editingSnippet) {
+			// User clicked edit existing entity
 			isEditMode = true;
+			createdSnippet = null; // Clear any created entity
 			const data = {
 				name: editingSnippet.name || '',
 				command: editingSnippet.command || '',
@@ -38,16 +90,27 @@
 			formData = { ...data };
 			originalData = { ...data };
 			nameError = '';
-		} else {
+			saveQueue.reset();
+		} else if (!createdSnippet) {
+			// Only reset if no created entity
+			// (don't reset after auto-create)
 			isEditMode = false;
 			originalData = null;
-			// Reset form when switching from edit to add mode
 			formData = {
 				name: '',
 				command: '',
 				labels: []
 			};
 			nameError = '';
+			saveQueue.reset();
+		}
+	});
+
+	// Auto-save on form changes - Debounced
+	$effect(() => {
+		// Watch formData for changes
+		if (formData.name || formData.command) {
+			saveQueue.save(formData); // Debounced auto-save
 		}
 	});
 
@@ -106,34 +169,24 @@
 		nameError = '';
 	}
 
-	async function saveSnippet() {
-		const savedSnippet = isEditMode
-			? await updateSnippet(editingSnippet.id, formData)
-			: await addSnippet(formData);
-
-		onsave?.(savedSnippet);
-
-		return savedSnippet;
-	}
-
 	async function handleSave() {
 		if (!validateForm()) return;
 
-		try {
-			await saveSnippet();
-			resetForm();
-		} catch (error) {
-			console.error('Failed to save snippet:', error);
-			if (error.message?.includes('name') && error.message?.includes('already exists')) {
-				nameError = error.message;
-			} else {
-				console.error('Failed to save snippet:', error.message);
-			}
-		}
+		// Save immediately - onManualSave callback handles onsave + reset
+		await saveQueue.save(formData, { immediate: true });
 	}
 </script>
 
-<PanelLayout title={isEditMode ? 'Edit Snippet' : 'Snippet'} {content} {footer} />
+<PanelLayout
+	title={isEditMode ? 'Edit Snippet' : 'Snippet'}
+	saveStatus={saveQueue.status}
+	showMenu={!!onmenu && isEditMode}
+	showClose={!!onclose}
+	{onmenu}
+	{onclose}
+	{content}
+	{footer}
+/>
 
 {#snippet content()}
 	<div class="flex flex-col gap-4">

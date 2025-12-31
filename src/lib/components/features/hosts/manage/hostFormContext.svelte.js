@@ -29,7 +29,7 @@ import { setContext, getContext } from 'svelte';
 import { get } from 'svelte/store';
 import { addHost, updateHost, hostsStore } from '$lib/services';
 import { hostDraftStore } from '$lib/stores';
-import { handleHostConnect } from '$lib/composables';
+import { handleHostConnect, useSaveQueue } from '$lib/composables';
 import { parseChain, serializeChain, getChainSummary } from '$lib/utils/host-chaining.js';
 
 const HOST_FORM_CTX = Symbol('host-form');
@@ -103,6 +103,73 @@ export function createHostFormContext(options) {
 	let showAdvanced = $state(false);
 	let isHostChainingOpen = $state(false);
 	let localAllTags = $state([]);
+
+	// NEW: Track created entity to prevent duplicates
+	let createdHost = $state(null);
+
+	// Computed: effective editing host (from prop or created)
+	const effectiveEditingHost = $derived(() => {
+		const editingHost = getEditingHost();
+		return editingHost || createdHost;
+	});
+
+	// ========== SAVE QUEUE ==========
+	// Setup save queue - Single Save Queue Pattern
+	const saveQueue = useSaveQueue(
+		async (data) => {
+			const groups = getGroups();
+			const effective = effectiveEditingHost();
+
+			const dataToSave = {
+				...data,
+				groupId: data.groupId || groups[0]?.id || defaultGroupId,
+				proxyJump: serializeChain(hostChainIds)
+			};
+
+			let savedHost;
+			if (effective) {
+				savedHost = await updateHost(effective.id, dataToSave);
+			} else {
+				savedHost = await addHost(dataToSave);
+			}
+
+			hostDraftStore.clear();
+
+			return savedHost;
+		},
+		{
+			onAutoSave: (result) => {
+				console.log('Auto-saved host:', result);
+
+				// NEW: If this was a create (no editing entity), switch to edit mode
+				if (!effectiveEditingHost()) {
+					createdHost = result; // Store created entity
+					isEditMode = true; // Switch to edit mode
+					onsave?.(result); // Notify parent about created host
+					console.log('✅ Auto-switched to edit mode with ID:', result.id);
+				}
+			},
+			onManualSave: (result) => {
+				// Manual save success: trigger callback
+				// Note: For host, we don't reset form (keep in edit mode)
+				onsave?.(result);
+			},
+			onError: (error) => {
+				console.error('Save failed:', error);
+				if (error.message?.includes('label') && error.message?.includes('already exists')) {
+					errors = { ...errors, label: error.message };
+				}
+			}
+		}
+	);
+
+	// Auto-save on form changes - Debounced
+	$effect(() => {
+		// Watch formData for changes (only trigger if there's meaningful content)
+		if (formData.label || formData.hostname) {
+			saveQueue.save(formData); // Debounced auto-save
+		}
+	});
 
 	// ========== DERIVED ==========
 	const connectionTypes = CONNECTION_TYPES;
@@ -258,49 +325,63 @@ export function createHostFormContext(options) {
 		errors = { label: '', hostname: '' };
 		hostChainIds = [];
 		showAdvanced = false;
+		saveQueue.reset();
 	}
 
-	async function saveHost() {
-		const groups = getGroups();
-		const editingHost = getEditingHost();
-
-		const dataToSave = {
-			...formData,
-			groupId: formData.groupId || groups[0]?.id || defaultGroupId,
-			proxyJump: serializeChain(hostChainIds)
-		};
-
-		const savedHost = isEditMode
-			? await updateHost(editingHost.id, dataToSave)
-			: await addHost(dataToSave);
-
-		hostDraftStore.clear();
-		onsave?.(savedHost);
-
-		return savedHost;
-	}
-
+	/**
+	 * Manual save handler
+	 * Validates form, then saves immediately (cancels debounce)
+	 */
 	async function handleSave() {
 		if (!validateForm()) return;
 
-		const editingHost = getEditingHost();
+		// Save immediately (cancel debounce, save now)
+		const result = await saveQueue.save(formData, { immediate: true });
 
-		try {
-			const dataChanged = hasChanges();
-			const hostToConnect = dataChanged ? await saveHost() : editingHost;
-
-			if (autoConnect) {
-				await handleHostConnect(hostToConnect).catch(err =>
-					console.error('Failed to connect:', err)
-				);
-			}
-
+		if (result.success) {
 			resetForm();
+		}
+	}
+
+	/**
+	 * Connect button handler
+	 * Validates → Saves immediately → Connects to host
+	 * Note: Does NOT reset form - keeps in edit mode for reconnection
+	 */
+	async function handleConnect() {
+		// Validate first
+		if (!validateForm()) {
+			return;
+		}
+
+		// Save immediately (cancel debounce, save now)
+		const result = await saveQueue.save(formData, { immediate: true });
+
+		if (!result.success) {
+			return;
+		}
+
+		// Get the host to connect to
+		let hostToConnect;
+		if (result.skipped) {
+			// Data unchanged, use effective editing host
+			hostToConnect = effectiveEditingHost();
+		} else {
+			hostToConnect = result.result;
+		}
+
+		if (!hostToConnect) {
+			console.error('No host to connect to');
+			return;
+		}
+
+		// Connect to the saved host
+		try {
+			await handleHostConnect(hostToConnect);
+			// Don't reset form - keep in edit mode for easy reconnection
+			// User can manually close panel if they want to create new host
 		} catch (error) {
-			console.error('Failed to save host:', error);
-			if (error.message?.includes('label') && error.message?.includes('already exists')) {
-				errors = { ...errors, label: error.message };
-			}
+			console.error('Failed to connect:', error);
 		}
 	}
 
@@ -343,7 +424,9 @@ export function createHostFormContext(options) {
 	// ========== INITIALIZATION ==========
 	function initFromEditingHost(editingHost) {
 		if (editingHost) {
+			// User clicked edit existing entity
 			isEditMode = true;
+			createdHost = null; // Clear any created entity
 			const data = {
 				label: editingHost.label,
 				connectionType: editingHost.connectionType || 'ssh',
@@ -362,7 +445,10 @@ export function createHostFormContext(options) {
 			originalData = { ...data, proxyJump: editingHost.proxyJump };
 			errors = { label: '', hostname: '' };
 			hostChainIds = parseChain(editingHost.proxyJump);
-		} else {
+			saveQueue.reset();
+		} else if (!createdHost) {
+			// Only reset if no created entity
+			// (don't reset after auto-create)
 			isEditMode = false;
 			originalData = null;
 			// Use draft from store
@@ -373,6 +459,7 @@ export function createHostFormContext(options) {
 			};
 			errors = { label: '', hostname: '' };
 			hostChainIds = [];
+			saveQueue.reset();
 		}
 	}
 
@@ -411,6 +498,9 @@ export function createHostFormContext(options) {
 		get localAllTags() {
 			return localAllTags;
 		},
+
+		// Save queue
+		saveQueue,
 
 		// Static data
 		connectionTypes,
@@ -453,6 +543,7 @@ export function createHostFormContext(options) {
 		validateForm,
 		resetForm,
 		handleSave,
+		handleConnect,
 
 		// Initialization
 		initFromEditingHost,

@@ -280,7 +280,12 @@
 	{/snippet}
 
 	{#snippet panel()}
-		<KeyPanel {editingKey} on:import={handleKeyImport} />
+		<KeyPanel
+			{editingKey}
+			onclose={handleClosePanel}
+			onmenu={handleRemove}
+			on:import={handleKeyImport}
+		/>
 	{/snippet}
 </ContentWithPanel>
 

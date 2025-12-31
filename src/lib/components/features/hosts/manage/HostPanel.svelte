@@ -9,6 +9,7 @@
 	import { createHostFormContext } from './hostFormContext.svelte.js';
 
 	const props = $props();
+	const { onclose, onmenu } = props;
 
 	// Reactive derived values from store
 	const groups = $derived($hostsStore.groups || []);
@@ -45,7 +46,16 @@
 </script>
 
 <div class="relative h-full">
-	<PanelLayout title={ctx.isEditMode ? 'Edit Host' : 'Host'} {content} {footer} />
+	<PanelLayout
+		title={ctx.isEditMode ? 'Edit Host' : 'Host'}
+		saveStatus={ctx.saveQueue.status}
+		showMenu={!!onmenu}
+		showClose={!!onclose}
+		{onmenu}
+		{onclose}
+		{content}
+		{footer}
+	/>
 
 	<HostChainingPanel
 		open={ctx.isHostChainingOpen}

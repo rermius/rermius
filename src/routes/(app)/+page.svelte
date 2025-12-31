@@ -131,8 +131,12 @@
 		goto(`/group/${group.id}`);
 	}
 
-	function handleHostSave(event) {
-		closePanel();
+	function handleHostSave(savedHost) {
+		// Update editingHost to the saved host (for auto-save tracking)
+		// Don't close panel - keep it open in edit mode
+		if (savedHost) {
+			openEditHost(savedHost);
+		}
 	}
 
 	function handleGroupSave(event) {

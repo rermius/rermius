@@ -183,9 +183,15 @@
 
 	{#snippet panel()}
 		{#if panelType === 'host'}
-			<HostPanel {editingHost} {defaultGroupId} onsave={handleHostSave} />
+			<HostPanel
+				{editingHost}
+				{defaultGroupId}
+				onsave={handleHostSave}
+				onclose={handleClosePanel}
+				onmenu={handleRemove}
+			/>
 		{:else if panelType === 'group'}
-			<GroupPanel {editingGroup} onsave={handleGroupSave} />
+			<GroupPanel {editingGroup} onsave={handleGroupSave} onclose={handleClosePanel} onmenu={handleRemove} />
 		{/if}
 	{/snippet}
 </ContentWithPanel>

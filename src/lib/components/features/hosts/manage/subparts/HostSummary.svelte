@@ -9,6 +9,7 @@
 	const formData = $derived(ctx.formData);
 	const errors = $derived(ctx.errors);
 
+	// Disable if form invalid OR saving
 	const isDisabled = $derived(
 		!formData.label.trim() ||
 			!formData.hostname.trim() ||
@@ -20,14 +21,11 @@
 			(ctx.supportsSshKey(formData.connectionType) &&
 				formData.authMethod === 'password' &&
 				!formData.password.trim()) ||
-			(!ctx.supportsSshKey(formData.connectionType) && !formData.password.trim())
+			(!ctx.supportsSshKey(formData.connectionType) && !formData.password.trim()) ||
+			ctx.saveQueue.isSaving
 	);
 </script>
 
-<Button variant="success" fullWidth onclick={ctx.handleSave} disabled={isDisabled}>
-	{#if ctx.isEditMode}
-		{ctx.hasChanges() ? 'Save & Connect' : 'Connect'}
-	{:else}
-		Connect
-	{/if}
+<Button variant="success" fullWidth onclick={ctx.handleConnect} disabled={isDisabled}>
+	Connect
 </Button>
