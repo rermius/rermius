@@ -89,7 +89,7 @@
 {#if open}
 	<div class="absolute inset-0 z-20 flex justify-end pointer-events-none">
 		<div
-			class="h-full bg-(--color-bg-tertiary) shadow-xl border-l border-border w-[300px] pointer-events-auto"
+			class="h-full bg-(--color-bg-tertiary) shadow-xl border-l border-border w-[350px] pointer-events-auto"
 			transition:slide={{ duration: 220, easing: quintOut, axis: 'x' }}
 		>
 			<PanelLayout {header} {content} {footer} />
