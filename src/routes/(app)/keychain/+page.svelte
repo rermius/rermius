@@ -2,11 +2,11 @@
 	import { ContentWithPanel } from '$lib/components/layout';
 	import { ItemCard } from '$lib/components/ui/Card';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
-	import { Button, SearchInput, TagFilterIcon, SortIcon, ScrollArea } from '$lib/components/ui';
+	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon, ScrollArea } from '$lib/components/ui';
 	import { KeyPanel, KeyScanModal } from '$lib/components/features/keychain';
 	import { keychainStore, deleteKey } from '$lib/services';
 	import { panelStore } from '$lib/stores';
-	import { FolderOpen, LayoutGrid, List } from 'lucide-svelte';
+	import { FolderOpen } from 'lucide-svelte';
 	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
 
 	let editingKey = $state(null);
@@ -150,8 +150,6 @@
 	// Layout mode for key list (grid/list), own setting
 	let layoutMode = $state(getUiSettings().keychainLayoutMode || 'grid');
 	let sortMode = $state(getUiSettings().keychainSortMode || 'newest');
-	let isLayoutMenuOpen = $state(false);
-	let layoutMenuEl;
 
 	// Save sort mode when changed
 	$effect(() => {
@@ -160,28 +158,13 @@
 		);
 	});
 
-	function handleLayoutButtonClick() {
-		isLayoutMenuOpen = !isLayoutMenuOpen;
-	}
-
-	async function handleSelectLayout(mode) {
-		layoutMode = mode;
-		isLayoutMenuOpen = false;
-		try {
-			await updateUiSettings({ keychainLayoutMode: mode });
-		} catch (e) {
-			console.warn('Failed to update home layout mode:', e);
-		}
-	}
-
-	function handleLayoutClickOutside(event) {
-		if (isLayoutMenuOpen && layoutMenuEl && !layoutMenuEl.contains(event.target)) {
-			isLayoutMenuOpen = false;
-		}
-	}
+	// Save layout mode when changed
+	$effect(() => {
+		updateUiSettings({ keychainLayoutMode: layoutMode }).catch(e =>
+			console.warn('Failed to save layout mode:', e)
+		);
+	});
 </script>
-
-<svelte:window onclick={handleLayoutClickOutside} />
 
 <ContentWithPanel showPanel={showNewKeyPanel} onclose={handleClosePanel} onremove={handleRemove}>
 	{#snippet content()}
@@ -199,45 +182,7 @@
 					</Button>
 
 					<div class="flex items-center gap-2">
-						<!-- Layout toggle icon (grid/list) - same row with tag filter, same behavior as hosts/snippets -->
-						<div class="relative" bind:this={layoutMenuEl}>
-							<button
-								type="button"
-								onclick={handleLayoutButtonClick}
-								class="p-2 rounded-lg transition-colors border border-transparent hover:border-tab-active-text bg-bg-secondary hover:bg-bg-hover text-text-primary hover:text-tab-active-text flex items-center justify-center gap-1.5"
-								title="Switch layout"
-							>
-								{#if layoutMode === 'grid'}
-									<LayoutGrid size={16} />
-								{:else}
-									<List size={16} />
-								{/if}
-							</button>
-
-							{#if isLayoutMenuOpen}
-								<div
-									class="absolute right-0 top-full mt-2 z-50 w-40 bg-bg-secondary border border-border rounded-lg shadow-xl py-1"
-								>
-									<button
-										type="button"
-										onclick={() => handleSelectLayout('grid')}
-										class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-hover text-text-secondary"
-									>
-										<LayoutGrid size={14} class="text-text-secondary" />
-										<span>Grid view</span>
-									</button>
-									<button
-										type="button"
-										onclick={() => handleSelectLayout('list')}
-										class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-hover text-text-secondary"
-									>
-										<List size={14} class="text-text-secondary" />
-										<span>List view</span>
-									</button>
-								</div>
-							{/if}
-						</div>
-
+						<LayoutIcon bind:layoutMode />
 						<SortIcon bind:sortMode />
 						<TagFilterIcon {allTags} bind:selectedTags />
 					</div>

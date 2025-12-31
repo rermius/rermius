@@ -56,6 +56,9 @@ export * from './TagFilterIcon/index.js';
 // SortIcon component
 export * from './SortIcon/index.js';
 
+// LayoutIcon component
+export * from './LayoutIcon/index.js';
+
 // ScanListHeader component
 export * from './ScanListHeader/index.js';
 
