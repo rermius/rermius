@@ -27,8 +27,7 @@
 
 import { setContext, getContext } from 'svelte';
 import { get } from 'svelte/store';
-import { debounce } from '$lib/utils';
-import { addHost, updateHost, isHostLabelDuplicate, hostsStore } from '$lib/services';
+import { addHost, updateHost, hostsStore } from '$lib/services';
 import { hostDraftStore } from '$lib/stores';
 import { handleHostConnect } from '$lib/composables';
 import { parseChain, serializeChain, getChainSummary } from '$lib/utils/host-chaining.js';
@@ -122,27 +121,10 @@ export function createHostFormContext(options) {
 		formData = { ...formData, [key]: value };
 	}
 
-	// Debounced label duplicate check
-	const debouncedLabelCheck = debounce((trimmedLabel, excludeId) => {
-		if (isHostLabelDuplicate(trimmedLabel, excludeId)) {
-			errors = { ...errors, label: 'This label already exists' };
-		} else {
-			errors = { ...errors, label: '' };
-		}
-	}, 300);
-
 	function handleLabelChange(value) {
 		updateField('label', value ?? '');
-		const trimmedLabel = typeof value === 'string' ? value.trim() : value;
-
-		if (!trimmedLabel) {
-			errors = { ...errors, label: '' };
-			return;
-		}
-
-		const editingHost = getEditingHost();
-		const excludeId = isEditMode ? editingHost?.id : null;
-		debouncedLabelCheck(trimmedLabel, excludeId);
+		// Clear any existing error when label changes
+		errors = { ...errors, label: '' };
 	}
 
 	function handleHostnameChange(value) {

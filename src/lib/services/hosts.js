@@ -134,11 +134,6 @@ export async function addHost(hostData) {
 	const data = get(hostsStore);
 	const settings = data.settings;
 
-	// Check for duplicate label
-	if (isHostLabelDuplicate(hostData.label)) {
-		throw new Error(`A host with label "${hostData.label}" already exists`);
-	}
-
 	const newHost = {
 		id: crypto.randomUUID(),
 		label: hostData.label,
@@ -211,13 +206,6 @@ export async function updateHost(hostId, updates) {
 
 	if (hostIndex === -1) {
 		throw new Error('Host not found');
-	}
-
-	// Check for duplicate label if label is being updated
-	if (updates.label && updates.label !== data.hosts[hostIndex].label) {
-		if (isHostLabelDuplicate(updates.label, hostId)) {
-			throw new Error(`A host with label "${updates.label}" already exists`);
-		}
 	}
 
 	const updatedHost = {
@@ -323,11 +311,6 @@ export function getGroups() {
 export async function addGroup(groupData) {
 	const data = get(hostsStore);
 
-	// Check for duplicate name
-	if (isGroupNameDuplicate(groupData.name)) {
-		throw new Error(`A group with name "${groupData.name}" already exists`);
-	}
-
 	const newGroup = {
 		id: crypto.randomUUID(),
 		name: groupData.name,
@@ -354,13 +337,6 @@ export async function updateGroup(groupId, updates) {
 
 	if (groupIndex === -1) {
 		throw new Error('Group not found');
-	}
-
-	// Check for duplicate name if name is being updated
-	if (updates.name && updates.name !== data.groups[groupIndex].name) {
-		if (isGroupNameDuplicate(updates.name, groupId)) {
-			throw new Error(`A group with name "${updates.name}" already exists`);
-		}
 	}
 
 	data.groups[groupIndex] = {

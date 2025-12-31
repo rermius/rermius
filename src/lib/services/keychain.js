@@ -282,12 +282,7 @@ export async function importKeyFromFile(filePath, options = {}) {
 export async function addKey(keyData) {
 	const keychain = get(keychainStore);
 
-	// Check for duplicate label
-	if (isLabelDuplicate(keyData.label)) {
-		throw new Error(`A key with label "${keyData.label}" already exists`);
-	}
-
-	// Check for duplicate key
+	// Check for duplicate key (by fingerprint)
 	if (isKeyDuplicate(keyData.privateKey, keyData.publicKey)) {
 		const duplicate = findDuplicateKey(keyData.privateKey, keyData.publicKey);
 		throw new Error(`This key already exists with label "${duplicate.label}"`);

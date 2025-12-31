@@ -1,6 +1,6 @@
 <script>
 	import { Input, Textarea, Button, IconInput } from '$lib/components/ui';
-	import { addGroup, updateGroup, isGroupNameDuplicate, hostsStore } from '$lib/services';
+	import { addGroup, updateGroup, hostsStore } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
 
 	const { editingGroup = null, onsave } = $props();
@@ -91,20 +91,8 @@
 	}
 
 	function handleNameChange() {
-		const trimmedName = formData.name.trim();
-
-		if (!trimmedName) {
-			nameError = '';
-			return;
-		}
-
-		// Check for duplicate name (exclude current group if editing)
-		const excludeId = isEditMode ? editingGroup.id : null;
-		if (isGroupNameDuplicate(trimmedName, excludeId)) {
-			nameError = 'This group name already exists';
-		} else {
-			nameError = '';
-		}
+		// Clear any existing error when name changes
+		nameError = '';
 	}
 </script>
 

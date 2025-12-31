@@ -4,8 +4,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { tauriDialog } from '$lib/services/tauri/dialog';
 	import { tauriFs } from '$lib/services/tauri/fs';
-	import { addKey, updateKey, isLabelDuplicate, findDuplicateKey } from '$lib/services';
-	import { debounce } from '$lib/utils';
+	import { addKey, updateKey, findDuplicateKey } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
 
 	const dispatch = createEventDispatcher();
@@ -210,26 +209,9 @@
 		event.preventDefault();
 	}
 
-	// Create debounced validation handler for label
-	const debouncedLabelCheck = debounce((trimmedLabel, excludeId) => {
-		if (isLabelDuplicate(trimmedLabel, excludeId)) {
-			labelError = 'This label already exists';
-		} else {
-			labelError = '';
-		}
-	}, 300);
-
-	function handleLabelChange(event) {
-		const value = event?.target?.value ?? formData.label;
-		const trimmedLabel = typeof value === 'string' ? value.trim() : value;
-
-		if (!trimmedLabel) {
-			labelError = '';
-			return;
-		}
-
-		const excludeId = isEditMode ? editingKey?.id : null;
-		debouncedLabelCheck(trimmedLabel, excludeId);
+	function handleLabelChange() {
+		// Clear any existing error when label changes
+		labelError = '';
 	}
 
 	/**

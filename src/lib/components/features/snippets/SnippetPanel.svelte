@@ -1,8 +1,7 @@
 <script>
 	import { Input, Textarea, Button, IconInput, TagInput } from '$lib/components/ui';
 	import { Tag, Terminal } from 'lucide-svelte';
-	import { addSnippet, updateSnippet, isSnippetNameDuplicate, snippetsStore } from '$lib/services';
-	import { debounce } from '$lib/utils';
+	import { addSnippet, updateSnippet, snippetsStore } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
 
 	const { editingSnippet = null, onsave, ondelete } = $props();
@@ -66,31 +65,17 @@
 		);
 	});
 
-	// Create debounced validation handler for name
-	const debouncedNameCheck = debounce((trimmedName, excludeId) => {
-		if (isSnippetNameDuplicate(trimmedName, excludeId)) {
-			nameError = 'This name already exists';
-		} else {
-			nameError = '';
-		}
-	}, 300);
-
 	function handleNameChange(event) {
 		const value = event?.target?.value ?? formData.name;
 		const trimmedName = typeof value === 'string' ? value.trim() : value;
 
-		if (!trimmedName) {
-			nameError = '';
-			return;
-		}
+		// Clear error first
+		nameError = '';
 
-		if (trimmedName.length > 60) {
+		// Keep length validation only
+		if (trimmedName && trimmedName.length > 60) {
 			nameError = 'Name must be 60 characters or less';
-			return;
 		}
-
-		const excludeId = isEditMode ? editingSnippet?.id : null;
-		debouncedNameCheck(trimmedName, excludeId);
 	}
 
 	function validateForm() {

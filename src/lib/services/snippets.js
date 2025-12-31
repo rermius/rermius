@@ -114,11 +114,6 @@ export function isSnippetNameDuplicate(name, excludeSnippetId = null) {
 export async function addSnippet(snippetData) {
 	const data = get(snippetsStore);
 
-	// Check for duplicate name
-	if (isSnippetNameDuplicate(snippetData.name)) {
-		throw new Error(`A snippet with name "${snippetData.name}" already exists`);
-	}
-
 	const newSnippet = {
 		id: crypto.randomUUID(),
 		name: snippetData.name,
@@ -152,13 +147,6 @@ export async function updateSnippet(snippetId, updates) {
 
 	if (snippetIndex === -1) {
 		throw new Error('Snippet not found');
-	}
-
-	// Check for duplicate name if name is being updated
-	if (updates.name && updates.name !== data.snippets[snippetIndex].name) {
-		if (isSnippetNameDuplicate(updates.name, snippetId)) {
-			throw new Error(`A snippet with name "${updates.name}" already exists`);
-		}
 	}
 
 	const updatedSnippet = {
