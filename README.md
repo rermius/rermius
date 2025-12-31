@@ -38,7 +38,24 @@ A powerful desktop application combining full-featured terminal emulation with a
 
 ## Download
 
-- [GitHub Releases](https://github.com/rermius/rermius/releases)
+Get the latest version of Rermius:
+
+- **🌐 [Download Page](https://rermius.github.io/page/#download)** - Installation guides for Windows, macOS, and Linux
+- **📦 [GitHub Releases](https://github.com/rermius/rermius/releases)** - Direct download links
+
+### Quick Install
+
+**macOS (Homebrew):**
+```bash
+brew tap rermius/rermius-homebrew
+brew install --cask rermius
+```
+
+**Windows:** Download and run the `.exe` installer from [releases](https://github.com/rermius/rermius/releases)
+
+**Linux:** Download `.AppImage`, `.deb`, or `.rpm` from [releases](https://github.com/rermius/rermius/releases)
+
+> ⚠️ **Note**: The app is currently unsigned. See the [download page](https://rermius.github.io/page/#download) for platform-specific instructions to bypass security warnings.
 
 ## Install
 
