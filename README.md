@@ -6,6 +6,10 @@
     <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge&color=34d399&labelColor=111827" alt="License">
 </div>
 
+<div align="center">
+    <img src="static/rermius.gif" alt="Rermius Demo" width="800">
+</div>
+
 ---
 
 Open-sourced SSH/SFTP/FTP terminal management application built with Tauri 2 + SvelteKit 5 (Linux, macOS, Windows).
