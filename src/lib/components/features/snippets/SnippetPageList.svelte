@@ -9,6 +9,7 @@
 		onadd,
 		onedit,
 		onremove,
+		oncontextmenu,
 		layoutMode = 'grid',
 		sortMode = 'newest'
 	} = $props();
@@ -85,6 +86,7 @@
 				variant={layoutMode === 'list' ? 'list' : 'card'}
 				isActive={editingSnippet?.id === snippet.id}
 				onedit={() => onedit(snippet)}
+				oncontextmenu={(pos) => oncontextmenu?.(snippet, pos)}
 			>
 				<!-- Tags display -->
 				{#if snippet.labels && snippet.labels.length > 0}

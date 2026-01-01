@@ -187,6 +187,40 @@ export async function deleteSnippet(snippetId) {
 }
 
 /**
+ * Duplicate a snippet with unique name
+ */
+export async function duplicateSnippet(snippetId) {
+	const snippet = getSnippetById(snippetId);
+	if (!snippet) {
+		throw new Error('Snippet not found');
+	}
+
+	// Generate unique name
+	let copyNumber = 1;
+	let newName = `${snippet.name} (copy)`;
+	while (isSnippetNameDuplicate(newName)) {
+		copyNumber++;
+		newName = `${snippet.name} (copy ${copyNumber})`;
+	}
+
+	// Create duplicate
+	const duplicateData = {
+		...snippet,
+		name: newName,
+		clickCount: 0,
+		metadata: {
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString()
+		}
+	};
+
+	// Remove ID so addSnippet generates new one
+	delete duplicateData.id;
+
+	return await addSnippet(duplicateData);
+}
+
+/**
  * Get all snippets
  */
 export function getSnippets() {

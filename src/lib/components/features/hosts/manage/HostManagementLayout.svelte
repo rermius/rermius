@@ -1,13 +1,15 @@
 <script>
 	import { ItemCard } from '$lib/components/ui/Card';
-	import { ScrollArea } from '$lib/components/ui';
-	import { LayoutGrid, List } from 'lucide-svelte';
+	import { ScrollArea, ContextMenu } from '$lib/components/ui';
+	import { Zap, Plug, Terminal, File, Pencil, Copy, Trash2 } from 'lucide-svelte';
 	import { ContentWithPanel } from '$lib/components/layout';
 	import { HostPanel, GroupPanel } from '$lib/components/features/hosts';
 	import { handleHostConnect } from '$lib/composables';
 	import { get } from 'svelte/store';
 	import { tabsStore } from '$lib/stores';
 	import { connectFileTransfer } from '$lib/services/file-connection';
+	import { duplicateHost } from '$lib/services/hosts';
+	import { useToast } from '$lib/composables';
 
 	// Props
 	const {
@@ -30,6 +32,67 @@
 		onconfirmRemove,
 		layoutMode = 'grid'
 	} = $props();
+
+	// Toast notifications
+	const toast = useToast();
+
+	// Context menu state
+	let contextMenuOpen = $state(false);
+	let contextMenuPosition = $state({ x: 0, y: 0 });
+	let contextMenuTarget = $state(null);
+
+	// Context menu items configuration
+	function getHostMenuItems(host) {
+		return [
+			{
+				id: 'quick-connect',
+				label: 'Quick Connect',
+				icon: Zap,
+				action: 'quick-connect'
+			},
+			{
+				id: 'connect',
+				label: 'Connect',
+				icon: Plug,
+				submenu: [
+					{
+						id: 'connect-ssh',
+						label: 'SSH Terminal',
+						icon: Terminal,
+						action: 'connect-ssh'
+					},
+					{
+						id: 'connect-sftp',
+						label: 'SFTP Browser',
+						icon: File,
+						action: 'connect-sftp',
+						visible: host.connectionType === 'ssh' || !host.connectionType
+					}
+				]
+			},
+			{ id: 'divider-1', divider: true },
+			{
+				id: 'edit',
+				label: 'Edit',
+				icon: Pencil,
+				action: 'edit'
+			},
+			{
+				id: 'duplicate',
+				label: 'Duplicate',
+				icon: Copy,
+				action: 'duplicate'
+			},
+			{ id: 'divider-2', divider: true },
+			{
+				id: 'remove',
+				label: 'Remove',
+				icon: Trash2,
+				action: 'remove',
+				variant: 'danger'
+			}
+		];
+	}
 
 	// Event handlers
 	function handleAddHost() {
@@ -117,6 +180,48 @@
 			alert(`Failed to open SFTP: ${error.message}`);
 		}
 	}
+
+	function handleHostContextMenu(host, { x, y }) {
+		contextMenuTarget = host;
+		contextMenuPosition = { x, y };
+		contextMenuOpen = true;
+	}
+
+	async function handleContextMenuAction(item) {
+		const host = contextMenuTarget;
+		if (!host) return;
+
+		switch (item.action) {
+			case 'quick-connect':
+			case 'connect-ssh':
+				await handleHostConnect(host);
+				break;
+			case 'connect-sftp':
+				await handleSftpClick(host);
+				break;
+			case 'edit':
+				handleEditHost(host);
+				break;
+			case 'duplicate':
+				try {
+					const newHost = await duplicateHost(host.id);
+					toast.success(`Host "${newHost.label}" created`);
+				} catch (error) {
+					console.error('Failed to duplicate host:', error);
+					toast.error('Failed to duplicate host');
+				}
+				break;
+			case 'remove':
+				handleEditHost(host); // Open panel for the host first
+				handleRemove(); // Then trigger remove
+				break;
+		}
+	}
+
+	function handleCloseContextMenu() {
+		contextMenuOpen = false;
+		contextMenuTarget = null;
+	}
 </script>
 
 <ContentWithPanel
@@ -171,6 +276,7 @@
 										onedit={() => handleEditHost(host)}
 										ondoubleclick={() => handleHostConnect(host)}
 										onsftpclick={() => handleSftpClick(host)}
+										oncontextmenu={(pos) => handleHostContextMenu(host, pos)}
 									/>
 								</div>
 							{/each}
@@ -195,3 +301,14 @@
 		{/if}
 	{/snippet}
 </ContentWithPanel>
+
+<!-- Context Menu -->
+{#if contextMenuTarget}
+	<ContextMenu
+		open={contextMenuOpen}
+		position={contextMenuPosition}
+		items={getHostMenuItems(contextMenuTarget)}
+		onSelect={handleContextMenuAction}
+		onClose={handleCloseContextMenu}
+	/>
+{/if}

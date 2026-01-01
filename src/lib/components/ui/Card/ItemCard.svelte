@@ -14,7 +14,8 @@
 		onclick,
 		ondoubleclick,
 		onedit,
-		onsftpclick
+		onsftpclick,
+		oncontextmenu
 	} = $props();
 
 	// Get icon component based on icon prop (connectionType)
@@ -60,6 +61,12 @@
 			handleSftpClick(event);
 		}
 	}
+
+	function handleContextMenu(event) {
+		event.preventDefault();
+		event.stopPropagation();
+		oncontextmenu?.({ x: event.clientX, y: event.clientY });
+	}
 </script>
 
 <div
@@ -68,6 +75,7 @@
 	onclick={handleClick}
 	ondblclick={handleDoubleClick}
 	onkeydown={handleKeydown}
+	oncontextmenu={handleContextMenu}
 	class="group flex items-center gap-2.5 rounded-xl transition-colors {variant === 'list'
 		? 'w-full h-14 px-4'
 		: 'w-70 h-12 px-3'} {isAddNew

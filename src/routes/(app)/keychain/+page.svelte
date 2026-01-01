@@ -2,12 +2,15 @@
 	import { ContentWithPanel } from '$lib/components/layout';
 	import { ItemCard } from '$lib/components/ui/Card';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
-	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon, ScrollArea } from '$lib/components/ui';
+	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon, ScrollArea, ContextMenu } from '$lib/components/ui';
 	import { KeyPanel, KeyScanModal } from '$lib/components/features/keychain';
-	import { keychainStore, deleteKey } from '$lib/services';
+	import { keychainStore, deleteKey, exportKey } from '$lib/services';
 	import { panelStore } from '$lib/stores';
-	import { FolderOpen } from 'lucide-svelte';
+	import { FolderOpen, Pencil, Download, Trash2 } from 'lucide-svelte';
 	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
+	import { useToast } from '$lib/composables';
+
+	const toast = useToast();
 
 	let editingKey = $state(null);
 	let showRemoveModal = $state(false);
@@ -151,6 +154,35 @@
 	let layoutMode = $state(getUiSettings().keychainLayoutMode || 'grid');
 	let sortMode = $state(getUiSettings().keychainSortMode || 'newest');
 
+	// Context menu state
+	let contextMenuOpen = $state(false);
+	let contextMenuPosition = $state({ x: 0, y: 0 });
+	let contextMenuTarget = $state(null);
+
+	// Context menu items configuration
+	const keychainMenuItems = [
+		{
+			id: 'edit',
+			label: 'Edit',
+			icon: Pencil,
+			action: 'edit'
+		},
+		{
+			id: 'export',
+			label: 'Export',
+			icon: Download,
+			action: 'export'
+		},
+		{ id: 'divider-1', divider: true },
+		{
+			id: 'remove',
+			label: 'Remove',
+			icon: Trash2,
+			action: 'remove',
+			variant: 'danger'
+		}
+	];
+
 	// Save sort mode when changed
 	$effect(() => {
 		updateUiSettings({ keychainSortMode: sortMode }).catch(e =>
@@ -164,6 +196,43 @@
 			console.warn('Failed to save layout mode:', e)
 		);
 	});
+
+	function handleKeyContextMenu(key, { x, y }) {
+		contextMenuTarget = key;
+		contextMenuPosition = { x, y };
+		contextMenuOpen = true;
+	}
+
+	async function handleContextMenuAction(item) {
+		const key = contextMenuTarget;
+		if (!key) return;
+
+		switch (item.action) {
+			case 'edit':
+				handleEditKey(key);
+				break;
+			case 'export':
+				try {
+					const success = await exportKey(key.id);
+					if (success) {
+						toast.success(`Key "${key.label}" exported successfully`);
+					}
+				} catch (error) {
+					console.error('Failed to export key:', error);
+					toast.error('Failed to export key');
+				}
+				break;
+			case 'remove':
+				handleEditKey(key); // Open panel for the key first
+				handleRemove(); // Then trigger remove
+				break;
+		}
+	}
+
+	function handleCloseContextMenu() {
+		contextMenuOpen = false;
+		contextMenuTarget = null;
+	}
 </script>
 
 <ContentWithPanel showPanel={showNewKeyPanel} onclose={handleClosePanel} onremove={handleRemove}>
@@ -215,6 +284,7 @@
 									variant={layoutMode === 'list' ? 'list' : 'card'}
 									isActive={editingKey?.id === key.id}
 									onedit={() => handleEditKey(key)}
+									oncontextmenu={(pos) => handleKeyContextMenu(key, pos)}
 								/>
 							</div>
 						{/each}
@@ -253,3 +323,14 @@
 
 <!-- Scan Folder Modal -->
 <KeyScanModal bind:open={showScanModal} onImportComplete={handleImportComplete} />
+
+<!-- Context Menu -->
+{#if contextMenuTarget}
+	<ContextMenu
+		open={contextMenuOpen}
+		position={contextMenuPosition}
+		items={keychainMenuItems}
+		onSelect={handleContextMenuAction}
+		onClose={handleCloseContextMenu}
+	/>
+{/if}

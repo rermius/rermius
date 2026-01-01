@@ -15,6 +15,9 @@ export * from './Textarea/index.js';
 // Modal components
 export * from './Modal/index.js';
 
+// ContextMenu components
+export * from './ContextMenu/index.js';
+
 // Card components
 export * from './Card/index.js';
 

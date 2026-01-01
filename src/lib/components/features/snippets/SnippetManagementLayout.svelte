@@ -2,11 +2,12 @@
 	import { ContentWithPanel } from '$lib/components/layout';
 	import SnippetPanel from './SnippetPanel.svelte';
 	import SnippetPageList from './SnippetPageList.svelte';
-	import { deleteSnippet, snippetsStore } from '$lib/services';
+	import { deleteSnippet, duplicateSnippet, snippetsStore } from '$lib/services';
 	import { useToast } from '$lib/composables';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
-	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon, ScrollArea } from '$lib/components/ui';
+	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon, ScrollArea, ContextMenu } from '$lib/components/ui';
 	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
+	import { Play, ClipboardCopy, Pencil, Copy, Trash2 } from 'lucide-svelte';
 
 	const toast = useToast();
 
@@ -30,6 +31,48 @@
 
 	// Layout mode for snippet list (grid/list), own setting
 	let layoutMode = $state(getUiSettings().snippetsLayoutMode || 'grid');
+
+	// Context menu state
+	let contextMenuOpen = $state(false);
+	let contextMenuPosition = $state({ x: 0, y: 0 });
+	let contextMenuTarget = $state(null);
+
+	// Context menu items configuration
+	const snippetMenuItems = [
+		{
+			id: 'run',
+			label: 'Run',
+			icon: Play,
+			action: 'run'
+		},
+		{
+			id: 'paste',
+			label: 'Paste',
+			icon: ClipboardCopy,
+			action: 'paste'
+		},
+		{ id: 'divider-1', divider: true },
+		{
+			id: 'edit',
+			label: 'Edit',
+			icon: Pencil,
+			action: 'edit'
+		},
+		{
+			id: 'duplicate',
+			label: 'Duplicate',
+			icon: Copy,
+			action: 'duplicate'
+		},
+		{ id: 'divider-2', divider: true },
+		{
+			id: 'delete',
+			label: 'Delete',
+			icon: Trash2,
+			action: 'delete',
+			variant: 'danger'
+		}
+	];
 
 	// Save sort mode when changed
 	$effect(() => {
@@ -105,6 +148,50 @@
 		showRemoveModal = false;
 		snippetToDelete = null;
 	}
+
+	function handleSnippetContextMenu(snippet, { x, y }) {
+		contextMenuTarget = snippet;
+		contextMenuPosition = { x, y };
+		contextMenuOpen = true;
+	}
+
+	async function handleContextMenuAction(item) {
+		const snippet = contextMenuTarget;
+		if (!snippet) return;
+
+		switch (item.action) {
+			case 'run':
+				// TODO: Implement run action (execute snippet in active terminal)
+				console.log('Run snippet:', snippet.name);
+				toast.info('Run action not yet implemented');
+				break;
+			case 'paste':
+				// TODO: Implement paste action (paste to active terminal)
+				console.log('Paste snippet:', snippet.name);
+				toast.info('Paste action not yet implemented');
+				break;
+			case 'edit':
+				handleEdit(snippet);
+				break;
+			case 'duplicate':
+				try {
+					const newSnippet = await duplicateSnippet(snippet.id);
+					toast.success(`Snippet "${newSnippet.name}" created`);
+				} catch (error) {
+					console.error('Failed to duplicate snippet:', error);
+					toast.error('Failed to duplicate snippet');
+				}
+				break;
+			case 'delete':
+				handleRemove(snippet);
+				break;
+		}
+	}
+
+	function handleCloseContextMenu() {
+		contextMenuOpen = false;
+		contextMenuTarget = null;
+	}
 </script>
 
 <ContentWithPanel
@@ -143,6 +230,7 @@
 						onadd={handleAdd}
 						onedit={handleEdit}
 						onremove={handleRemove}
+						oncontextmenu={handleSnippetContextMenu}
 					/>
 				</div>
 			</ScrollArea>
@@ -176,3 +264,14 @@
 		<Button variant="danger" onclick={handleConfirmRemove}>Delete</Button>
 	</ModalFooter>
 </Modal>
+
+<!-- Context Menu -->
+{#if contextMenuTarget}
+	<ContextMenu
+		open={contextMenuOpen}
+		position={contextMenuPosition}
+		items={snippetMenuItems}
+		onSelect={handleContextMenuAction}
+		onClose={handleCloseContextMenu}
+	/>
+{/if}

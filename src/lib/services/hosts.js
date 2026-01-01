@@ -260,6 +260,42 @@ export async function deleteHost(hostId) {
 }
 
 /**
+ * Duplicate a host with unique label
+ */
+export async function duplicateHost(hostId) {
+	const host = getHostById(hostId);
+	if (!host) {
+		throw new Error('Host not found');
+	}
+
+	// Generate unique label
+	let copyNumber = 1;
+	let newLabel = `${host.label} (copy)`;
+	while (isHostLabelDuplicate(newLabel)) {
+		copyNumber++;
+		newLabel = `${host.label} (copy ${copyNumber})`;
+	}
+
+	// Create duplicate with new metadata
+	const duplicateData = {
+		...host,
+		label: newLabel,
+		metadata: {
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			lastConnected: null,
+			connectionCount: 0,
+			totalUptime: 0
+		}
+	};
+
+	// Remove ID so addHost generates new one
+	delete duplicateData.id;
+
+	return await addHost(duplicateData);
+}
+
+/**
  * Get all hosts
  */
 export function getHosts() {

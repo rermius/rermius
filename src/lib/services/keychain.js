@@ -6,6 +6,7 @@ import { writable, get } from 'svelte/store';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';
 import { getCurrentWorkspaceId } from './workspaces.js';
+import { save } from '@tauri-apps/plugin-dialog';
 
 /**
  * Detect SSH key type from private key content
@@ -395,6 +396,42 @@ export function getKeys() {
 export function getKey(keyId) {
 	const keychain = get(keychainStore);
 	return keychain.keys.find(k => k.id === keyId);
+}
+
+/**
+ * Export key to .pem file
+ */
+export async function exportKey(keyId) {
+	const key = getKey(keyId);
+	if (!key) {
+		throw new Error('Key not found');
+	}
+
+	// Show save file dialog
+	const savePath = await save({
+		title: 'Export SSH Key',
+		defaultPath: `${key.label}.pem`,
+		filters: [
+			{
+				name: 'PEM Files',
+				extensions: ['pem']
+			}
+		]
+	});
+
+	if (!savePath) {
+		return false; // User cancelled
+	}
+
+	// Write private key to file
+	await tauriFs.writeFile(savePath, key.privateKey);
+
+	// Export public key if exists
+	if (key.publicKey) {
+		await tauriFs.writeFile(`${savePath}.pub`, key.publicKey);
+	}
+
+	return true;
 }
 
 /**
