@@ -9,7 +9,6 @@
 	let formData = $state({
 		name: '',
 		description: '',
-		color: '#4A9FFF',
 		icon: 'server-filled'
 	});
 
@@ -49,7 +48,6 @@
 				formData = {
 					name: '',
 					description: '',
-					color: '#4A9FFF',
 					icon: 'server-filled'
 				};
 				nameError = '';
@@ -66,17 +64,6 @@
 		}
 	);
 
-	// Color options
-	const colorOptions = [
-		{ value: '#4A9FFF', label: 'Blue' },
-		{ value: '#21b568', label: 'Green' },
-		{ value: '#f97316', label: 'Orange' },
-		{ value: '#ef4444', label: 'Red' },
-		{ value: '#a855f7', label: 'Purple' },
-		{ value: '#ec4899', label: 'Pink' },
-		{ value: '#14b8a6', label: 'Teal' },
-		{ value: '#f59e0b', label: 'Amber' }
-	];
 
 	// Load editing group data when editingGroup changes
 	$effect(() => {
@@ -87,7 +74,6 @@
 			formData = {
 				name: editingGroup.name,
 				description: editingGroup.description || '',
-				color: editingGroup.color || '#4A9FFF',
 				icon: editingGroup.icon || 'server-filled'
 			};
 			nameError = '';
@@ -99,7 +85,6 @@
 			formData = {
 				name: '',
 				description: '',
-				color: '#4A9FFF',
 				icon: 'server-filled'
 			};
 			nameError = '';
@@ -110,7 +95,7 @@
 	// Auto-save on form changes - Debounced
 	$effect(() => {
 		// Watch formData for changes
-		if (formData.name || formData.description || formData.color !== '#4A9FFF') {
+		if (formData.name || formData.description) {
 			saveQueue.save(formData); // Debounced auto-save
 		}
 	});
@@ -172,35 +157,6 @@
 			bind:value={formData.description}
 			placeholder="Description"
 		/>
-
-		<!-- Color Selection -->
-		<fieldset class="flex flex-col gap-2">
-			<div class="grid grid-cols-4 gap-2">
-				{#each colorOptions as color (color.value)}
-					<button
-						type="button"
-						onclick={() => (formData.color = color.value)}
-						class="h-10 rounded-lg border-2 transition-all flex items-center justify-center {formData.color ===
-						color.value
-							? 'border-active scale-105'
-							: 'border-transparent hover:border-white/20'}"
-						style="background-color: {color.value}"
-						title={color.label}
-						aria-pressed={formData.color === color.value}
-					>
-						{#if formData.color === color.value}
-							<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-								<path
-									fill-rule="evenodd"
-									d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-						{/if}
-					</button>
-				{/each}
-			</div>
-		</fieldset>
 	</div>
 {/snippet}
 

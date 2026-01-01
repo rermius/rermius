@@ -22,7 +22,6 @@ const defaultHosts = {
 			id: 'group-default',
 			name: 'Default',
 			description: 'Default group for SSH hosts',
-			color: '#4A9FFF',
 			icon: 'server-filled',
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString()
@@ -171,7 +170,6 @@ export async function addHost(hostData) {
 		// Organization
 		tags: hostData.tags || [],
 		isFavorite: hostData.isFavorite || false,
-		color: hostData.color || '#4A9FFF',
 
 		// Metadata
 		metadata: {
@@ -315,7 +313,6 @@ export async function addGroup(groupData) {
 		id: crypto.randomUUID(),
 		name: groupData.name,
 		description: groupData.description || '',
-		color: groupData.color || '#4A9FFF',
 		icon: groupData.icon || 'server-filled',
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString()
