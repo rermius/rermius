@@ -45,19 +45,11 @@
 		if (fileSessionLoading.has(tab.id)) return;
 
 		fileSessionLoading.add(tab.id);
-		console.info('[MainLayout] Creating file session for split view', {
-			tabId: tab.id,
-			hostId: host.id
-		});
 		try {
 			// Reuse host config but force connectionType to sftp for file manager
 			const fileHost = { ...host, connectionType: 'sftp' };
 			const result = await connectFileTransfer(fileHost);
 			tabsStore.updateTabConnectionState(tab.id, {
-				fileSessionId: result.sessionId
-			});
-			console.info('[MainLayout] File session ready', {
-				tabId: tab.id,
 				fileSessionId: result.sessionId
 			});
 		} catch (error) {
@@ -90,18 +82,10 @@
 			.filter(t => t.type === 'terminal' && !t.showFileManager && t.fileSessionId)
 			.forEach(async tab => {
 				const fileSessionId = tab.fileSessionId;
-				console.info('[MainLayout] Closing file session (split view disabled)', {
-					tabId: tab.id,
-					fileSessionId
-				});
 				try {
 					await closeFileSession(fileSessionId);
 					tabsStore.updateTabConnectionState(tab.id, {
 						fileSessionId: null
-					});
-					console.info('[MainLayout] File session closed successfully', {
-						tabId: tab.id,
-						fileSessionId
 					});
 				} catch (error) {
 					console.error('[MainLayout] Error closing file session:', {
@@ -214,7 +198,7 @@
 			<div
 				class="absolute inset-0"
 				style:visibility={activeTab?.type === 'home' ? 'visible' : 'hidden'}
-				style="z-index: {activeTab?.type === 'home' ? 'var(--z-content)' : '-1'};"
+				style="z-index: {activeTab?.type === 'home' ? 'var(--z-tab-active)' : '-1'};"
 				style:pointer-events={activeTab?.type === 'home' ? 'auto' : 'none'}
 			>
 				<ScrollArea class="h-full">
@@ -227,7 +211,7 @@
 				<div
 					class="absolute inset-0"
 					style:visibility={terminalTab.id === activeTabId ? 'visible' : 'hidden'}
-					style="z-index: {terminalTab.id === activeTabId ? 'var(--z-content)' : '-1'};"
+					style="z-index: {terminalTab.id === activeTabId ? 'var(--z-tab-active)' : '-1'};"
 					style:pointer-events={terminalTab.id === activeTabId ? 'auto' : 'none'}
 				>
 					<RemoteTerminalContainer
@@ -246,7 +230,7 @@
 				<div
 					class="absolute inset-0"
 					style:visibility={fbTab.id === activeTabId ? 'visible' : 'hidden'}
-					style="z-index: {fbTab.id === activeTabId ? 'var(--z-content)' : '-1'};"
+					style="z-index: {fbTab.id === activeTabId ? 'var(--z-tab-active)' : '-1'};"
 					style:pointer-events={fbTab.id === activeTabId ? 'auto' : 'none'}
 				>
 					<FileBrowserTabContainer

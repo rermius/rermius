@@ -85,7 +85,6 @@ export async function getHomeDirectory() {
 export async function listLocalDirectory(path) {
 	// Handle Windows root path - list drives like Electerm
 	if (isWin && (path === '/' || path === '\\' || path === '')) {
-		console.log('[FileBrowser] Listing Windows drives at root');
 		try {
 			const drives = await listWindowsDrives();
 			const files = [];
@@ -145,7 +144,6 @@ export async function listLocalDirectory(path) {
 			normalizedPath = `${path}${pathSep}`;
 		}
 
-		console.log('[FileBrowser] Listing local directory:', normalizedPath);
 		const entries = await readDir(normalizedPath);
 		const files = [];
 
@@ -179,7 +177,6 @@ export async function listLocalDirectory(path) {
 			}
 		}
 
-		console.log(`[FileBrowser] Found ${files.length} items in ${normalizedPath}`);
 		return files;
 	} catch (e) {
 		console.error(`[FileBrowser] Failed to read directory ${normalizedPath}:`, e);

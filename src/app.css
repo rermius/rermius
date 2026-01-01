@@ -125,6 +125,7 @@ textarea,
 	--z-base: 1;
 	--z-content: 5;
 	--z-header: 10;
+	--z-tab-active: 30;
 	--z-dropdown: 50;
 	--z-modal-backdrop: 100;
 	--z-modal: 110;

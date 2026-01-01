@@ -20,6 +20,7 @@
 	// Menu state
 	let menuOpen = $state(false);
 	let showSettingsModal = $state(false);
+	let menuButtonRef = $state(null);
 
 	// Initialize event listeners for global shortcuts
 	onMount(() => {
@@ -144,7 +145,6 @@
 
 		// Toggle split view flag without affecting tab focus
 		const next = !tab.showFileManager;
-		console.info('[Header] Toggle file manager', { tabId: tab.id, hostId: tab.hostId, next });
 		tabsStore.updateTabConnectionState(tab.id, { showFileManager: next });
 	}
 
@@ -191,7 +191,6 @@
 
 	async function showInfo() {
 		// TODO: Show app info modal with version, license, etc.
-		console.log('Show app info - TODO: implement');
 	}
 
 	async function newWindow() {
@@ -210,8 +209,9 @@
 >
 	<!-- Left Section -->
 	<div class="flex items-center gap-2 px-3 h-full">
-		<div class="mb-1 relative" style="z-index: var(--z-menu);">
+		<div class="mb-1">
 			<button
+				bind:this={menuButtonRef}
 				type="button"
 				onclick={toggleMenu}
 				class="p-1 rounded transition-colors hover:bg-bg-hover"
@@ -219,20 +219,6 @@
 			>
 				<Menu size={24} class="text-text-primary" />
 			</button>
-			<AppMenu
-				bind:open={menuOpen}
-				onclose={handleMenuClose}
-				onNavigateToHome={navigateToHome}
-				onOpenSettingsModal={openSettingsModal}
-				onCreateTerminal={openNewTerminal}
-				onMinimize={minimizeWindow}
-				onMaximize={toggleMaximize}
-				onExit={exitApp}
-				onLearnMore={learnMore}
-				onCheckUpdate={checkUpdate}
-				onShowInfo={showInfo}
-				onNewWindow={newWindow}
-			/>
 		</div>
 
 		<!-- Home tab (not draggable) -->
@@ -288,9 +274,9 @@
 
 	<!-- Right Section Theme Toggle - Hidden temporarily  -->
 	<!-- <div class="flex items-center gap-4 px-6 w-[300px] justify-end">
-		<button 
-			onclick={() => themeStore.toggle()} 
-			class="w-8 h-8 flex items-center justify-center hover:opacity-70 transition-opacity" 
+		<button
+			onclick={() => themeStore.toggle()}
+			class="w-8 h-8 flex items-center justify-center hover:opacity-70 transition-opacity"
 			aria-label="Toggle theme"
 		>
 			{#if currentTheme === 'dark'}
@@ -337,6 +323,23 @@
 		</button>
 	</div>
 </header>
+
+<!-- AppMenu rendered outside header to escape stacking context -->
+<AppMenu
+	bind:open={menuOpen}
+	buttonRef={menuButtonRef}
+	onclose={handleMenuClose}
+	onNavigateToHome={navigateToHome}
+	onOpenSettingsModal={openSettingsModal}
+	onCreateTerminal={openNewTerminal}
+	onMinimize={minimizeWindow}
+	onMaximize={toggleMaximize}
+	onExit={exitApp}
+	onLearnMore={learnMore}
+	onCheckUpdate={checkUpdate}
+	onShowInfo={showInfo}
+	onNewWindow={newWindow}
+/>
 
 <!-- Settings Modal -->
 <SettingsModal bind:open={showSettingsModal} />

@@ -18,7 +18,7 @@
 	import { generateUniqueRemotePath, generateUniqueLocalPath } from '$lib/utils/path/unique-path';
 	import { toastStore } from '$lib/stores/toast.store';
 
-	let {
+	const {
 		// Left panel (Local)
 		localInitialPath: _localInitialPath = '',
 
@@ -42,7 +42,6 @@
 					const normalizedPath = homeDir.replace(/\\/g, '/');
 					if (normalizedPath) {
 						localInitialPath = normalizedPath;
-						console.log('[FileBrowserDualPane] Set local path to home:', localInitialPath);
 					}
 				} catch (e) {
 					console.error('[FileBrowserDualPane] Failed to get home directory:', e);

@@ -14,6 +14,7 @@
 
 	let {
 		open = $bindable(false),
+		buttonRef = null,
 		onclose,
 		onNavigateToHome,
 		onOpenSettingsModal,
@@ -29,6 +30,18 @@
 
 	let dropdownElement = $state(null);
 	let activeSubmenu = $state(null);
+	let menuPosition = $state({ x: 0, y: 0 });
+
+	// Calculate menu position when opened
+	$effect(() => {
+		if (open && buttonRef) {
+			const rect = buttonRef.getBoundingClientRect();
+			menuPosition = {
+				x: rect.left,
+				y: rect.bottom + 8
+			};
+		}
+	});
 
 	// Menu items structure
 	const menuItems = [
@@ -163,9 +176,9 @@
 <!-- Dropdown Menu -->
 {#if open}
 	<div
-		class="absolute left-0 top-full mt-2 w-56 bg-bg-secondary border border-border rounded-lg shadow-xl"
+		class="fixed w-56 bg-bg-secondary border border-border rounded-lg shadow-xl"
 		bind:this={dropdownElement}
-		style="z-index: var(--z-menu); overflow: visible;"
+		style="left: {menuPosition.x}px; top: {menuPosition.y}px; z-index: var(--z-menu); overflow: visible;"
 	>
 			<div class="py-1" style="overflow: visible;">
 				{#each menuItems as item, index (`${item.type}-${index}-${item.label || ''}`)}

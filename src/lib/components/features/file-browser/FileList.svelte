@@ -44,11 +44,9 @@
 
 	function handleDoubleClick(file) {
 		const fileSnapshot = $state.snapshot(file);
-		console.log('[FileList] Double-click on:', fileSnapshot);
 
 		// Symlink to directory: navigate to target path
 		if (file.isSymlink && file.symlinkTarget && file.isDirectory) {
-			console.log('[FileList] Navigating to symlink target:', file.symlinkTarget);
 			onNavigate?.({
 				...file,
 				path: file.symlinkTarget,
@@ -58,10 +56,8 @@
 		}
 
 		if (file.name === '..' || file.isDirectory) {
-			console.log('[FileList] Calling onNavigate with:', fileSnapshot);
 			onNavigate?.(file);
 		} else {
-			console.log('[FileList] Calling onFileAction with:', fileSnapshot);
 			onFileAction?.(file, 'open');
 		}
 	}
