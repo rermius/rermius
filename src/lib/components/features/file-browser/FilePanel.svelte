@@ -199,13 +199,13 @@
 	});
 
 	// Filtered and sorted files (all files after filter/sort)
-	let displayFiles = $derived(() => {
+	const displayFiles = $derived(() => {
 		const filtered = filterFiles(files, { showHidden, keyword, filterText });
 		return sortFiles(filtered, sortBy, sortOrder);
 	});
 
 	// Paginated files (slice of displayFiles for current page)
-	let paginatedFiles = $derived(() => {
+	const paginatedFiles = $derived(() => {
 		const start = (currentPage - 1) * pageSize;
 		const end = start + pageSize;
 		return displayFiles().slice(start, end);
