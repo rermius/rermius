@@ -32,6 +32,92 @@ function deepMerge(target, source) {
 }
 
 /**
+ * Safely parse JSON content, handling corrupted files with trailing content
+ * @param {string} content - File content to parse
+ * @returns {Object|null} Parsed JSON object or null if parsing fails
+ */
+function safeJsonParse(content) {
+	if (!content || typeof content !== 'string') {
+		return null;
+	}
+
+	// Trim whitespace
+	content = content.trim();
+
+	if (!content) {
+		return null;
+	}
+
+	// Try direct parse first
+	try {
+		return JSON.parse(content);
+	} catch (error) {
+		// If parsing fails, try to extract valid JSON
+		// Look for the first complete JSON object by finding matching braces
+		let braceCount = 0;
+		let inString = false;
+		let escapeNext = false;
+		let jsonEnd = -1;
+
+		for (let i = 0; i < content.length; i++) {
+			const char = content[i];
+
+			if (escapeNext) {
+				escapeNext = false;
+				continue;
+			}
+
+			if (char === '\\') {
+				escapeNext = true;
+				continue;
+			}
+
+			if (char === '"' && !escapeNext) {
+				inString = !inString;
+				continue;
+			}
+
+			if (!inString) {
+				if (char === '{') {
+					braceCount++;
+				} else if (char === '}') {
+					braceCount--;
+					if (braceCount === 0) {
+						jsonEnd = i + 1;
+						break;
+					}
+				}
+			}
+		}
+
+		// If we found a complete JSON object, try parsing just that part
+		if (jsonEnd > 0) {
+			try {
+				const jsonPart = content.substring(0, jsonEnd).trim();
+				return JSON.parse(jsonPart);
+			} catch (e) {
+				// Still failed, return null
+			}
+		}
+
+		// Last resort: try to find JSON between first { and last }
+		const firstBrace = content.indexOf('{');
+		const lastBrace = content.lastIndexOf('}');
+
+		if (firstBrace >= 0 && lastBrace > firstBrace) {
+			try {
+				const jsonPart = content.substring(firstBrace, lastBrace + 1);
+				return JSON.parse(jsonPart);
+			} catch (e) {
+				// Still failed
+			}
+		}
+
+		return null;
+	}
+}
+
+/**
  * Get sync settings file path
  * @param {string} workspaceId - Optional workspace ID (uses current if not provided)
  */
@@ -128,7 +214,23 @@ export async function loadSyncSettings(workspaceId = null) {
 
 		// File exists, read it
 		const content = await tauriFs.readFile(filePath);
-		const loadedSettings = JSON.parse(content);
+		const loadedSettings = safeJsonParse(content);
+
+		if (!loadedSettings) {
+			console.warn('[loadSyncSettings] File contains invalid JSON, backing up and resetting to defaults');
+			// Backup corrupted file
+			try {
+				const backupPath = filePath + '.corrupted.' + Date.now();
+				await tauriFs.writeFile(backupPath, content);
+				console.warn(`[loadSyncSettings] Corrupted file backed up to: ${backupPath}`);
+			} catch (backupError) {
+				console.warn('[loadSyncSettings] Failed to backup corrupted file:', backupError);
+			}
+			// Initialize with default settings
+			await saveSyncSettings(defaultSettings, workspaceId);
+			syncSettingsStore.set({ ...defaultSettings, __loaded: true });
+			return defaultSettings;
+		}
 
 		// Merge with defaults to ensure all fields exist
 		const mergedSettings = deepMerge(defaultSettings, loadedSettings);
