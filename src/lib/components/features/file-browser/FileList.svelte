@@ -1,6 +1,7 @@
 <script>
 	import FileRow from './FileRow.svelte';
 	import ContextMenu from './ContextMenu.svelte';
+	import { fileClipboardStore } from '$lib/stores/file-clipboard.store';
 	import {
 		getFileMenuItems,
 		getEmptyAreaMenuItems
@@ -209,17 +210,12 @@
 
 	const selectedFiles = $derived(files.filter(f => selectedIds.includes(f.path)));
 
-	let canPaste = $state(false);
-
-	// Check clipboard for paste (simplified - can be enhanced)
-	$effect(async () => {
-		try {
-			const text = await navigator.clipboard.readText();
-			canPaste = text.length > 0;
-		} catch {
-			canPaste = false;
-		}
-	});
+	// Clipboard state for paste and cut visual feedback
+	const clipboard = $derived($fileClipboardStore);
+	const canPaste = $derived(clipboard.files.length > 0);
+	const cutFilePaths = $derived(
+		clipboard.operation === 'cut' ? new Set(clipboard.files.map(f => f.path)) : new Set()
+	);
 
 	function handleFileAction(actionId, file) {
 		onFileAction?.(actionId, file);
@@ -282,6 +278,7 @@
 					{hasHost}
 					{enableSsh}
 					{canPaste}
+					isCut={cutFilePaths.has(file.path)}
 					shouldStartEdit={fileToRename === file.path}
 					onSelect={handleSelect}
 					onDoubleClick={handleDoubleClick}

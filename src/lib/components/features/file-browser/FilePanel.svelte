@@ -7,13 +7,20 @@
 	import FilePermissionsModal from './FilePermissionsModal.svelte';
 	import InputNameModal from './InputNameModal.svelte';
 	import DeleteConfirmModal from './DeleteConfirmModal.svelte';
+	import { fileClipboardStore } from '$lib/stores/file-clipboard.store';
 	import resolve from '$lib/utils/path/resolve';
 	import {
 		getHomeDirectory,
 		getParentPath,
 		isWindowsPath,
 		getLocalFileStat,
-		getRemoteFileStat
+		getRemoteFileStat,
+		copyLocalPath,
+		moveLocalPath,
+		copyRemotePath,
+		moveRemotePath,
+		uploadFile,
+		downloadFile
 	} from '$lib/services/file-browser';
 	import { isWin } from '$lib/utils/path/file-utils';
 	import { sortFiles, filterFiles } from '$lib/utils/file-browser/file-sorting';
@@ -31,7 +38,7 @@
 		handlePathNavigation
 	} from '$lib/utils/file-browser/navigation-handlers';
 
-	let {
+	const {
 		// Session info
 		sessionId = null,
 		type = 'local', // 'local' | 'sftp' | 'ftp'
@@ -66,7 +73,7 @@
 	let sortOrder = $state('asc');
 
 	// Filter
-	let filterText = $state('');
+	const filterText = $state('');
 	let keyword = $state('');
 	let showHidden = $state(false);
 
@@ -110,7 +117,7 @@
 	let deleting = $state(false);
 
 	// Track rename operations to prevent duplicates
-	let renameInProgress = $state(new Set());
+	const renameInProgress = $state(new Set());
 
 	// Track which file should start editing (for F2 keyboard shortcut)
 	let fileToRename = $state(null);
@@ -205,10 +212,10 @@
 	});
 
 	// Pagination info
-	let totalPages = $derived(Math.ceil(displayFiles().length / pageSize));
-	let totalFiles = $derived(displayFiles().length); // Total after filter
-	let startIndex = $derived((currentPage - 1) * pageSize);
-	let endIndex = $derived(Math.min(startIndex + pageSize, totalFiles));
+	const totalPages = $derived(Math.ceil(displayFiles().length / pageSize));
+	const totalFiles = $derived(displayFiles().length); // Total after filter
+	const startIndex = $derived((currentPage - 1) * pageSize);
+	const endIndex = $derived(Math.min(startIndex + pageSize, totalFiles));
 
 	// Reset page to 1 when filter/sort/path changes
 	let prevDisplayFilesLength = $state(0);
@@ -227,8 +234,8 @@
 		}
 	});
 
-	let canGoBack = $derived(historyIndex > 0);
-	let canGoForward = $derived(historyIndex < history.length - 1);
+	const canGoBack = $derived(historyIndex > 0);
+	const canGoForward = $derived(historyIndex < history.length - 1);
 
 	// Load files when path changes
 	$effect(() => {
@@ -553,7 +560,7 @@
 					showInputNameModal = true;
 					return;
 				case 'paste':
-					// TODO: Implement paste operation
+					await handlePaste();
 					return;
 				case 'selectAll':
 					selectedIds = files.filter(f => f.name !== '..').map(f => f.path);
@@ -696,9 +703,6 @@
 				filesToDelete = targetFiles;
 				showDeleteConfirmModal = true;
 				break;
-			case 'rename':
-				// Inline editing handled by FileRow
-				break;
 			case 'refresh':
 				handleRefresh();
 				break;
@@ -765,19 +769,33 @@
 				break;
 			case 'copy':
 			case 'cut':
-				// Copy/cut file paths to clipboard
+				// Copy/cut files to clipboard
 				try {
+					console.log(`[COPY/CUT] Starting ${actionId} operation`, targetFiles);
+					// Write paths to system clipboard (for compatibility)
 					const paths = targetFiles.map(f => f.path).join('\n');
 					await navigator.clipboard.writeText(paths);
-					// Store operation type for paste
-					window.__fileOperation = actionId === 'cut' ? 'move' : 'copy';
+					// Prepare clipboard items for store
+					const clipboardFiles = targetFiles.map(f => ({
+						path: f.path,
+						name: f.name,
+						isDirectory: f.isDirectory
+					}));
+
+					// Write to clipboard store
+					if (actionId === 'cut') {
+						fileClipboardStore.cut(clipboardFiles, type, sessionId);
+					} else {
+						fileClipboardStore.copy(clipboardFiles, type, sessionId);
+					}
+					console.log("[COPY/CUT] ✅ Wrote to clipboard store, operation:", actionId);
 				} catch (e) {
-					console.error('Failed to copy:', e);
+					console.error('Failed to copy/cut:', e);
 				}
 				break;
 			case 'paste':
-				// TODO: Implement paste operation
-				console.log('Paste to:', currentPath);
+				console.log('[PASTE] ========== Starting paste operation ==========');
+				await handlePaste();
 				break;
 			case 'copyPath':
 				try {
@@ -792,10 +810,6 @@
 					showPermissionsModal = true;
 					permissionsFile = file;
 				}
-				break;
-			case 'info':
-				// TODO: Open file info dialog
-				console.log('Show info:', file.path);
 				break;
 			default:
 		}
@@ -923,6 +937,169 @@
 			window.removeEventListener('app:refresh-file-list', handleRefreshFileList);
 		};
 	});
+
+	// ============== Paste Implementation ==============
+
+	async function handlePaste() {
+		console.log('[PASTE] ========== Starting paste operation ==========');
+		const clipboard = $state.snapshot($fileClipboardStore);
+		console.log('[PASTE] Clipboard state:', clipboard);
+
+		if (!clipboard.files || clipboard.files.length === 0) {
+			console.log('[PASTE] ❌ No files in clipboard');
+			return;
+		}
+
+		const isCut = clipboard.operation === 'cut';
+		const sourceIsLocal = clipboard.sourceType === 'local';
+		const destIsLocal = type === 'local';
+		const sourceSessionId = clipboard.sourceSessionId;
+		const destSessionId = sessionId;
+
+		console.log('[PASTE] Operation details:', {
+			isCut,
+			sourceIsLocal,
+			destIsLocal,
+			sourceSessionId,
+			destSessionId,
+			currentPath,
+			fileCount: clipboard.files.length
+		});
+
+		const successfulFiles = [];
+		let successCount = 0;
+
+		try {
+			for (const clipboardFile of clipboard.files) {
+				console.log(`[PASTE] Processing file: ${clipboardFile.name}`, clipboardFile);
+				try {
+					const opType = determineOperationType(sourceIsLocal, destIsLocal, isCut);
+					console.log(`[PASTE] Operation type: ${opType}`);
+
+					const destPath = await generateUniqueDestPath(clipboardFile.name, currentPath, destIsLocal, destSessionId);
+					console.log(`[PASTE] Destination path: ${destPath}`);
+
+					await executePasteOperation(opType, clipboardFile, destPath, sourceSessionId, destSessionId);
+					console.log(`[PASTE] ✅ Successfully pasted ${clipboardFile.name}`);
+
+					successfulFiles.push(clipboardFile);
+					successCount++;
+				} catch (e) {
+					console.error(`[PASTE] ❌ Failed to paste ${clipboardFile.name}:`, e);
+				}
+			}
+
+			console.log(`[PASTE] Paste complete: ${successCount} succeeded, ${clipboard.files.length - successCount} failed`);
+
+			if (isCut && successfulFiles.length > 0) {
+				console.log('[PASTE] Deleting source files (cut operation)...');
+				await deleteSourceFiles(successfulFiles, sourceIsLocal, sourceSessionId);
+				fileClipboardStore.clear();
+				console.log('[PASTE] ✅ Source files deleted, clipboard cleared');
+			}
+
+			console.log('[PASTE] Refreshing file list...');
+			await loadFiles(currentPath);
+			console.log('[PASTE] ========== Paste operation complete ==========');
+		} catch (e) {
+			console.error('[PASTE] ❌ Paste operation failed:', e);
+			error = `Paste failed: ${e.message || e}`;
+		}
+	}
+
+	function determineOperationType(sourceIsLocal, destIsLocal, isCut) {
+		if (sourceIsLocal && destIsLocal) return isCut ? 'move-local' : 'copy-local';
+		if (!sourceIsLocal && !destIsLocal) return isCut ? 'move-remote' : 'copy-remote';
+		if (sourceIsLocal && !destIsLocal) return 'upload';
+		return 'download';
+	}
+
+	async function generateUniqueDestPath(fileName, targetDir, isLocal, sessionIdForRemote) {
+		let basePath = targetDir.endsWith('/') || targetDir.endsWith('\\') ? `${targetDir}${fileName}` : `${targetDir}/${fileName}`;
+		let destPath = basePath;
+		let counter = 1;
+
+		while (true) {
+			try {
+				if (isLocal) {
+					await getLocalFileStat(destPath);
+				} else {
+					await getRemoteFileStat(sessionIdForRemote, destPath);
+				}
+				const ext = fileName.includes('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
+				const nameWithoutExt = ext ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
+				destPath = `${targetDir.endsWith('/') || targetDir.endsWith('\\') ? targetDir : targetDir + '/'}${nameWithoutExt} (${counter})${ext}`;
+				counter++;
+			} catch {
+				break;
+			}
+		}
+		return destPath;
+	}
+
+	async function executePasteOperation(opType, file, destPath, sourceSessionId, destSessionId) {
+		const transferId = crypto.randomUUID();
+		console.log(`[PASTE] Executing ${opType}:`, {
+			sourcePath: file.path,
+			destPath,
+			sourceSessionId,
+			destSessionId,
+			transferId
+		});
+
+		try {
+			switch (opType) {
+				case 'copy-local':
+					console.log('[PASTE] Calling copyLocalPath...');
+					await copyLocalPath(file.path, destPath);
+					break;
+				case 'move-local':
+					console.log('[PASTE] Calling moveLocalPath...');
+					await moveLocalPath(file.path, destPath);
+					break;
+				case 'copy-remote':
+					console.log('[PASTE] Calling copyRemotePath...');
+					await copyRemotePath(sourceSessionId, file.path, destPath);
+					break;
+				case 'move-remote':
+					console.log('[PASTE] Calling moveRemotePath...');
+					await moveRemotePath(sourceSessionId, file.path, destPath);
+					break;
+				case 'upload':
+					console.log('[PASTE] Calling uploadFile...');
+					await uploadFile(destSessionId, file.path, destPath, transferId);
+					break;
+				case 'download':
+					console.log('[PASTE] Calling downloadFile...');
+					await downloadFile(sourceSessionId, file.path, destPath, transferId);
+					break;
+			}
+			console.log(`[PASTE] ✅ ${opType} completed successfully`);
+		} catch (error) {
+			console.error(`[PASTE] ❌ ${opType} failed:`, error);
+			throw error;
+		}
+	}
+
+	async function deleteSourceFiles(files, isLocal, sessionIdForRemote) {
+		for (const file of files) {
+			try {
+				if (isLocal) {
+					const { remove, removeDir } = await import('@tauri-apps/plugin-fs');
+					if (file.isDirectory) {
+						await removeDir(file.path, { recursive: true });
+					} else {
+						await remove(file.path);
+					}
+				} else {
+					const { deleteRemotePath } = await import('$lib/services/file-browser');
+					await deleteRemotePath(sessionIdForRemote, file.path, file.isDirectory);
+				}
+			} catch (e) {
+				console.error(`Failed to delete source file ${file.path}:`, e);
+			}
+		}
+	}
 </script>
 
 <div class="file-panel flex flex-col h-full border-r border-border">

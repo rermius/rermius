@@ -46,6 +46,7 @@ Get the latest version of Rermius:
 ### Quick Install
 
 **macOS (Homebrew):**
+
 ```bash
 brew tap rermius/rermius-homebrew
 brew install --cask rermius

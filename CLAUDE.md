@@ -9,18 +9,21 @@ Rermius is a modern SSH terminal management application built with Tauri 2 (Rust
 ## Essential Commands
 
 ### Development
+
 ```bash
 npm run dev              # Start Vite dev server (frontend only)
 npm run tauri dev        # Start full Tauri app with hot reload
 ```
 
 ### Building
+
 ```bash
 npm run build            # Build frontend for production
 npm run tauri build      # Build full desktop application
 ```
 
 ### Code Quality
+
 ```bash
 npm run check            # Type-check Svelte code with svelte-check
 npm run lint             # Run ESLint
@@ -30,6 +33,7 @@ npm run format:check     # Check code formatting
 ```
 
 ### Platform-Specific Builds
+
 ```bash
 npm run build:windows    # Build for Windows (x86_64-pc-windows-msvc)
 npm run build:macos-arm  # Build for macOS ARM (aarch64-apple-darwin)
@@ -38,6 +42,7 @@ npm run build:linux      # Build for Linux (x86_64-unknown-linux-gnu)
 ```
 
 ### Rust Backend
+
 ```bash
 cd src-tauri
 cargo check              # Check Rust code for errors
@@ -50,16 +55,19 @@ cargo build --release    # Build optimized release
 ### Frontend-Backend Communication
 
 **Tauri Command Pattern (Request/Response):**
+
 - Frontend calls Rust via `@tauri-apps/api/core::invoke('command_name', params)`
 - Backend functions marked with `#[tauri::command]` in `src-tauri/src/commands/`
 - All commands registered in `src-tauri/src/lib.rs` via `tauri::generate_handler![]`
 
 **Event Pattern (Pub/Sub for Streaming):**
+
 - Backend emits events: `app_handle.emit(event_name, payload)`
 - Frontend subscribes: `@tauri-apps/api/event::listen(event_name, handler)`
 - Used for terminal output streaming, file transfer progress, SSH chain status
 
 **Critical Pattern - Two-Phase SSH Initialization:**
+
 1. Frontend calls `create_ssh_session()` → returns `session_id` immediately
 2. Backend buffers output in `pending_buffer`
 3. Frontend sets up event listener for `terminal-output:{session_id}`
@@ -71,11 +79,13 @@ Local PTY sessions auto-stream because listener is set up before spawn.
 ### State Management
 
 **Svelte Stores Architecture:**
+
 - `stores/terminal.store.js` - Terminal sessions, xterm.js instances, active session
 - `stores/tabs.store.js` - UI tabs, connection states (IDLE → CONNECTING → CONNECTED), auto-reconnect tracking
 - `stores/status-bar.js` - File transfer progress, network status
 
 **Service Layer:**
+
 - `services/` contains all backend interaction logic (Facade pattern)
 - `terminalCommands.js` - Terminal session operations
 - `ssh-connection.js` - SSH connection establishment and chaining
@@ -83,6 +93,7 @@ Local PTY sessions auto-stream because listener is set up before spawn.
 - Services abstract Tauri `invoke()` calls for cleaner, testable APIs
 
 **Data Flow:**
+
 ```
 User Action → Service → Tauri Command → Rust Backend
                 ↓
@@ -96,6 +107,7 @@ User Action → Service → Tauri Command → Rust Backend
 ### Terminal Architecture
 
 **Backend Trait Polymorphism:**
+
 ```rust
 trait TerminalSession {
     fn id(&self) -> &str;
@@ -124,11 +136,13 @@ trait TerminalSession {
      - `channel.wait()` → match ChannelMsg variants (server output)
 
 **Session Management:**
+
 - `TerminalManager` singleton (via Tauri state management)
 - Sessions stored in `Arc<RwLock<HashMap<String, Box<dyn TerminalSession>>>>`
 - UUIDs generated server-side for session IDs
 
 **Frontend Integration:**
+
 - `composables/useXtermTerminal.svelte.js` - xterm.js wrapper with FitAddon
 - ResizeObserver for automatic PTY resize on DOM changes
 - Theme-aware: reads CSS variables (`--terminal-bg`, `--terminal-fg`, etc.)
@@ -137,6 +151,7 @@ trait TerminalSession {
 ### SSH Connection Flow
 
 **Direct Connection:**
+
 ```
 1. Frontend: connectSSH(host) → prepares auth (loads SSH key to temp file)
 2. invoke('create_ssh_session', { hostname, port, username, authMethod, keyPath })
@@ -149,6 +164,7 @@ trait TerminalSession {
 ```
 
 **Chained Connection (ProxyJump):**
+
 - Uses Chain of Responsibility pattern (`ssh/chain.rs`)
 - Each `HopHandler` contains config + optional next handler
 - Recursive `execute()` with tunnel forwarding between hops
@@ -159,6 +175,7 @@ trait TerminalSession {
 ### File Browser/SFTP Architecture
 
 **Backend Trait:**
+
 ```rust
 trait FileTransferSession {
     async fn list_directory(&self, path: &str) -> Result<Vec<FileInfo>>;
@@ -171,11 +188,13 @@ trait FileTransferSession {
 ```
 
 **Three Implementations:**
+
 1. **SftpSession** (`sftp/session.rs`) - Uses `russh-sftp`, shares SSH handle with terminal
 2. **FtpSession** (`ftp/session.rs`) - Uses `suppaftp` with async-rustls for FTPS
 3. **Local filesystem** - Via Tauri `plugin-fs` with Windows drive enumeration
 
 **Lock-Free Transfer Pattern:**
+
 ```rust
 // Get file handle (brief SFTP lock)
 let file_handle = sftp.open(...).await?;
@@ -188,11 +207,13 @@ while let Ok(bytes_read) = file_handle.read().await {
 ```
 
 **Progress Reporting:**
+
 - Backend emits `file-transfer-progress` events with `transferId` (UUID from frontend)
 - Frontend `statusBarStore` shows progress bars with cancel capability
 - **Duplicate handling**: Auto-renames files with " (N)" suffix
 
 **Frontend Dual-Panel:**
+
 - Left: Local filesystem | Right: Remote (SFTP/FTP)
 - Drag-and-drop for uploads/downloads
 - Context menus for operations (chmod, delete, rename, properties)
@@ -200,6 +221,7 @@ while let Ok(bytes_read) = file_handle.read().await {
 ## Key Patterns & Best Practices
 
 ### Dependency Injection via Tauri State
+
 ```rust
 // In lib.rs
 .manage(TerminalManager::new())
@@ -216,28 +238,33 @@ async fn create_terminal(
 ```
 
 ### Error Handling
+
 - Custom error types: `SessionError`, `ConnectionError`, `SshError` (using `thiserror`)
 - All Tauri commands return `Result<T, String>` (errors serialized to strings)
 - Frontend displays errors via toast notifications
 
 ### Async Runtime
+
 - Backend uses Tokio for all async operations
 - Long-running I/O loops spawned with `tokio::spawn(async move { ... })`
 - mpsc channels for thread-safe communication between command handlers and I/O loops
 - Use unbounded channels with clone-able senders (avoid Arc<Mutex> on channels)
 
 ### Session Lifecycle
+
 - Sessions stored in `Arc<RwLock<HashMap>>` for thread-safe concurrent access
 - Cleanup on drop: terminal processes killed, SSH connections closed
 - Frontend tracks sessions separately for UI state
 
 ### Authentication & Key Management
+
 - SSH keys stored encrypted in frontend LocalStorage keychain
 - Keys written to temporary files before passing to backend
 - Auto-cleanup after 2s delay to avoid race conditions
 - Supports: password, SSH key (RSA/Ed25519/ECDSA)
 
 ### Connection Heartbeat & Auto-Reconnect
+
 - Frontend pings SSH sessions periodically: `terminalCommands.ping(sessionId)`
 - On failure: triggers auto-reconnect with exponential backoff
 - Max retries configurable, user can cancel
@@ -248,6 +275,7 @@ async fn create_terminal(
 ### Adding a New Tauri Command
 
 1. **Define command in Rust** (`src-tauri/src/commands/`):
+
 ```rust
 #[tauri::command]
 async fn my_command(
@@ -262,6 +290,7 @@ async fn my_command(
 ```
 
 2. **Register in `lib.rs`**:
+
 ```rust
 .invoke_handler(tauri::generate_handler![
     // ... existing commands
@@ -270,27 +299,30 @@ async fn my_command(
 ```
 
 3. **Call from frontend** (`src/lib/services/`):
+
 ```javascript
 import { invoke } from '@tauri-apps/api/core';
 
 export async function myCommand(param) {
-    return await invoke('my_command', { param });
+	return await invoke('my_command', { param });
 }
 ```
 
 ### Adding Event Streaming
 
 1. **Backend emits**:
+
 ```rust
 app_handle.emit(&format!("my-event:{}", id), MyEventPayload { ... })?;
 ```
 
 2. **Frontend listens**:
+
 ```javascript
 import { listen } from '@tauri-apps/api/event';
 
-const unlisten = await listen(`my-event:${id}`, (event) => {
-    console.log('Received:', event.payload);
+const unlisten = await listen(`my-event:${id}`, event => {
+	console.log('Received:', event.payload);
 });
 // Call unlisten() when done
 ```
@@ -298,41 +330,45 @@ const unlisten = await listen(`my-event:${id}`, (event) => {
 ### Adding a New Store
 
 1. **Create store** (`src/lib/stores/my-feature.store.js`):
+
 ```javascript
 import { writable } from 'svelte/store';
 
 function createMyStore() {
-    const { subscribe, set, update } = writable({
-        items: [],
-        activeId: null
-    });
+	const { subscribe, set, update } = writable({
+		items: [],
+		activeId: null
+	});
 
-    return {
-        subscribe,
-        addItem: (item) => update(state => ({
-            ...state,
-            items: [...state.items, item]
-        })),
-        setActive: (id) => update(state => ({ ...state, activeId: id })),
-        reset: () => set({ items: [], activeId: null })
-    };
+	return {
+		subscribe,
+		addItem: item =>
+			update(state => ({
+				...state,
+				items: [...state.items, item]
+			})),
+		setActive: id => update(state => ({ ...state, activeId: id })),
+		reset: () => set({ items: [], activeId: null })
+	};
 }
 
 export const myStore = createMyStore();
 ```
 
 2. **Use in components**:
+
 ```svelte
 <script>
-    import { myStore } from '$lib/stores/my-feature.store.js';
+	import { myStore } from '$lib/stores/my-feature.store.js';
 
-    const items = $derived($myStore.items);
+	const items = $derived($myStore.items);
 </script>
 ```
 
 ## Important File Paths
 
 **Rust Backend Core:**
+
 - `src-tauri/src/lib.rs` - Main entry, command registration, manager initialization
 - `src-tauri/src/commands/` - All Tauri command definitions
 - `src-tauri/src/managers/terminal.rs` - Terminal session manager (singleton)
@@ -344,6 +380,7 @@ export const myStore = createMyStore();
 - `src-tauri/Cargo.toml` - Rust dependencies and build config
 
 **Frontend Core:**
+
 - `src/lib/composables/useXtermTerminal.svelte.js` - xterm.js integration
 - `src/lib/services/ssh-connection.js` - SSH connection establishment
 - `src/lib/services/file-connection.js` - File transfer operations
@@ -353,21 +390,21 @@ export const myStore = createMyStore();
 
 ## Tech Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Frontend Framework | SvelteKit | 5.x |
-| Language | JavaScript | ES2022+ |
-| State Management | Svelte Stores | Built-in |
-| Desktop Runtime | Tauri | 2.x |
-| Backend Language | Rust | 2021 Edition |
-| Terminal Emulator | xterm.js | 6.x |
-| Styling | Tailwind CSS | 4.x |
-| Build Tool | Vite | 6.x |
-| SSH Library | russh | 0.55 |
-| PTY Library | portable-pty | 0.8 |
-| SFTP Library | russh-sftp | 2.0 |
-| FTP Library | suppaftp | 6.x |
-| Async Runtime | Tokio | 1.x |
+| Layer              | Technology    | Version      |
+| ------------------ | ------------- | ------------ |
+| Frontend Framework | SvelteKit     | 5.x          |
+| Language           | JavaScript    | ES2022+      |
+| State Management   | Svelte Stores | Built-in     |
+| Desktop Runtime    | Tauri         | 2.x          |
+| Backend Language   | Rust          | 2021 Edition |
+| Terminal Emulator  | xterm.js      | 6.x          |
+| Styling            | Tailwind CSS  | 4.x          |
+| Build Tool         | Vite          | 6.x          |
+| SSH Library        | russh         | 0.55         |
+| PTY Library        | portable-pty  | 0.8          |
+| SFTP Library       | russh-sftp    | 2.0          |
+| FTP Library        | suppaftp      | 6.x          |
+| Async Runtime      | Tokio         | 1.x          |
 
 ## Svelte 5 Development Rules
 

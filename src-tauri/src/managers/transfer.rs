@@ -397,5 +397,91 @@ impl FileTransferManager {
         }
         Ok(())
     }
+
+    /// Copy file/directory on remote (uses download+upload since SFTP/FTP don't have native copy)
+    pub async fn copy_remote(
+        &self,
+        session_id: &str,
+        source_path: &str,
+        dest_path: &str,
+    ) -> Result<(), ConnectionError> {
+        let session = self.get_session_arc(session_id).await
+            .ok_or_else(|| ConnectionError::Unknown(format!("Session not found: {}", session_id)))?;
+
+        // Check if source is a file or directory
+        let source_info = session.stat(source_path).await?;
+
+        if source_info.is_directory {
+            // Recursive directory copy
+            self.copy_remote_directory_recursive(session_id, source_path, dest_path).await
+        } else {
+            // Single file copy (download to temp + upload)
+            self.copy_remote_file(session_id, source_path, dest_path).await
+        }
+    }
+
+    /// Copy single remote file (download to temp, upload to destination)
+    async fn copy_remote_file(
+        &self,
+        session_id: &str,
+        source_path: &str,
+        dest_path: &str,
+    ) -> Result<(), ConnectionError> {
+        use tempfile::NamedTempFile;
+
+        // Create temp file
+        let temp_file = NamedTempFile::new()
+            .map_err(|e| ConnectionError::IoError(format!("Failed to create temp file: {}", e)))?;
+        let temp_path = temp_file.path().to_str().unwrap();
+
+        // Get session
+        let session = self.get_session_arc(session_id).await
+            .ok_or_else(|| ConnectionError::Unknown(format!("Session not found: {}", session_id)))?;
+
+        // Download source to temp (without progress)
+        session.download_file_with_progress(source_path, temp_path, None).await?;
+
+        // Upload temp to destination (without progress)
+        session.upload_file_with_progress(temp_path, dest_path, None).await?;
+
+        Ok(())
+    }
+
+    /// Recursive directory copy (list + copy each file/subdir)
+    async fn copy_remote_directory_recursive(
+        &self,
+        session_id: &str,
+        source_dir: &str,
+        dest_dir: &str,
+    ) -> Result<(), ConnectionError> {
+        let session = self.get_session_arc(session_id).await
+            .ok_or_else(|| ConnectionError::Unknown(format!("Session not found: {}", session_id)))?;
+
+        // Create destination directory
+        session.create_directory(dest_dir).await?;
+
+        // List source directory
+        let entries = session.list_directory(source_dir).await?;
+
+        for entry in entries {
+            // Skip . and ..
+            if entry.name == "." || entry.name == ".." {
+                continue;
+            }
+
+            let source_item = format!("{}/{}", source_dir.trim_end_matches('/'), entry.name);
+            let dest_item = format!("{}/{}", dest_dir.trim_end_matches('/'), entry.name);
+
+            if entry.is_directory {
+                // Recursive copy for subdirectories
+                Box::pin(self.copy_remote_directory_recursive(session_id, &source_item, &dest_item)).await?;
+            } else {
+                // Copy file
+                self.copy_remote_file(session_id, &source_item, &dest_item).await?;
+            }
+        }
+
+        Ok(())
+    }
 }
 

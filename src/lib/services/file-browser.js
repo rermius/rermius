@@ -271,6 +271,44 @@ export async function renameLocalPath(oldPath, newPath) {
 }
 
 /**
+ * Copy file or directory locally (recursive)
+ * @param {string} sourcePath - Source path to copy from
+ * @param {string} destPath - Destination path to copy to
+ */
+export async function copyLocalPath(sourcePath, destPath) {
+	return await invoke('copy_local_path', { sourcePath, destPath });
+}
+
+/**
+ * Move file or directory locally (atomic rename with copy+delete fallback)
+ * @param {string} sourcePath - Source path to move from
+ * @param {string} destPath - Destination path to move to
+ */
+export async function moveLocalPath(sourcePath, destPath) {
+	return await invoke('move_local_path', { sourcePath, destPath });
+}
+
+/**
+ * Copy file or directory on remote (SFTP/FTP)
+ * @param {string} sessionId - Session ID
+ * @param {string} sourcePath - Source path to copy from
+ * @param {string} destPath - Destination path to copy to
+ */
+export async function copyRemotePath(sessionId, sourcePath, destPath) {
+	return await invoke('copy_remote_path', { sessionId, sourcePath, destPath });
+}
+
+/**
+ * Move file or directory on remote (uses rename)
+ * @param {string} sessionId - Session ID
+ * @param {string} sourcePath - Source path to move from
+ * @param {string} destPath - Destination path to move to
+ */
+export async function moveRemotePath(sessionId, sourcePath, destPath) {
+	return await invoke('move_remote_path', { sessionId, sourcePath, destPath });
+}
+
+/**
  * Get file stat/info (local)
  * @param {string} path - File path
  * @returns {Promise<Object>} File stat info

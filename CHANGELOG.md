@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2026-01-01
 
 ### Added
+
 - **Context Menu System**: New reusable context menu component system
   - `ContextMenu` component with viewport overflow detection and smart positioning
   - `ContextMenuItem` with icon, label, shortcut, and submenu support
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Useful for backup and sharing snippet configurations
 
 ### Changed
+
 - **Code Quality Improvements**: Enhanced code quality and maintainability
   - Changed `let` to `const` for props that are never reassigned across multiple components
   - Improved code clarity and consistency
@@ -63,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed Svelte 5 warnings across the codebase
 
 ### Fixed
+
 - **Svelte 5 Warnings**: Fixed all Svelte 5 warnings about missing keys in iteration blocks
   - `FileListHeader.svelte` - Added keys for column iteration
   - `ShortcutInput.svelte` - Added keys for key parts display
@@ -79,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved code consistency across components
 
 ### Technical
+
 - Enhanced Svelte 5 compatibility and best practices
 - Improved component reactivity and performance with proper key usage
 - Better code maintainability with proper const usage
@@ -87,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better service layer organization for host and snippet operations
 
 ### Statistics
+
 - **36 files changed**
 - **859 insertions(+), 107 deletions(-)**
 - **4 new component files** (ContextMenu system)
@@ -97,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.9] - Previous Release
 
 ### Features
+
 - Multiple terminal sessions with tab management
 - SSH host management with groups and colors
 - SSH config import functionality
@@ -109,4 +115,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Theme-aware modern dark theme
 - xterm.js with WebGL-accelerated terminal
 - Security-first encrypted credential storage
-

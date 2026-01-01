@@ -89,6 +89,10 @@ pub fn run() {
             commands::file_transfer::rename_local_path,
             commands::file_transfer::close_file_session,
             commands::file_transfer::chmod_remote,
+            commands::file_transfer::copy_local_path,
+            commands::file_transfer::move_local_path,
+            commands::file_transfer::copy_remote_path,
+            commands::file_transfer::move_remote_path,
             // File operations
             commands::file_operations::get_local_file_stat,
             commands::file_operations::get_local_file_info,

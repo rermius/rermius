@@ -3,7 +3,7 @@
 	import * as LucideIcons from 'lucide-svelte';
 	import { modeToPermissionsString } from '$lib/utils/permissions';
 
-	let {
+	const {
 		file,
 		isSelected = false,
 		selectedFiles = [],
@@ -11,6 +11,7 @@
 		hasHost = false,
 		enableSsh = true,
 		canPaste = false,
+		isCut = false,
 		shouldStartEdit = false,
 		onSelect,
 		onDoubleClick,
@@ -226,6 +227,7 @@
 	class="file-row flex items-center h-8 px-2 cursor-pointer border-l-2 transition-colors
 		{isSelected ? 'bg-primary border-active text-white' : 'border-transparent hover:bg-dark-50/50'}
 		{isDragging ? 'opacity-50' : ''}"
+	class:cut-file={isCut}
 	data-file-path={file.path}
 	onclick={handleClick}
 	onkeydown={handleKeyDown}
@@ -300,5 +302,14 @@
 	.file-row:focus {
 		outline: none;
 		background-color: var(--color-dark-50);
+	}
+
+	/* Visual feedback for cut files */
+	.file-row.cut-file {
+		opacity: 0.5;
+	}
+
+	.file-row.cut-file:hover {
+		opacity: 0.6;
 	}
 </style>

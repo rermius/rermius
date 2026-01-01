@@ -55,4 +55,5 @@ rustls-pki-types = "1"
 # System file operations
 open = "5"
 notify = "6"
+tempfile = "3"
 
