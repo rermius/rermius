@@ -92,7 +92,7 @@
 			class="h-full bg-(--color-bg-tertiary) shadow-xl border-l border-border w-[350px] pointer-events-auto"
 			transition:slide={{ duration: 220, easing: quintOut, axis: 'x' }}
 		>
-			<PanelLayout {header} {content} {footer} />
+			<PanelLayout headerLeft={header} {content} {footer} />
 		</div>
 	</div>
 {/if}
