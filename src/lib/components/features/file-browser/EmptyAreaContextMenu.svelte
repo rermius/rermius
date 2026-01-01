@@ -2,7 +2,7 @@
 	import * as LucideIcons from 'lucide-svelte';
 	import { adjustDropdownPosition } from '$lib/utils/dropdown-position';
 
-	let { type = 'local', canPaste = false, onAction, children } = $props();
+	const { type = 'local', canPaste = false, onAction, children } = $props();
 
 	function getMenuItems() {
 		const items = [];

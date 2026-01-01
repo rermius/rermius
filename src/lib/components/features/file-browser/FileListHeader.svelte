@@ -1,7 +1,7 @@
 <script>
 	import { ChevronUp, ChevronDown } from 'lucide-svelte';
 
-	let { sortBy = 'name', sortOrder = 'asc', onSort } = $props();
+	const { sortBy = 'name', sortOrder = 'asc', onSort } = $props();
 
 	const columns = [
 		{ key: 'name', label: 'Name', width: 'flex-1 min-w-30 max-w-[53%]', padding: 'pr-2' },
@@ -25,7 +25,7 @@
 	<!-- Icon spacer -->
 	<div class="w-6 shrink-0"></div>
 
-	{#each columns as col}
+	{#each columns as col (col.key)}
 		<button
 			class="flex items-center gap-1 {col.width} shrink-0 hover:text-white transition-colors
 				{col.align === 'right' ? 'justify-end' : ''}

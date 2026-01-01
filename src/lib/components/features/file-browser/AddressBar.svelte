@@ -42,7 +42,7 @@
 	} = $props();
 
 	let inputRef = $state(null);
-	let showHistory = $derived(inputFocus && pathHistory.length > 0);
+	const showHistory = $derived(inputFocus && pathHistory.length > 0);
 	let showKeywordFilter = $state(false);
 	let keywordInput = $state('');
 
@@ -247,7 +247,7 @@
 		<ScrollArea
 			class="absolute left-2 right-2 top-full mt-1 bg-bg-secondary border border-border rounded shadow-lg z-50 max-h-48"
 		>
-			{#each filteredHistory as historyPath}
+			{#each filteredHistory as historyPath (historyPath)}
 				<button
 					class="w-full px-3 py-2 text-left text-sm text-white/80 hover:bg-primary hover:text-white transition-colors border-b bg-bg-secondary last:border-b-0"
 					onclick={() => handleHistoryClick(historyPath)}

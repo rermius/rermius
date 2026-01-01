@@ -119,12 +119,12 @@
 				<!-- Available Shells List -->
 				<div>
 					<h3 class="text-sm font-medium text-text-primary mb-2">Available Shells</h3>
-					<div class="space-y-2">
-						{#each availableShells as shell}
-							<div class="flex items-center justify-between p-3 bg-bg-tertiary rounded">
-								<div class="flex items-center gap-2">
-									<Terminal size={16} class="text-text-secondary" />
-									<span class="text-sm text-text-primary">{shell.label}</span>
+			<div class="space-y-2">
+				{#each availableShells as shell (shell.value)}
+					<div class="flex items-center justify-between p-3 bg-bg-tertiary rounded">
+						<div class="flex items-center gap-2">
+							<Terminal size={16} class="text-text-secondary" />
+							<span class="text-sm text-text-primary">{shell.label}</span>
 								</div>
 								<div class="flex items-center gap-2">
 									<span class="text-xs text-text-tertiary font-mono">{shell.value}</span>

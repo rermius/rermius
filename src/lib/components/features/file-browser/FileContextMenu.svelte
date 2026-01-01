@@ -3,7 +3,7 @@
 	import { ScrollArea } from '$lib/components/ui';
 	import { adjustDropdownPosition } from '$lib/utils/dropdown-position';
 
-	let {
+	const {
 		file = null,
 		selectedFiles = [],
 		type = 'local', // 'local' | 'sftp' | 'ftp'
@@ -314,14 +314,14 @@
 			role="menu"
 			tabindex="-1"
 		>
-			<ScrollArea class="h-full">
-				<div class="py-1">
-					{#each menuItems as item}
-						{#if item.id === 'separator'}
-							<div class="h-px bg-border my-1"></div>
-						{:else}
-							<button
-								class="flex items-center gap-2 w-full px-3 py-2 text-xs text-white/80 hover:bg-dark-100 transition-colors
+		<ScrollArea class="h-full">
+			<div class="py-1">
+				{#each menuItems as item (item.id)}
+					{#if item.id === 'separator'}
+						<div class="h-px bg-border my-1"></div>
+					{:else}
+						<button
+							class="flex items-center gap-2 w-full px-3 py-2 text-xs text-white/80 hover:bg-dark-100 transition-colors
 							{item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
 							{item.danger ? 'text-red-400 hover:text-red-300' : ''}"
 								onclick={() => handleItemClick(item)}

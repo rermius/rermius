@@ -2,7 +2,7 @@
 	import { ItemCard } from '$lib/components/ui/Card';
 	import { snippetsStore } from '$lib/services';
 
-	let {
+	const {
 		editingSnippet = null,
 		searchQuery = '',
 		selectedLabels = [],

@@ -6,7 +6,7 @@ Displays a single SSH config host item in the scan modal
 	import { Checkbox } from '$lib/components/ui';
 	import { Server, Key, User, Globe } from 'lucide-svelte';
 
-	let { host, selected = false, onToggle } = $props();
+	const { host, selected = false, onToggle } = $props();
 
 	function handleToggle() {
 		onToggle?.(host.name);

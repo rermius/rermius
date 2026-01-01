@@ -159,17 +159,17 @@
 		{#if isLoading}
 			<div class="text-center text-text-secondary">Loading shortcuts...</div>
 		{:else}
-			<div class="space-y-8">
-				{#each Object.entries(categories) as [category, actions]}
-					<div>
-						<h3 class="text-sm font-semibold text-text-primary mb-4 uppercase tracking-wide">
-							{category}
-						</h3>
-						<div class="space-y-1">
-							{#each actions as actionName}
-								<div
-									class="grid grid-cols-2 gap-4 items-center py-3 px-4 rounded transition-colors hover:bg-bg-tertiary"
-								>
+		<div class="space-y-8">
+			{#each Object.entries(categories) as [category, actions] (category)}
+				<div>
+					<h3 class="text-sm font-semibold text-text-primary mb-4 uppercase tracking-wide">
+						{category}
+					</h3>
+					<div class="space-y-1">
+						{#each actions as actionName (actionName)}
+							<div
+								class="grid grid-cols-2 gap-4 items-center py-3 px-4 rounded transition-colors hover:bg-bg-tertiary"
+							>
 									<div class="text-sm text-text-primary">{shortcutLabels[actionName]}</div>
 									<div class="flex justify-end">
 										<ShortcutInput

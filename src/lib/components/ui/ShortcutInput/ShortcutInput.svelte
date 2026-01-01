@@ -98,7 +98,7 @@
 				<span class="text-sm text-text-secondary">Press key combination...</span>
 			{:else if value}
 				<div class="flex items-center gap-1.5 flex-wrap">
-					{#each keyParts as keyPart, index}
+					{#each keyParts as keyPart, index (keyPart + '-' + index)}
 						<span
 							class="inline-flex items-center justify-center px-2 py-1 text-xs font-semibold
 							       bg-bg-primary border border-border rounded min-w-[32px] text-text-primary"

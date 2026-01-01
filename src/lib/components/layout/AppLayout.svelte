@@ -2,7 +2,7 @@
 	import Sidebar from './Sidebar.svelte';
 	import { ToastContainer, ScrollArea } from '$lib/components/ui';
 
-	let { children, class: className = '' } = $props();
+	const { children, class: className = '' } = $props();
 </script>
 
 <div class="flex h-full {className}">

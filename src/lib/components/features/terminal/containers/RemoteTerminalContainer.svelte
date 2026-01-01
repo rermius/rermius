@@ -31,7 +31,7 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 	import { browser } from '$app/environment';
 	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
 
-	let { tab, activeTabId, host = null, onRetry, onEdit, onClose } = $props();
+	const { tab, activeTabId, host = null, onRetry, onEdit, onClose } = $props();
 
 	// For SSH terminal: only cd when user explicitly set homeDirectory
 	const terminalHomeDir = $derived(

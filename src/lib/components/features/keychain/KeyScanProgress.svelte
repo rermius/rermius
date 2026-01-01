@@ -3,7 +3,7 @@
 Displays progress bar and counters during import operation
 -->
 <script>
-	let { current = 0, total = 0, success = 0, errors = 0, duplicates = 0 } = $props();
+	const { current = 0, total = 0, success = 0, errors = 0, duplicates = 0 } = $props();
 
 	const progress = $derived(total > 0 ? Math.round((current / total) * 100) : 0);
 </script>

@@ -3,7 +3,7 @@
 	import { ScrollArea } from '$lib/components/ui';
 	import SnippetItem from './SnippetItem.svelte';
 
-	let { snippets = [], selectedTags = [], onRun, onPaste } = $props();
+	const { snippets = [], selectedTags = [], onRun, onPaste } = $props();
 
 	// Filter and sort snippets by selected tags (newest first)
 	const filteredSnippets = $derived.by(() => {

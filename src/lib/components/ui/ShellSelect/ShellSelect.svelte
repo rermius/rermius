@@ -73,7 +73,7 @@
 			class="absolute w-full mt-2 bg-bg-secondary border border-border rounded-lg shadow-xl max-h-80 overflow-y-auto"
 			style="z-index: var(--z-dropdown);"
 		>
-			{#each options as option}
+			{#each options as option (option.value)}
 				<button
 					type="button"
 					onclick={() => selectOption(option)}

@@ -6,7 +6,7 @@ Displays a single file item in the scan modal with checkbox, preview, and warnin
 	import { Checkbox } from '$lib/components/ui';
 	import { Key, AlertCircle } from 'lucide-svelte';
 
-	let { file, selected = false, previewType = null, hasWarning = false, onToggle } = $props();
+	const { file, selected = false, previewType = null, hasWarning = false, onToggle } = $props();
 
 	function formatFileSize(bytes) {
 		if (bytes === 0) return '0 B';

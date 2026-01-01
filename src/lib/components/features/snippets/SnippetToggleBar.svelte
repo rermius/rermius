@@ -1,7 +1,7 @@
 <script>
 	import { PanelRightOpen } from 'lucide-svelte';
 
-	let { onexpand = () => {} } = $props();
+	const { onexpand = () => {} } = $props();
 </script>
 
 <div class="flex flex-col shrink-0 mr-2">

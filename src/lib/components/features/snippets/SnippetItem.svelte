@@ -6,7 +6,7 @@
 		SNIPPET_COMMAND_PREVIEW_LENGTH
 	} from '$lib/constants/snippet-ui.js';
 
-	let { snippet, onRun, onPaste } = $props();
+	const { snippet, onRun, onPaste } = $props();
 
 	let isHovered = $state(false);
 

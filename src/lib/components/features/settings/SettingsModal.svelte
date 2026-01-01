@@ -30,12 +30,12 @@
 				<h2 class="text-lg font-semibold text-text-primary">Settings</h2>
 			</div>
 
-			<nav class="flex-1 p-2">
-				{#each panels as panel}
-					{@const IconComponent = panel.icon}
-					<button
-						type="button"
-						onclick={() => selectPanel(panel.id)}
+		<nav class="flex-1 p-2">
+			{#each panels as panel (panel.id)}
+				{@const IconComponent = panel.icon}
+				<button
+					type="button"
+					onclick={() => selectPanel(panel.id)}
 						class="w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors
                    hover:bg-bg-hover"
 						class:bg-bg-hover={activePanel === panel.id}
