@@ -32,7 +32,7 @@
 	} = $props();
 
 	// Display files without ".." parent navigation
-	let displayFiles = $derived(files);
+	const displayFiles = $derived(files);
 
 	function handleSelect(file, event) {
 		if (file.name === '..') {
@@ -174,18 +174,24 @@
 
 	function handleContextMenuItemClick(item) {
 		if (item.disabled) return;
+
+		// Save state before clearing
+		const wasEmptyContextMenu = isEmptyContextMenu;
+		const fileSnapshot = contextMenuFile ? $state.snapshot(contextMenuFile) : null;
+
+		// Close menu FIRST before any action (prevents re-render issues)
 		showContextMenu = false;
-
-		if (isEmptyContextMenu) {
-			handleEmptyAreaAction(item.id);
-		} else if (contextMenuFile) {
-			// Use snapshot to avoid proxy issues
-			const fileSnapshot = $state.snapshot(contextMenuFile);
-			handleFileAction(item.id, fileSnapshot);
-		}
-
 		isEmptyContextMenu = false;
 		contextMenuFile = null;
+
+		// Then process action (which might trigger re-render)
+		if (wasEmptyContextMenu) {
+			// Empty area actions (refresh, selectAll, newFile, newFolder, etc.)
+			handleEmptyAreaAction(item.id);
+		} else if (fileSnapshot) {
+			// File-specific actions
+			handleFileAction(item.id, fileSnapshot);
+		}
 	}
 
 	function getContextMenuItems() {
@@ -233,7 +239,7 @@
 
 	// Pagination handlers
 	let pageInput = $state('');
-	let showPagination = $derived(totalFiles > pageSize && files.length > 0);
+	const showPagination = $derived(totalFiles > pageSize && files.length > 0);
 
 	// Sync pageInput when currentPage changes
 	$effect(() => {
@@ -262,7 +268,7 @@
 	<!-- Scrollable file list -->
 	<ScrollArea class="flex-1">
 		<div
-			class="file-list bg-dark"
+			class="file-list bg-dark min-h-full pb-20"
 			onkeydown={handleKeyDown}
 			ondragover={handleDragOver}
 			ondrop={handleDrop}

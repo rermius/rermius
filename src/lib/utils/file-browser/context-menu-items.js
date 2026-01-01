@@ -3,8 +3,14 @@
  * Separated from components for reusability
  */
 import * as LucideIcons from 'lucide-svelte';
+import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
 
 const maxEditFileSize = 1024 * 3000; // 3MB
+
+// Helper to get shortcut from settings
+function getShortcut(actionName, defaultValue) {
+	return keyboardShortcutManager.getShortcut(actionName) || defaultValue;
+}
 
 /**
  * Generate file context menu items
@@ -129,13 +135,13 @@ export function getFileMenuItems(file, options = {}) {
 			id: 'copy',
 			icon: LucideIcons.Copy,
 			label: 'Copy',
-			shortcut: 'Ctrl+C'
+			shortcut: getShortcut('copyFile', 'Ctrl+Shift+C')
 		});
 		items.push({
 			id: 'cut',
 			icon: LucideIcons.Scissors,
 			label: 'Cut',
-			shortcut: 'Ctrl+X'
+			shortcut: getShortcut('cutFile', 'Ctrl+Shift+X')
 		});
 	}
 
@@ -144,7 +150,7 @@ export function getFileMenuItems(file, options = {}) {
 			id: 'paste',
 			icon: LucideIcons.Clipboard,
 			label: 'Paste',
-			shortcut: 'Ctrl+V',
+			shortcut: getShortcut('pasteFile', 'Ctrl+Shift+V'),
 			disabled: !canPaste
 		});
 	}
@@ -160,13 +166,13 @@ export function getFileMenuItems(file, options = {}) {
 			id: 'rename',
 			icon: LucideIcons.Edit3,
 			label: 'Rename',
-			shortcut: 'F2'
+			shortcut: getShortcut('renameFile', 'F2')
 		});
 		items.push({
 			id: 'delete',
 			icon: LucideIcons.Trash2,
 			label: 'Delete',
-			shortcut: 'Delete',
+			shortcut: getShortcut('deleteFile', 'Delete'),
 			danger: true
 		});
 	}
@@ -179,14 +185,14 @@ export function getFileMenuItems(file, options = {}) {
 		id: 'selectAll',
 		icon: LucideIcons.CheckSquare,
 		label: 'Select All',
-		shortcut: 'Ctrl+A'
+		shortcut: getShortcut('selectAllFiles', 'Ctrl+Shift+A')
 	});
 
 	items.push({
 		id: 'refresh',
 		icon: LucideIcons.RefreshCw,
 		label: 'Refresh',
-		shortcut: 'F5'
+		shortcut: getShortcut('refreshFileList', 'F5')
 	});
 
 	// Separator before permissions/info
@@ -256,14 +262,14 @@ export function getEmptyAreaMenuItems(options = {}) {
 		id: 'selectAll',
 		icon: LucideIcons.CheckSquare,
 		label: 'Select All',
-		shortcut: 'Ctrl+A'
+		shortcut: getShortcut('selectAllFiles', 'Ctrl+Shift+A')
 	});
 
 	items.push({
 		id: 'refresh',
 		icon: LucideIcons.RefreshCw,
 		label: 'Refresh',
-		shortcut: 'F5'
+		shortcut: getShortcut('refreshFileList', 'F5')
 	});
 
 	return items;

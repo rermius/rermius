@@ -10,7 +10,7 @@
 		onSelect,
 		minWidth = '180px',
 		maxWidth = '240px',
-		zIndex = 1060
+		zIndex = 'var(--z-popover)'
 	} = $props();
 
 	let menuElement = $state(null);

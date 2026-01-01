@@ -60,11 +60,12 @@
 <div
 	bind:this={submenuElement}
 	role="menu"
-	class="fixed bg-bg-secondary border border-border rounded-lg shadow-xl py-1 overflow-hidden z-[1070]"
+	class="fixed bg-bg-secondary border border-border rounded-lg shadow-xl py-1 overflow-hidden"
 	style:left="{position.x}px"
 	style:top="{position.y}px"
 	style:min-width="160px"
 	style:max-width="220px"
+	style:z-index="var(--z-popover)"
 	style:opacity={isPositioned ? '1' : '0'}
 >
 	{#each visibleItems as item (item.id)}

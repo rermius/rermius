@@ -1,8 +1,15 @@
 <script>
 	import * as LucideIcons from 'lucide-svelte';
 	import { adjustDropdownPosition } from '$lib/utils/dropdown-position';
+	import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
+	import { onMount } from 'svelte';
 
 	const { type = 'local', canPaste = false, onAction, children } = $props();
+
+	// Helper to get shortcut with fallback to defaults
+	function getShortcutDisplay(actionName, defaultValue) {
+		return keyboardShortcutManager.getShortcut(actionName) || defaultValue;
+	}
 
 	function getMenuItems() {
 		const items = [];
@@ -42,7 +49,7 @@
 			id: 'selectAll',
 			icon: LucideIcons.CheckSquare,
 			label: 'Select All',
-			shortcut: 'Ctrl+A'
+			shortcut: getShortcutDisplay('selectAllFiles', 'Ctrl+Shift+A')
 		});
 
 		// Refresh
@@ -50,17 +57,18 @@
 			id: 'refresh',
 			icon: LucideIcons.RefreshCw,
 			label: 'Refresh',
-			shortcut: 'F5'
+			shortcut: getShortcutDisplay('refreshFileList', 'F5')
 		});
 
 		return items;
 	}
 
-	const menuItems = $derived(getMenuItems());
-
+	// Generate menu items fresh when menu opens (not $derived) to get latest shortcuts
+	let menuItems = $state([]);
 	let showMenu = $state(false);
 	let menuPosition = $state({ x: 0, y: 0 });
 	let menuRef = $state(null);
+	let portalContainer = $state(null);
 
 	function handleContextMenu(e) {
 		// Don't show empty area menu if clicking on a file row
@@ -80,6 +88,9 @@
 		const x = e.clientX;
 		const y = e.clientY;
 		menuPosition = { x, y };
+
+		// Generate menu items NOW to get current shortcuts
+		menuItems = getMenuItems();
 		showMenu = true;
 
 		// Adjust position after menu is rendered
@@ -89,6 +100,38 @@
 			}
 		});
 	}
+
+	// Portal pattern - mount menu to document.body to escape all stacking contexts
+	onMount(() => {
+		portalContainer = document.createElement('div');
+		portalContainer.className = 'empty-area-context-menu-portal';
+		document.body.appendChild(portalContainer);
+
+		return () => {
+			if (portalContainer && document.body.contains(portalContainer)) {
+				document.body.removeChild(portalContainer);
+			}
+		};
+	});
+
+	// Mount/unmount menu in portal
+	$effect(() => {
+		if (!portalContainer || !showMenu || !menuRef) return;
+
+		// Find the context-menu-container and move it to portal
+		const container = menuRef.closest('.context-menu-container');
+		if (container && container.parentElement !== portalContainer) {
+			const originalParent = container.parentElement;
+			portalContainer.appendChild(container);
+
+			// Cleanup: move back when menu closes
+			return () => {
+				if (container && portalContainer.contains(container) && originalParent) {
+					originalParent.appendChild(container);
+				}
+			};
+		}
+	});
 
 	function handleItemClick(item) {
 		if (item.disabled) {
@@ -110,12 +153,16 @@
 	style="width: 100%; height: 100%;"
 >
 	{@render children()}
+</div>
 
-	{#if showMenu}
+<!-- Portal container - will be moved to document.body -->
+{#if showMenu}
+	<div class="context-menu-container">
 		<!-- Backdrop -->
 		<button
 			type="button"
-			class="fixed inset-0 z-40 bg-transparent border-none p-0 cursor-default"
+			class="fixed inset-0 bg-transparent border-none p-0 cursor-default"
+			style="z-index: var(--z-modal-backdrop);"
 			onclick={handleClose}
 			oncontextmenu={e => {
 				e.preventDefault();
@@ -127,8 +174,8 @@
 		<!-- Menu -->
 		<div
 			bind:this={menuRef}
-			class="fixed z-50 bg-(--color-bg-tertiary) border border-border rounded-lg shadow-xl py-1 min-w-[180px]"
-			style="left: {menuPosition.x}px; top: {menuPosition.y}px;"
+			class="fixed bg-(--color-bg-tertiary) border border-border rounded-lg shadow-xl py-1 min-w-[180px]"
+			style="left: {menuPosition.x}px; top: {menuPosition.y}px; z-index: var(--z-popover);"
 			oncontextmenu={e => e.preventDefault()}
 			role="menu"
 			tabindex="-1"
@@ -153,5 +200,5 @@
 				{/if}
 			{/each}
 		</div>
-	{/if}
-</div>
+	</div>
+{/if}

@@ -282,7 +282,7 @@
 									icon="key-filled"
 									showEdit={true}
 									variant={layoutMode === 'list' ? 'list' : 'card'}
-									isActive={editingKey?.id === key.id}
+									isActive={editingKey?.id === key.id || contextMenuTarget?.id === key.id}
 									onedit={() => handleEditKey(key)}
 									oncontextmenu={(pos) => handleKeyContextMenu(key, pos)}
 								/>

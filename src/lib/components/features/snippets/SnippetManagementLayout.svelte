@@ -223,6 +223,7 @@
 				<div class="p-6">
 					<SnippetPageList
 						{editingSnippet}
+						{contextMenuTarget}
 						{searchQuery}
 						{selectedLabels}
 						{layoutMode}

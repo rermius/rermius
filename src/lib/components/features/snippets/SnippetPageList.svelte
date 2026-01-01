@@ -4,6 +4,7 @@
 
 	const {
 		editingSnippet = null,
+		contextMenuTarget = null,
 		searchQuery = '',
 		selectedLabels = [],
 		onadd,
@@ -84,7 +85,7 @@
 				icon="code-filled"
 				showEdit={true}
 				variant={layoutMode === 'list' ? 'list' : 'card'}
-				isActive={editingSnippet?.id === snippet.id}
+				isActive={editingSnippet?.id === snippet.id || contextMenuTarget?.id === snippet.id}
 				onedit={() => onedit(snippet)}
 				oncontextmenu={(pos) => oncontextmenu?.(snippet, pos)}
 			>

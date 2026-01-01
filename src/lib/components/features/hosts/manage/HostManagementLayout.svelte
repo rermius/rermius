@@ -272,7 +272,7 @@
 										variant={layoutMode === 'list' ? 'list' : 'card'}
 										showEdit={true}
 										showSftpIcon={host.connectionType === 'ssh' || !host.connectionType}
-										isActive={editingHost?.id === host.id}
+										isActive={editingHost?.id === host.id || contextMenuTarget?.id === host.id}
 										onedit={() => handleEditHost(host)}
 										ondoubleclick={() => handleHostConnect(host)}
 										onsftpclick={() => handleSftpClick(host)}
