@@ -33,7 +33,7 @@
 
 	// Setup save queue - Single Save Queue Pattern
 	const saveQueue = useSaveQueue(
-		async (data) => {
+		async data => {
 			// Check if we have an entity to update (from prop or created)
 			if (effectiveEditingKey) {
 				return await updateKey(effectiveEditingKey.id, data);
@@ -42,7 +42,7 @@
 			}
 		},
 		{
-			onAutoSave: (result) => {
+			onAutoSave: result => {
 				// NEW: If this was a create (no editing entity), switch to edit mode
 				if (!effectiveEditingKey) {
 					createdKey = result; // Store created entity
@@ -50,7 +50,7 @@
 					dispatch('import', result); // Notify parent about created key
 				}
 			},
-			onManualSave: (result) => {
+			onManualSave: result => {
 				// Manual save success: dispatch event and reset form
 				dispatch('import', result);
 
@@ -69,7 +69,7 @@
 				isEditMode = false; // Back to create mode
 				saveQueue.reset();
 			},
-			onError: (error) => {
+			onError: error => {
 				console.error('Save failed:', error);
 				if (error.message.startsWith('A key with label')) {
 					labelError = error.message;

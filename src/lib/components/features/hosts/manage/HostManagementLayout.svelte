@@ -276,7 +276,7 @@
 										onedit={() => handleEditHost(host)}
 										ondoubleclick={() => handleHostConnect(host)}
 										onsftpclick={() => handleSftpClick(host)}
-										oncontextmenu={(pos) => handleHostContextMenu(host, pos)}
+										oncontextmenu={pos => handleHostContextMenu(host, pos)}
 									/>
 								</div>
 							{/each}
@@ -297,7 +297,12 @@
 				onmenu={handleRemove}
 			/>
 		{:else if panelType === 'group'}
-			<GroupPanel {editingGroup} onsave={handleGroupSave} onclose={handleClosePanel} onmenu={handleRemove} />
+			<GroupPanel
+				{editingGroup}
+				onsave={handleGroupSave}
+				onclose={handleClosePanel}
+				onmenu={handleRemove}
+			/>
 		{/if}
 	{/snippet}
 </ContentWithPanel>

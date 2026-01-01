@@ -82,7 +82,7 @@ function createFileClipboardStore() {
 		 */
 		hasFiles: () => {
 			let hasFiles = false;
-			const unsubscribe = subscribe((state) => {
+			const unsubscribe = subscribe(state => {
 				hasFiles = state.files.length > 0;
 			});
 			unsubscribe();

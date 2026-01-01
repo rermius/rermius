@@ -19,7 +19,10 @@
 	}
 </script>
 
-<div class="fixed {positionClasses[position]} flex flex-col gap-2 pointer-events-none" style="z-index: var(--z-toast);">
+<div
+	class="fixed {positionClasses[position]} flex flex-col gap-2 pointer-events-none"
+	style="z-index: var(--z-toast);"
+>
 	{#each $toastStore as toast (toast.id)}
 		<div class="pointer-events-auto">
 			<Toast

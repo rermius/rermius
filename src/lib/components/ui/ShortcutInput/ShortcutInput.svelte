@@ -12,7 +12,7 @@
 	let isCapturing = $state(false);
 	let containerElement = $state(null);
 
-	const keyParts = $derived(value ? value.split('+').map((k) => k.trim()) : []);
+	const keyParts = $derived(value ? value.split('+').map(k => k.trim()) : []);
 
 	function startCapture() {
 		if (disabled) return;

@@ -217,7 +217,9 @@ export async function loadSyncSettings(workspaceId = null) {
 		const loadedSettings = safeJsonParse(content);
 
 		if (!loadedSettings) {
-			console.warn('[loadSyncSettings] File contains invalid JSON, backing up and resetting to defaults');
+			console.warn(
+				'[loadSyncSettings] File contains invalid JSON, backing up and resetting to defaults'
+			);
 			// Backup corrupted file
 			try {
 				const backupPath = filePath + '.corrupted.' + Date.now();

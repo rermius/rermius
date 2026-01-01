@@ -9,7 +9,12 @@
 		loadSnippets,
 		loadSettings
 	} from '$lib/services';
-	import { initAutoSync, stopAutoSync, markLoadingStart, markLoadingComplete } from '$lib/services/auto-sync.js';
+	import {
+		initAutoSync,
+		stopAutoSync,
+		markLoadingStart,
+		markLoadingComplete
+	} from '$lib/services/auto-sync.js';
 	import { initFileTransferProgressListener } from '$lib/services/file-transfer-events';
 	import { themeStore, workspaceStore, tabsStore } from '$lib/stores';
 	import {
@@ -236,7 +241,7 @@
 		});
 
 		// Global keydown listener
-		const handleGlobalKeyDown = (event) => {
+		const handleGlobalKeyDown = event => {
 			keyboardShortcutManager.handleKeyDown(event);
 		};
 

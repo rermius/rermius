@@ -5,7 +5,15 @@
 	import { deleteSnippet, duplicateSnippet, snippetsStore } from '$lib/services';
 	import { useToast } from '$lib/composables';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
-	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon, ScrollArea, ContextMenu } from '$lib/components/ui';
+	import {
+		Button,
+		SearchInput,
+		TagFilterIcon,
+		SortIcon,
+		LayoutIcon,
+		ScrollArea,
+		ContextMenu
+	} from '$lib/components/ui';
 	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
 	import { Play, ClipboardCopy, Pencil, Copy, Trash2 } from 'lucide-svelte';
 

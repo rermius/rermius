@@ -30,7 +30,9 @@
 		}
 	}
 
-	const currentOption = $derived(layoutOptions.find(o => o.value === layoutMode) || layoutOptions[0]);
+	const currentOption = $derived(
+		layoutOptions.find(o => o.value === layoutMode) || layoutOptions[0]
+	);
 	const CurrentIcon = $derived(currentOption.icon);
 </script>
 
@@ -65,7 +67,8 @@
 				<button
 					type="button"
 					onclick={() => selectLayout(option.value)}
-					class="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-hover transition-colors {layoutMode === option.value
+					class="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-left hover:bg-bg-hover transition-colors {layoutMode ===
+					option.value
 						? 'text-text-primary'
 						: 'text-text-secondary'}"
 				>

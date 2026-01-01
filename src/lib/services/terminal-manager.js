@@ -30,7 +30,7 @@ export async function createLocalTerminal(options = {}) {
 		shell: preferredShell
 	});
 
-	const terminalCount = get(tabsStore).tabs.filter((t) => t.type === 'terminal').length;
+	const terminalCount = get(tabsStore).tabs.filter(t => t.type === 'terminal').length;
 	const terminalTitle = title || `Terminal ${terminalCount + 1}`;
 	tabsStore.addTerminalTab(sessionId, terminalTitle, true);
 

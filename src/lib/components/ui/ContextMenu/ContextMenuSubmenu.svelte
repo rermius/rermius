@@ -1,12 +1,7 @@
 <script>
 	import ContextMenuItem from './ContextMenuItem.svelte';
 
-	const {
-		items = [],
-		parentElement = null,
-		onSelect,
-		onClose
-	} = $props();
+	const { items = [], parentElement = null, onSelect, onClose } = $props();
 
 	let submenuElement = $state(null);
 	let position = $state({ x: 0, y: 0 });
@@ -54,7 +49,7 @@
 	}
 
 	// Filter visible items
-	const visibleItems = $derived(items.filter((item) => item.visible !== false));
+	const visibleItems = $derived(items.filter(item => item.visible !== false));
 </script>
 
 <div

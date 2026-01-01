@@ -1,5 +1,12 @@
 <script>
-	import { ArrowDownAZ, ArrowUpZA, CalendarArrowDown, CalendarArrowUp, Check, ChevronDown } from 'lucide-svelte';
+	import {
+		ArrowDownAZ,
+		ArrowUpZA,
+		CalendarArrowDown,
+		CalendarArrowUp,
+		Check,
+		ChevronDown
+	} from 'lucide-svelte';
 
 	/**
 	 * @typedef {'a-z' | 'z-a' | 'newest' | 'oldest'} SortMode
@@ -71,7 +78,8 @@
 				<button
 					type="button"
 					onclick={() => selectSort(option.value)}
-					class="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs text-left hover:bg-bg-hover transition-colors {sortMode === option.value
+					class="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs text-left hover:bg-bg-hover transition-colors {sortMode ===
+					option.value
 						? 'text-text-primary'
 						: 'text-text-secondary'}"
 				>

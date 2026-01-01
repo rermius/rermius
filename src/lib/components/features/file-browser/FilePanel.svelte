@@ -443,141 +443,143 @@
 		loadFiles(currentPath);
 	}
 
-	async function handleAction(actionId) {
-		const selectedFiles = files.filter(f => selectedIds.includes(f.path));
+	// ============== Helper Functions (Extract complex logic) ==============
 
-		if (!fileService) {
-			console.warn('File service not available');
-			return;
-		}
-
-		// Block all actions during delete operation
-		if (deleting) {
-			return;
-		}
-
-		switch (actionId) {
-			case 'download':
-			case 'upload':
-				onTransferRequest?.(actionId, selectedFiles);
-				break;
-			case 'delete':
-				if (selectedFiles.length === 0) return;
-				filesToDelete = selectedFiles;
-				showDeleteConfirmModal = true;
-				break;
-			case 'new-folder':
-				const folderName = prompt('Enter folder name:');
-				if (!folderName) return;
-
-				try {
-					const newPath = `${currentPath}/${folderName}`.replace(/\/+/g, '/');
-					await fileService.createDirectory(newPath, type === 'local');
-					// Add new folder to array instead of reloading
-					const newFolder = {
-						name: folderName,
-						path: newPath,
-						isDirectory: true,
-						size: 0,
-						modified: new Date().toISOString(),
-						permissions: type !== 'local' ? 'drwxr-xr-x' : undefined
-					};
-					files = [...files, newFolder];
-					// Select the new folder
-					selectedIds = [newPath];
-				} catch (e) {
-					const errorMsg = e?.message || e?.toString() || String(e) || 'Unknown error';
-					error = `Failed to create folder: ${errorMsg}`;
-				}
-				break;
+	async function createNewFile(fileName) {
+		try {
+			const newFile = await handleCreateFile(
+				fileName,
+				currentPath,
+				type,
+				sessionId,
+				fileService,
+				files
+			);
+			files = [...files, newFile];
+			selectedIds = [newFile.path];
+			if (inputNameModalRef) {
+				inputNameModalRef.closeModal();
+			}
+		} catch (e) {
+			if (inputNameModalRef) {
+				inputNameModalRef.setError(e.message || `Failed to create file: ${e.message}`);
+			}
 		}
 	}
+
+	async function createNewFolder(folderName) {
+		try {
+			const newFolder = await handleCreateFolder(
+				folderName,
+				currentPath,
+				type,
+				fileService,
+				sessionId,
+				files
+			);
+			files = [...files, newFolder];
+			selectedIds = [newFolder.path];
+			if (inputNameModalRef) {
+				inputNameModalRef.closeModal();
+			}
+		} catch (e) {
+			if (inputNameModalRef) {
+				inputNameModalRef.setError(e.message || `Failed to create folder: ${e.message}`);
+			}
+		}
+	}
+
+	async function handleCopyOrCut(actionId, targetFiles) {
+		try {
+			// Write paths to system clipboard (for compatibility)
+			const paths = targetFiles.map(f => f.path).join('\n');
+			await navigator.clipboard.writeText(paths);
+
+			// Prepare clipboard items for store
+			const clipboardFiles = targetFiles.map(f => ({
+				path: f.path,
+				name: f.name,
+				isDirectory: f.isDirectory
+			}));
+
+			// Write to clipboard store
+			if (actionId === 'cut') {
+				fileClipboardStore.cut(clipboardFiles, type, sessionId);
+			} else {
+				fileClipboardStore.copy(clipboardFiles, type, sessionId);
+			}
+		} catch (e) {
+			console.error('Failed to copy/cut:', e);
+		}
+	}
+
+	// ============== Main Handler (Consolidated, No Duplicates) ==============
 
 	async function handleFileAction(actionId, file) {
 		// Block all actions during delete operation
 		if (deleting) {
 			return;
 		}
-		// Handle empty area actions (file is null)
-		if (!file) {
-			switch (actionId) {
-				case 'newFile':
-					inputNameModalType = 'file';
-					inputNameModalCallback = async fileName => {
-						try {
-							// handleCreateFile already checks for duplicates and throws error if exists
-							const newFile = await handleCreateFile(
-								fileName,
-								currentPath,
-								type,
-								sessionId,
-								fileService,
-								files
-							);
-							// If no error thrown, file was created successfully - add to array
-							files = [...files, newFile];
-							selectedIds = [newFile.path];
-							// Close modal on success
-							if (inputNameModalRef) {
-								inputNameModalRef.closeModal();
-							}
-						} catch (e) {
-							// Show error in modal (includes duplicate check errors)
-							if (inputNameModalRef) {
-								inputNameModalRef.setError(e.message || `Failed to create file: ${e.message}`);
-							}
-						}
-					};
-					showInputNameModal = true;
-					return;
-				case 'newFolder':
-					inputNameModalType = 'folder';
-					inputNameModalCallback = async folderName => {
-						try {
-							// handleCreateFolder already checks for duplicates and throws error if exists
-							const newFolder = await handleCreateFolder(
-								folderName,
-								currentPath,
-								type,
-								fileService,
-								sessionId,
-								files
-							);
-							// If no error thrown, folder was created successfully - add to array
-							files = [...files, newFolder];
-							selectedIds = [newFolder.path];
-							// Close modal on success
-							if (inputNameModalRef) {
-								inputNameModalRef.closeModal();
-							}
-						} catch (e) {
-							// Show error in modal (includes duplicate check errors)
-							if (inputNameModalRef) {
-								inputNameModalRef.setError(e.message || `Failed to create folder: ${e.message}`);
-							}
-						}
-					};
-					showInputNameModal = true;
-					return;
-				case 'paste':
-					await handlePaste();
-					return;
-				case 'selectAll':
-					selectedIds = files.filter(f => f.name !== '..').map(f => f.path);
-					return;
-				case 'refresh':
-					handleRefresh();
-					return;
-				default:
-					return;
-			}
-		}
 
+		// Get selected files and determine target files
 		const selectedFiles = files.filter(f => selectedIds.includes(f.path));
 		const targetFiles =
-			selectedFiles.length > 1 && selectedFiles.some(f => f.path === file.path)
+			file && selectedFiles.length > 1 && selectedFiles.some(f => f.path === file.path)
 				? selectedFiles
-				: [file];
+				: file
+					? [file]
+					: selectedFiles;
+
+		// === Universal Actions (work for both empty area and files) ===
+
+		if (actionId === 'paste') {
+			await handlePaste();
+			return;
+		}
+
+		if (actionId === 'refresh') {
+			handleRefresh();
+			return;
+		}
+
+		if (actionId === 'selectAll') {
+			selectedIds = files.filter(f => f.name !== '..').map(f => f.path);
+			return;
+		}
+
+		if (actionId === 'newFile') {
+			inputNameModalType = 'file';
+			inputNameModalCallback = createNewFile;
+			showInputNameModal = true;
+			return;
+		}
+
+		if (actionId === 'newFolder' || actionId === 'new-folder') {
+			inputNameModalType = 'folder';
+			inputNameModalCallback = createNewFolder;
+			showInputNameModal = true;
+			return;
+		}
+
+		if (actionId === 'delete') {
+			if (targetFiles.length === 0) return;
+			filesToDelete = targetFiles;
+			showDeleteConfirmModal = true;
+			return;
+		}
+
+		if (actionId === 'copy' || actionId === 'cut') {
+			await handleCopyOrCut(actionId, targetFiles);
+			return;
+		}
+
+		// === File-Specific Actions (require a file) ===
+
+		if (!file) {
+			// Action requires a file but none provided
+			console.warn(`Action "${actionId}" requires a file but none was provided`);
+			return;
+		}
 
 		switch (actionId) {
 			case 'enter':
@@ -585,20 +587,29 @@
 					handleNavigate(file);
 				}
 				break;
+
 			case 'transfer':
 			case 'transferSelected':
 				onTransferRequest?.('transfer', targetFiles);
 				break;
+
 			case 'upload':
 				// Explicit upload from local panel context menu
 				onTransferRequest?.('upload', targetFiles);
 				break;
+
+			case 'download':
+				onTransferRequest?.('download', targetFiles);
+				break;
+
 			case 'zipTransfer':
 				onTransferRequest?.('zipTransfer', targetFiles);
 				break;
+
 			case 'gotoTerminal':
-				// TODO: Open terminal at this path
+				onTransferRequest?.('gotoTerminal', file);
 				break;
+
 			case 'open':
 				try {
 					await handleOpenFile(file, type, sessionId);
@@ -608,30 +619,28 @@
 					error = `Failed to open file: ${errorMsg}`;
 				}
 				break;
+
 			case 'openWith':
 				try {
 					await handleOpenWithFile(file, type, sessionId);
 				} catch (e) {
-					console.error('[FilePanel] Failed to open file with app:', e);
+					console.error('[FilePanel] Failed to open with:', e);
 					const errorMsg = e?.message || e?.toString() || String(e) || 'Unknown error';
-					error = `Failed to open file: ${errorMsg}`;
+					error = `Failed to open with: ${errorMsg}`;
 				}
 				break;
+
 			case 'showInExplorer':
-				if (type === 'local') {
-					try {
-						const { showInFileManager } = await import('$lib/services/file-browser');
-						await showInFileManager(file.path);
-					} catch (e) {
-						console.error('Failed to show in explorer:', e);
-					}
+				try {
+					const { showInFileManager } = await import('$lib/services/file-browser');
+					await showInFileManager(file.path);
+				} catch (e) {
+					console.error('[FilePanel] Failed to show in explorer:', e);
 				}
 				break;
+
 			case 'rename':
-				// Only perform rename if newName is provided (from FileRow edit mode)
-				// If no newName, trigger edit mode in FileRow
 				if (file.newName) {
-					error = null;
 					try {
 						const result = await handleRenameFile(
 							file,
@@ -641,34 +650,29 @@
 							renameInProgress
 						);
 						if (result) {
-							// Reload directory to ensure consistency and get updated file info
 							await loadFiles(currentPath);
-							// Select the renamed file
 							selectedIds = [result.newPath];
 						}
 					} catch (e) {
 						console.error('[FilePanel] Failed to rename:', e);
 						const errorMsg = e?.message || e?.toString() || String(e) || 'Unknown error';
 						error = `Failed to rename: ${errorMsg}`;
-						// Reload directory on error to ensure UI is in sync
 						await loadFiles(currentPath);
 					}
 				} else {
-					// No newName - trigger edit mode in FileRow (from context menu or F2)
+					// Trigger edit mode in FileRow
 					if (file.path && file.name !== '..') {
-						// Set fileToRename to trigger edit mode in FileRow
 						fileToRename = file.path;
-						// Also select the file if not already selected
 						if (!selectedIds.includes(file.path)) {
 							selectedIds = [file.path];
 						}
-						// Reset after a tick to allow FileRow to react
 						setTimeout(() => {
 							fileToRename = null;
 						}, 0);
 					}
 				}
 				break;
+
 			case 'info':
 				// Show properties modal
 				showPropertiesModal = true;
@@ -676,7 +680,6 @@
 				loadingProperties = true;
 				propertiesData = null;
 
-				// Load properties data
 				(async () => {
 					try {
 						if (type === 'local') {
@@ -695,108 +698,11 @@
 					}
 				})();
 				break;
+
 			case 'edit':
 				// TODO: Open file editor
 				break;
-			case 'delete':
-				if (targetFiles.length === 0) return;
-				filesToDelete = targetFiles;
-				showDeleteConfirmModal = true;
-				break;
-			case 'refresh':
-				handleRefresh();
-				break;
-			case 'selectAll':
-				selectedIds = files.filter(f => f.name !== '..').map(f => f.path);
-				break;
-			case 'newFile':
-				inputNameModalType = 'file';
-				inputNameModalCallback = async fileName => {
-					try {
-						// handleCreateFile already checks for duplicates and throws error if exists
-						const newFile = await handleCreateFile(
-							fileName,
-							currentPath,
-							type,
-							sessionId,
-							fileService,
-							files
-						);
-						// If no error thrown, file was created successfully - add to array
-						files = [...files, newFile];
-						selectedIds = [newFile.path];
-						// Close modal on success
-						if (inputNameModalRef) {
-							inputNameModalRef.closeModal();
-						}
-					} catch (e) {
-						// Show error in modal (includes duplicate check errors)
-						if (inputNameModalRef) {
-							inputNameModalRef.setError(e.message || `Failed to create file: ${e.message}`);
-						}
-					}
-				};
-				showInputNameModal = true;
-				break;
-			case 'newFolder':
-				inputNameModalType = 'folder';
-				inputNameModalCallback = async folderName => {
-					try {
-						// handleCreateFolder already checks for duplicates and throws error if exists
-						const newFolder = await handleCreateFolder(
-							folderName,
-							currentPath,
-							type,
-							fileService,
-							sessionId,
-							files
-						);
-						// If no error thrown, folder was created successfully - add to array
-						files = [...files, newFolder];
-						selectedIds = [newFolder.path];
-						// Close modal on success
-						if (inputNameModalRef) {
-							inputNameModalRef.closeModal();
-						}
-					} catch (e) {
-						// Show error in modal (includes duplicate check errors)
-						if (inputNameModalRef) {
-							inputNameModalRef.setError(e.message || `Failed to create folder: ${e.message}`);
-						}
-					}
-				};
-				showInputNameModal = true;
-				break;
-			case 'copy':
-			case 'cut':
-				// Copy/cut files to clipboard
-				try {
-					console.log(`[COPY/CUT] Starting ${actionId} operation`, targetFiles);
-					// Write paths to system clipboard (for compatibility)
-					const paths = targetFiles.map(f => f.path).join('\n');
-					await navigator.clipboard.writeText(paths);
-					// Prepare clipboard items for store
-					const clipboardFiles = targetFiles.map(f => ({
-						path: f.path,
-						name: f.name,
-						isDirectory: f.isDirectory
-					}));
 
-					// Write to clipboard store
-					if (actionId === 'cut') {
-						fileClipboardStore.cut(clipboardFiles, type, sessionId);
-					} else {
-						fileClipboardStore.copy(clipboardFiles, type, sessionId);
-					}
-					console.log("[COPY/CUT] ✅ Wrote to clipboard store, operation:", actionId);
-				} catch (e) {
-					console.error('Failed to copy/cut:', e);
-				}
-				break;
-			case 'paste':
-				console.log('[PASTE] ========== Starting paste operation ==========');
-				await handlePaste();
-				break;
 			case 'copyPath':
 				try {
 					await navigator.clipboard.writeText(file.path);
@@ -804,6 +710,7 @@
 					console.error('Failed to copy path:', e);
 				}
 				break;
+
 			case 'permissions':
 				// Show permissions modal (only for remote files with permissions)
 				if (type !== 'local' && sessionId && file.permissions) {
@@ -811,7 +718,9 @@
 					permissionsFile = file;
 				}
 				break;
+
 			default:
+				console.warn(`Unknown action: ${actionId}`);
 		}
 	}
 
@@ -839,7 +748,6 @@
 				onTransferRequest?.('transfer', [fromFile]);
 			} else {
 				// Same-pane move (future)
-				console.log('Same-pane move not implemented yet');
 			}
 		} catch (err) {
 			console.error('Failed to handle drop:', err);
@@ -941,12 +849,9 @@
 	// ============== Paste Implementation ==============
 
 	async function handlePaste() {
-		console.log('[PASTE] ========== Starting paste operation ==========');
 		const clipboard = $state.snapshot($fileClipboardStore);
-		console.log('[PASTE] Clipboard state:', clipboard);
 
 		if (!clipboard.files || clipboard.files.length === 0) {
-			console.log('[PASTE] ❌ No files in clipboard');
 			return;
 		}
 
@@ -956,32 +861,28 @@
 		const sourceSessionId = clipboard.sourceSessionId;
 		const destSessionId = sessionId;
 
-		console.log('[PASTE] Operation details:', {
-			isCut,
-			sourceIsLocal,
-			destIsLocal,
-			sourceSessionId,
-			destSessionId,
-			currentPath,
-			fileCount: clipboard.files.length
-		});
-
 		const successfulFiles = [];
 		let successCount = 0;
 
 		try {
 			for (const clipboardFile of clipboard.files) {
-				console.log(`[PASTE] Processing file: ${clipboardFile.name}`, clipboardFile);
 				try {
 					const opType = determineOperationType(sourceIsLocal, destIsLocal, isCut);
-					console.log(`[PASTE] Operation type: ${opType}`);
 
-					const destPath = await generateUniqueDestPath(clipboardFile.name, currentPath, destIsLocal, destSessionId);
-					console.log(`[PASTE] Destination path: ${destPath}`);
+					const destPath = await generateUniqueDestPath(
+						clipboardFile.name,
+						currentPath,
+						destIsLocal,
+						destSessionId
+					);
 
-					await executePasteOperation(opType, clipboardFile, destPath, sourceSessionId, destSessionId);
-					console.log(`[PASTE] ✅ Successfully pasted ${clipboardFile.name}`);
-
+					await executePasteOperation(
+						opType,
+						clipboardFile,
+						destPath,
+						sourceSessionId,
+						destSessionId
+					);
 					successfulFiles.push(clipboardFile);
 					successCount++;
 				} catch (e) {
@@ -989,18 +890,12 @@
 				}
 			}
 
-			console.log(`[PASTE] Paste complete: ${successCount} succeeded, ${clipboard.files.length - successCount} failed`);
-
 			if (isCut && successfulFiles.length > 0) {
-				console.log('[PASTE] Deleting source files (cut operation)...');
 				await deleteSourceFiles(successfulFiles, sourceIsLocal, sourceSessionId);
 				fileClipboardStore.clear();
-				console.log('[PASTE] ✅ Source files deleted, clipboard cleared');
 			}
 
-			console.log('[PASTE] Refreshing file list...');
 			await loadFiles(currentPath);
-			console.log('[PASTE] ========== Paste operation complete ==========');
 		} catch (e) {
 			console.error('[PASTE] ❌ Paste operation failed:', e);
 			error = `Paste failed: ${e.message || e}`;
@@ -1015,7 +910,10 @@
 	}
 
 	async function generateUniqueDestPath(fileName, targetDir, isLocal, sessionIdForRemote) {
-		let basePath = targetDir.endsWith('/') || targetDir.endsWith('\\') ? `${targetDir}${fileName}` : `${targetDir}/${fileName}`;
+		const basePath =
+			targetDir.endsWith('/') || targetDir.endsWith('\\')
+				? `${targetDir}${fileName}`
+				: `${targetDir}/${fileName}`;
 		let destPath = basePath;
 		let counter = 1;
 
@@ -1039,42 +937,28 @@
 
 	async function executePasteOperation(opType, file, destPath, sourceSessionId, destSessionId) {
 		const transferId = crypto.randomUUID();
-		console.log(`[PASTE] Executing ${opType}:`, {
-			sourcePath: file.path,
-			destPath,
-			sourceSessionId,
-			destSessionId,
-			transferId
-		});
 
 		try {
 			switch (opType) {
 				case 'copy-local':
-					console.log('[PASTE] Calling copyLocalPath...');
 					await copyLocalPath(file.path, destPath);
 					break;
 				case 'move-local':
-					console.log('[PASTE] Calling moveLocalPath...');
 					await moveLocalPath(file.path, destPath);
 					break;
 				case 'copy-remote':
-					console.log('[PASTE] Calling copyRemotePath...');
 					await copyRemotePath(sourceSessionId, file.path, destPath);
 					break;
 				case 'move-remote':
-					console.log('[PASTE] Calling moveRemotePath...');
 					await moveRemotePath(sourceSessionId, file.path, destPath);
 					break;
 				case 'upload':
-					console.log('[PASTE] Calling uploadFile...');
 					await uploadFile(destSessionId, file.path, destPath, transferId);
 					break;
 				case 'download':
-					console.log('[PASTE] Calling downloadFile...');
 					await downloadFile(sourceSessionId, file.path, destPath, transferId);
 					break;
 			}
-			console.log(`[PASTE] ✅ ${opType} completed successfully`);
 		} catch (error) {
 			console.error(`[PASTE] ❌ ${opType} failed:`, error);
 			throw error;

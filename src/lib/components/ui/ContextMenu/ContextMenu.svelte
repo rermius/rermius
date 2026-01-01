@@ -55,7 +55,7 @@
 	// Click outside detection
 	$effect(() => {
 		if (open) {
-			const handleClickOutside = (event) => {
+			const handleClickOutside = event => {
 				if (menuElement && !menuElement.contains(event.target)) {
 					onClose?.();
 				}
@@ -124,7 +124,7 @@
 	}
 
 	// Filter visible items
-	const visibleItems = $derived(items.filter((item) => item.visible !== false));
+	const visibleItems = $derived(items.filter(item => item.visible !== false));
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -152,7 +152,7 @@
 					disabled={item.disabled}
 					submenu={item.submenu}
 					{onSelect}
-					onClose={onClose}
+					{onClose}
 					onclick={() => handleItemClick(item)}
 				/>
 			{/if}

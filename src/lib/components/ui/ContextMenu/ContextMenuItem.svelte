@@ -88,8 +88,7 @@
 		}, 150);
 	}
 
-	const baseStyles =
-		'flex items-center justify-between gap-2 px-3 py-2 text-sm transition-colors';
+	const baseStyles = 'flex items-center justify-between gap-2 px-3 py-2 text-sm transition-colors';
 	const variantStyles = {
 		default: disabled
 			? 'text-text-disabled cursor-not-allowed opacity-50'

@@ -10,11 +10,7 @@
 	import HistoryList from './HistoryList.svelte';
 	import SnippetPanel from './SnippetPanel.svelte';
 
-	let {
-		sessionId: propSessionId = null,
-		collapsed = false,
-		ontoggle = () => {}
-	} = $props();
+	let { sessionId: propSessionId = null, collapsed = false, ontoggle = () => {} } = $props();
 
 	let activeTab = $state(SNIPPET_TABS.CODE);
 	let showSnippetModal = $state(false);

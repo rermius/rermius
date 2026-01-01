@@ -25,10 +25,10 @@
 	// Initialize event listeners for global shortcuts
 	onMount(() => {
 		const handleNewTerminal = () => openNewTerminal();
-		const handleCloseTab = (e) => handleTabClose(e.detail);
+		const handleCloseTab = e => handleTabClose(e.detail);
 		const handleOpenSettings = () => openSettingsModal();
-		const handleToggleFileManager = (e) => {
-			const tab = tabs.find((t) => t.id === e.detail.tabId);
+		const handleToggleFileManager = e => {
+			const tab = tabs.find(t => t.id === e.detail.tabId);
 			if (tab) handleToggleFileManager(tab);
 		};
 

@@ -147,7 +147,7 @@ export function useXtermTerminal(config = {}) {
 			fitAddon.fit();
 
 			// Intercept keyboard events for app shortcuts (Ctrl+T, Ctrl+W, etc.)
-			terminal.attachCustomKeyEventHandler((event) => {
+			terminal.attachCustomKeyEventHandler(event => {
 				// Check if this is an app shortcut using dynamic shortcuts from settings
 				const isAppShortcut = keyboardShortcutManager.isAppShortcut(event);
 

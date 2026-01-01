@@ -57,7 +57,7 @@ export function useSaveQueue(saveFn, options = {}) {
 		}
 
 		// Auto-save: debounce
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			debounceTimer = setTimeout(async () => {
 				const result = await executeSave(data, dataStr, false);
 				resolve(result);

@@ -87,19 +87,17 @@ class KeyboardShortcutManager {
 		// Allow basic editing shortcuts in input/textarea elements
 		const target = event.target;
 		const isEditableElement =
-			target.tagName === 'INPUT' ||
-			target.tagName === 'TEXTAREA' ||
-			target.isContentEditable;
+			target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
 		// Basic editing shortcuts that should always work in editable elements
 		const basicEditingShortcuts = [
-			'Ctrl+C',  // Copy
-			'Ctrl+V',  // Paste
-			'Ctrl+X',  // Cut
-			'Ctrl+A',  // Select All
-			'Ctrl+Z',  // Undo
-			'Ctrl+Y',  // Redo
-			'Ctrl+Shift+Z'  // Redo (alternative)
+			'Ctrl+C', // Copy
+			'Ctrl+V', // Paste
+			'Ctrl+X', // Cut
+			'Ctrl+A', // Select All
+			'Ctrl+Z', // Undo
+			'Ctrl+Y', // Redo
+			'Ctrl+Shift+Z' // Redo (alternative)
 		];
 
 		// Always allow basic editing shortcuts in editable elements
@@ -149,7 +147,8 @@ class KeyboardShortcutManager {
 		const key = event.key;
 		if (key === 'Tab') parts.push('Tab');
 		else if (key === 'Delete') parts.push('Delete');
-		else if (key.startsWith('F') && key.length <= 3) parts.push(key); // F1-F12
+		else if (key.startsWith('F') && key.length <= 3)
+			parts.push(key); // F1-F12
 		else if (key.length === 1) parts.push(key.toUpperCase());
 
 		return parts.join('+');

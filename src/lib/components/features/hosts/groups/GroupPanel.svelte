@@ -23,7 +23,7 @@
 
 	// Setup save queue - Single Save Queue Pattern
 	const saveQueue = useSaveQueue(
-		async (data) => {
+		async data => {
 			// Check if we have an entity to update (from prop or created)
 			if (effectiveEditingGroup) {
 				return await updateGroup(effectiveEditingGroup.id, data);
@@ -32,7 +32,7 @@
 			}
 		},
 		{
-			onAutoSave: (result) => {
+			onAutoSave: result => {
 				// NEW: If this was a create (no editing entity), switch to edit mode
 				if (!effectiveEditingGroup) {
 					createdGroup = result; // Store created entity
@@ -40,7 +40,7 @@
 					onsave?.(result); // Notify parent about created group
 				}
 			},
-			onManualSave: (result) => {
+			onManualSave: result => {
 				// Manual save success: trigger callback and reset form
 				onsave?.(result);
 
@@ -55,7 +55,7 @@
 				isEditMode = false; // Back to create mode
 				saveQueue.reset();
 			},
-			onError: (error) => {
+			onError: error => {
 				console.error('Save failed:', error);
 				if (error.message?.includes('already exists')) {
 					nameError = error.message;
@@ -63,7 +63,6 @@
 			}
 		}
 	);
-
 
 	// Load editing group data when editingGroup changes
 	$effect(() => {

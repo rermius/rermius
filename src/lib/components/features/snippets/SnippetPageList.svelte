@@ -87,7 +87,7 @@
 				variant={layoutMode === 'list' ? 'list' : 'card'}
 				isActive={editingSnippet?.id === snippet.id || contextMenuTarget?.id === snippet.id}
 				onedit={() => onedit(snippet)}
-				oncontextmenu={(pos) => oncontextmenu?.(snippet, pos)}
+				oncontextmenu={pos => oncontextmenu?.(snippet, pos)}
 			>
 				<!-- Tags display -->
 				{#if snippet.labels && snippet.labels.length > 0}

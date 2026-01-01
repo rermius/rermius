@@ -18,7 +18,7 @@
 
 	// Setup save queue - Single Save Queue Pattern
 	const saveQueue = useSaveQueue(
-		async (data) => {
+		async data => {
 			// Check if we have an entity to update (from prop or created)
 			if (effectiveEditingSnippet) {
 				return await updateSnippet(effectiveEditingSnippet.id, data);
@@ -27,7 +27,7 @@
 			}
 		},
 		{
-			onAutoSave: (result) => {
+			onAutoSave: result => {
 				// NEW: If this was a create (no editing entity), switch to edit mode
 				if (!effectiveEditingSnippet) {
 					createdSnippet = result; // Store created entity
@@ -35,7 +35,7 @@
 					onsave?.(result); // Notify parent about created snippet
 				}
 			},
-			onManualSave: (result) => {
+			onManualSave: result => {
 				// Manual save success: trigger callback and reset form
 				onsave?.(result);
 
@@ -50,7 +50,7 @@
 				isEditMode = false; // Back to create mode
 				saveQueue.reset();
 			},
-			onError: (error) => {
+			onError: error => {
 				console.error('Save failed:', error);
 				if (error.message?.includes('name') && error.message?.includes('already exists')) {
 					nameError = error.message;

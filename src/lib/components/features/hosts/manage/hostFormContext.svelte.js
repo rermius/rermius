@@ -116,7 +116,7 @@ export function createHostFormContext(options) {
 	// ========== SAVE QUEUE ==========
 	// Setup save queue - Single Save Queue Pattern
 	const saveQueue = useSaveQueue(
-		async (data) => {
+		async data => {
 			const groups = getGroups();
 			const effective = effectiveEditingHost();
 
@@ -138,7 +138,7 @@ export function createHostFormContext(options) {
 			return savedHost;
 		},
 		{
-			onAutoSave: (result) => {
+			onAutoSave: result => {
 				console.log('Auto-saved host:', result);
 
 				// NEW: If this was a create (no editing entity), switch to edit mode
@@ -149,12 +149,12 @@ export function createHostFormContext(options) {
 					console.log('✅ Auto-switched to edit mode with ID:', result.id);
 				}
 			},
-			onManualSave: (result) => {
+			onManualSave: result => {
 				// Manual save success: trigger callback
 				// Note: For host, we don't reset form (keep in edit mode)
 				onsave?.(result);
 			},
-			onError: (error) => {
+			onError: error => {
 				console.error('Save failed:', error);
 				if (error.message?.includes('label') && error.message?.includes('already exists')) {
 					errors = { ...errors, label: error.message };

@@ -180,58 +180,16 @@
 		bind:this={dropdownElement}
 		style="left: {menuPosition.x}px; top: {menuPosition.y}px; z-index: var(--z-menu); overflow: visible;"
 	>
-			<div class="py-1" style="overflow: visible;">
-				{#each menuItems as item, index (`${item.type}-${index}-${item.label || ''}`)}
-					{#if item.type === 'separator'}
-						<div class="h-px bg-border my-1"></div>
-					{:else if item.type === 'submenu'}
-						<div class="relative" style="z-index: var(--z-popover); overflow: visible;">
-							<button
-								type="button"
-								onclick={() => handleItemClick(item)}
-								onmouseenter={() => (activeSubmenu = item.label)}
-								class="w-full px-3 py-2 flex items-center gap-2 text-sm text-text-primary hover:bg-bg-hover transition-colors text-left"
-							>
-								{#if item.icon}
-									{@const Icon = item.icon}
-									<Icon size={16} class="text-text-secondary shrink-0" />
-								{/if}
-								<span class="flex-1">{item.label}</span>
-								<ChevronRight
-									size={14}
-									class="text-text-tertiary shrink-0 transition-transform {activeSubmenu ===
-									item.label
-										? 'rotate-90'
-										: ''}"
-								/>
-							</button>
-
-							<!-- Submenu -->
-							{#if activeSubmenu === item.label}
-								<div
-									class="absolute left-full top-0 ml-1 w-48 bg-bg-secondary border border-border rounded-lg shadow-xl py-1"
-									style="position: absolute; min-width: 12rem; z-index: var(--z-popover);"
-								>
-									{#each item.items as subItem (subItem.label)}
-										<button
-											type="button"
-											onclick={() => handleSubmenuItemClick(subItem, item.label)}
-											class="w-full px-3 py-2 flex items-center gap-2 text-sm text-text-primary hover:bg-bg-hover transition-colors text-left"
-										>
-											{#if subItem.icon}
-												{@const SubIcon = subItem.icon}
-												<SubIcon size={16} class="text-text-secondary shrink-0" />
-											{/if}
-											<span class="flex-1">{subItem.label}</span>
-										</button>
-									{/each}
-								</div>
-							{/if}
-						</div>
-					{:else}
+		<div class="py-1" style="overflow: visible;">
+			{#each menuItems as item, index (`${item.type}-${index}-${item.label || ''}`)}
+				{#if item.type === 'separator'}
+					<div class="h-px bg-border my-1"></div>
+				{:else if item.type === 'submenu'}
+					<div class="relative" style="z-index: var(--z-popover); overflow: visible;">
 						<button
 							type="button"
 							onclick={() => handleItemClick(item)}
+							onmouseenter={() => (activeSubmenu = item.label)}
 							class="w-full px-3 py-2 flex items-center gap-2 text-sm text-text-primary hover:bg-bg-hover transition-colors text-left"
 						>
 							{#if item.icon}
@@ -239,11 +197,53 @@
 								<Icon size={16} class="text-text-secondary shrink-0" />
 							{/if}
 							<span class="flex-1">{item.label}</span>
+							<ChevronRight
+								size={14}
+								class="text-text-tertiary shrink-0 transition-transform {activeSubmenu ===
+								item.label
+									? 'rotate-90'
+									: ''}"
+							/>
 						</button>
-					{/if}
-				{/each}
-			</div>
+
+						<!-- Submenu -->
+						{#if activeSubmenu === item.label}
+							<div
+								class="absolute left-full top-0 ml-1 w-48 bg-bg-secondary border border-border rounded-lg shadow-xl py-1"
+								style="position: absolute; min-width: 12rem; z-index: var(--z-popover);"
+							>
+								{#each item.items as subItem (subItem.label)}
+									<button
+										type="button"
+										onclick={() => handleSubmenuItemClick(subItem, item.label)}
+										class="w-full px-3 py-2 flex items-center gap-2 text-sm text-text-primary hover:bg-bg-hover transition-colors text-left"
+									>
+										{#if subItem.icon}
+											{@const SubIcon = subItem.icon}
+											<SubIcon size={16} class="text-text-secondary shrink-0" />
+										{/if}
+										<span class="flex-1">{subItem.label}</span>
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				{:else}
+					<button
+						type="button"
+						onclick={() => handleItemClick(item)}
+						class="w-full px-3 py-2 flex items-center gap-2 text-sm text-text-primary hover:bg-bg-hover transition-colors text-left"
+					>
+						{#if item.icon}
+							{@const Icon = item.icon}
+							<Icon size={16} class="text-text-secondary shrink-0" />
+						{/if}
+						<span class="flex-1">{item.label}</span>
+					</button>
+				{/if}
+			{/each}
 		</div>
+	</div>
 {/if}
 
 <style>

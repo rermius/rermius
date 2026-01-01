@@ -2,7 +2,15 @@
 	import { ContentWithPanel } from '$lib/components/layout';
 	import { ItemCard } from '$lib/components/ui/Card';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
-	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon, ScrollArea, ContextMenu } from '$lib/components/ui';
+	import {
+		Button,
+		SearchInput,
+		TagFilterIcon,
+		SortIcon,
+		LayoutIcon,
+		ScrollArea,
+		ContextMenu
+	} from '$lib/components/ui';
 	import { KeyPanel, KeyScanModal } from '$lib/components/features/keychain';
 	import { keychainStore, deleteKey, exportKey } from '$lib/services';
 	import { panelStore } from '$lib/stores';
@@ -284,7 +292,7 @@
 									variant={layoutMode === 'list' ? 'list' : 'card'}
 									isActive={editingKey?.id === key.id || contextMenuTarget?.id === key.id}
 									onedit={() => handleEditKey(key)}
-									oncontextmenu={(pos) => handleKeyContextMenu(key, pos)}
+									oncontextmenu={pos => handleKeyContextMenu(key, pos)}
 								/>
 							</div>
 						{/each}

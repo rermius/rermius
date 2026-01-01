@@ -44,8 +44,8 @@
 
 			// Detect which shells are actually available on system
 			const detected = await detectAvailableShells();
-			availableShells = availableShells.map((shell) => {
-				const detectedShell = detected.find((d) => d.value === shell.value);
+			availableShells = availableShells.map(shell => {
+				const detectedShell = detected.find(d => d.value === shell.value);
 				return {
 					...shell,
 					available: detectedShell?.available ?? true
@@ -88,9 +88,7 @@
 		{:else}
 			<div class="space-y-6">
 				<!-- Current Platform Info -->
-				<div
-					class="flex items-start gap-3 p-4 bg-bg-tertiary rounded border border-border"
-				>
+				<div class="flex items-start gap-3 p-4 bg-bg-tertiary rounded border border-border">
 					<Info size={20} class="text-accent-primary mt-0.5" />
 					<div>
 						<h3 class="text-sm font-medium text-text-primary">
@@ -119,12 +117,12 @@
 				<!-- Available Shells List -->
 				<div>
 					<h3 class="text-sm font-medium text-text-primary mb-2">Available Shells</h3>
-			<div class="space-y-2">
-				{#each availableShells as shell (shell.value)}
-					<div class="flex items-center justify-between p-3 bg-bg-tertiary rounded">
-						<div class="flex items-center gap-2">
-							<Terminal size={16} class="text-text-secondary" />
-							<span class="text-sm text-text-primary">{shell.label}</span>
+					<div class="space-y-2">
+						{#each availableShells as shell (shell.value)}
+							<div class="flex items-center justify-between p-3 bg-bg-tertiary rounded">
+								<div class="flex items-center gap-2">
+									<Terminal size={16} class="text-text-secondary" />
+									<span class="text-sm text-text-primary">{shell.label}</span>
 								</div>
 								<div class="flex items-center gap-2">
 									<span class="text-xs text-text-tertiary font-mono">{shell.value}</span>

@@ -55,7 +55,7 @@ function cleanMetadata(data) {
 
 	// Exclude snippet click counts
 	if (cleaned.snippets) {
-		cleaned.snippets = cleaned.snippets.map((s) => {
+		cleaned.snippets = cleaned.snippets.map(s => {
 			const { clickCount, ...rest } = s;
 			return rest;
 		});
@@ -82,7 +82,7 @@ function areStoreStatesEqual(prev, current) {
 function createStoreSubscription(storeName, store) {
 	let previousState = null;
 
-	return store.subscribe((currentState) => {
+	return store.subscribe(currentState => {
 		// Skip if not initialized
 		if (!isInitialized) {
 			previousState = currentState;

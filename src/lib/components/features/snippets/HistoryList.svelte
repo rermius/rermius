@@ -35,11 +35,11 @@
 
 	$effect(() => {
 		const sessions = $terminalStore.sessions || [];
-		
+
 		for (const session of sessions) {
 			if (!loadedSessionIds.has(session.id)) {
 				loadedSessionIds.add(session.id);
-				
+
 				const { shouldFetch } = shouldFetchHistory(session.id);
 				if (shouldFetch) {
 					loadHistoryForSession(session.id, session.type, session.shell, false);
@@ -74,9 +74,10 @@
 		}
 
 		try {
-			const history = sessionType === 'local'
-				? await terminalCommands.fetchLocalHistory({ shell: shell || null, limit: 100 })
-				: await terminalCommands.fetchHistory(sessionId, 100);
+			const history =
+				sessionType === 'local'
+					? await terminalCommands.fetchLocalHistory({ shell: shell || null, limit: 100 })
+					: await terminalCommands.fetchHistory(sessionId, 100);
 
 			const newHistoryItems = [...history].reverse().map((command, index) => ({
 				id: `history-${Date.now()}-${index}`,
@@ -110,7 +111,7 @@
 
 		const sessions = $terminalStore.sessions || [];
 		const session = sessions.find(s => s.id === activeSessionId);
-		
+
 		if (session) {
 			await loadHistoryForSession(activeSessionId, session.type, session.shell, showLoading);
 		}
