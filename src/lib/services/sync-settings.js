@@ -207,8 +207,9 @@ export async function loadSyncSettings(workspaceId = null) {
 		const exists = await tauriFs.fileExists(filePath);
 
 		if (!exists) {
-			// Initialize with default settings on first run
-			await saveSyncSettings(defaultSettings, workspaceId);
+			// File doesn't exist - set store to defaults without saving
+			// This prevents recreating settings after intentional clear
+			syncSettingsStore.set({ ...defaultSettings, __loaded: true });
 			return defaultSettings;
 		}
 

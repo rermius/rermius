@@ -6,6 +6,9 @@ import { writable } from 'svelte/store';
  * @property {string} message - Toast message to display
  * @property {'info' | 'success' | 'error' | 'warning'} type - Toast type
  * @property {number} duration - How long to show toast (ms), 0 for permanent
+ * @property {Object} [action] - Optional action button
+ * @property {string} action.label - Button label
+ * @property {Function} action.onClick - Button click handler
  */
 
 /**
@@ -23,12 +26,13 @@ function createToastStore() {
 		 * @param {string} message - Message to display
 		 * @param {'info' | 'success' | 'error' | 'warning'} type - Toast type
 		 * @param {number} duration - Duration in ms (0 for permanent)
+		 * @param {Object} [action] - Optional action button {label: string, onClick: function}
 		 * @returns {number} Toast ID
 		 */
-		show(message, type = 'info', duration = 3000) {
+		show(message, type = 'info', duration = 3000, action = null) {
 			const id = Date.now() + Math.random();
 
-			update(toasts => [...toasts, { id, message, type, duration }]);
+			update(toasts => [...toasts, { id, message, type, duration, action }]);
 
 			// Auto-dismiss if duration is set
 			if (duration > 0) {
@@ -76,6 +80,17 @@ function createToastStore() {
 		 */
 		info(message, duration = 3000) {
 			return this.show(message, 'info', duration);
+		},
+
+		/**
+		 * Show a success toast with action button
+		 * @param {string} message - Success message
+		 * @param {Object} action - Action config {label: string, onClick: function}
+		 * @param {number} duration - Duration in ms (0 for permanent)
+		 * @returns {number} Toast ID
+		 */
+		successWithAction(message, action, duration = 8000) {
+			return this.show(message, 'success', duration, action);
 		},
 
 		/**

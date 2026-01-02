@@ -58,6 +58,17 @@ export function useToast() {
 		},
 
 		/**
+		 * Show success toast with action button
+		 * @param {string} message - Success message
+		 * @param {Object} action - Action config {label: string, onClick: function}
+		 * @param {number} duration - Duration in ms
+		 * @returns {number} Toast ID
+		 */
+		successWithAction: (message, action, duration = 8000) => {
+			return toastStore.successWithAction(message, action, duration);
+		},
+
+		/**
 		 * Dismiss a toast by ID
 		 * @param {number} id - Toast ID
 		 */

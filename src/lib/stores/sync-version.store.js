@@ -57,6 +57,7 @@ function createSyncVersionStore() {
 	const { subscribe, set, update } = store;
 
 	let isPersisting = false;
+	let isHydrating = false; // Flag to prevent auto-save during external loads
 	let currentState = initialState;
 
 	// Keep local cache of current state
@@ -69,6 +70,8 @@ function createSyncVersionStore() {
 		try {
 			const settings = get(syncSettingsStore);
 			if (!settings.__loaded) return;
+			// Don't auto-save during hydration (workspace switch, external load)
+			if (isHydrating) return;
 			isPersisting = true;
 			syncSettingsStore.update(s => ({
 				...s,
@@ -99,7 +102,13 @@ function createSyncVersionStore() {
 			incoming.checkError === currentState.checkError;
 
 		if (!same) {
+			// Set hydrating flag to prevent auto-save during external load
+			isHydrating = true;
 			set({ ...defaultState, ...incoming });
+			// Reset flag after hydration completes
+			setTimeout(() => {
+				isHydrating = false;
+			}, 100);
 		}
 	});
 

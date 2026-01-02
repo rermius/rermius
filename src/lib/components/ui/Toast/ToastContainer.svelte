@@ -29,6 +29,7 @@
 				message={toast.message}
 				type={toast.type}
 				duration={toast.duration}
+				action={toast.action}
 				ondismiss={() => handleDismiss(toast.id)}
 			/>
 		</div>

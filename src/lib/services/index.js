@@ -67,6 +67,8 @@ export { connectSSH, retrySSHConnection } from './ssh-connection.js';
 export { connectTelnet, retryTelnetConnection } from './telnet-connection.js';
 export { connectionFactory } from './connection/index.js';
 export { loadSyncSettings, saveSyncSettings, clearSyncSettings } from './sync-settings.js';
+export { exportSyncData, generateExportFilename } from './sync-export.js';
+export { importSyncData } from './sync-import.js';
 export {
 	appSettingsStore,
 	loadSettings,

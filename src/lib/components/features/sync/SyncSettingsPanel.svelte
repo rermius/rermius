@@ -17,7 +17,8 @@
 		saveSyncSettings,
 		validateGitHubCredentials,
 		getGistHistory,
-		downloadGistVersion
+		downloadGistVersion,
+		clearSyncSettings
 	} from '$lib/services/sync-settings.js';
 	import { useToast } from '$lib/composables';
 	import {
@@ -31,6 +32,10 @@
 	import { workspaceStore, syncLogsStore, hasNewSyncVersion, syncVersionStore } from '$lib/stores';
 	import { get } from 'svelte/store';
 	import { performUpload, performDownload } from '$lib/services/sync-checker';
+	import { exportSyncData } from '$lib/services/sync-export.js';
+	import { importSyncData } from '$lib/services/sync-import.js';
+	import { tauriDialog } from '$lib/services/tauri/dialog.js';
+	import { showInFileManager } from '$lib/services/file-browser.js';
 
 	const toast = useToast();
 
@@ -51,6 +56,15 @@
 	let historyPage = $state(1);
 	let historyHasMore = $state(false);
 	const HISTORY_PER_PAGE = 10;
+
+	// Export state
+	let isExporting = $state(false);
+
+	// Import state
+	let isImporting = $state(false);
+
+	// Clear confirmation modal
+	let showClearConfirmModal = $state(false);
 
 	// Rollback options modal
 	let showRollbackOptions = $state(false);
@@ -726,6 +740,145 @@
 		historyPage = 1;
 		historyHasMore = false;
 	}
+
+	/**
+	 * Handle export sync data to file
+	 */
+	async function handleExport() {
+		try {
+			// 1. Open folder picker
+			const destinationFolder = await tauriDialog.openDirectory({
+				title: 'Select Export Destination'
+			});
+
+			if (!destinationFolder) {
+				// User cancelled
+				return;
+			}
+
+			isExporting = true;
+
+			// 2. Export data
+			const result = await exportSyncData({
+				destinationFolder,
+				syncOptions: $syncSettingsStore.syncOptions
+			});
+
+			if (result.success) {
+				// 3. Show success toast with action
+				toast.successWithAction(
+					'Backup exported successfully!',
+					{
+						label: 'Open Folder',
+						onClick: async () => {
+							try {
+								await showInFileManager(result.filePath);
+							} catch (error) {
+								console.error('Failed to open folder:', error);
+								toast.error('Failed to open folder');
+							}
+						}
+					},
+					8000
+				);
+			} else {
+				toast.error(`Export failed: ${result.message}`);
+			}
+		} catch (error) {
+			console.error('Export failed:', error);
+			toast.error('Export failed');
+		} finally {
+			isExporting = false;
+		}
+	}
+
+	/**
+	 * Handle clear sync settings
+	 */
+	async function handleClearSyncSettings() {
+		try {
+			// Clear sync settings from storage
+			await clearSyncSettings();
+
+			// Reset store to default values
+			syncSettingsStore.reset();
+
+			// Close modal
+			showClearConfirmModal = false;
+
+			// Show success message
+			toast.success('Sync settings cleared successfully');
+		} catch (error) {
+			console.error('Failed to clear sync settings:', error);
+			toast.error('Failed to clear sync settings');
+		}
+	}
+
+	/**
+	 * Handle import sync data from file
+	 */
+	async function handleImport() {
+		try {
+			// 1. Open file picker
+			const filePath = await tauriDialog.openFile({
+				title: 'Select Backup File to Import',
+				filters: [
+					{
+						name: 'JSON Backup Files',
+						extensions: ['json']
+					}
+				]
+			});
+
+			if (!filePath) {
+				// User cancelled
+				return;
+			}
+
+			isImporting = true;
+
+			// 2. Import data
+			const result = await importSyncData(filePath);
+
+			if (result.success) {
+				// 3. Show success toast with detailed stats
+				const stats = result.stats;
+				const details = [];
+
+				// Hosts
+				if (stats.hostsAdded > 0) details.push(`${stats.hostsAdded} host(s) created`);
+				if (stats.hostsUpdated > 0) details.push(`${stats.hostsUpdated} host(s) updated`);
+
+				// Groups
+				if (stats.groupsAdded > 0) details.push(`${stats.groupsAdded} group(s) created`);
+				if (stats.groupsUpdated > 0) details.push(`${stats.groupsUpdated} group(s) updated`);
+
+				// Snippets
+				if (stats.snippetsAdded > 0)
+					details.push(`${stats.snippetsAdded} snippet(s) created`);
+				if (stats.snippetsUpdated > 0)
+					details.push(`${stats.snippetsUpdated} snippet(s) updated`);
+
+				// Keys
+				if (stats.keysAdded > 0) details.push(`${stats.keysAdded} key(s) created`);
+				if (stats.keysUpdated > 0) details.push(`${stats.keysUpdated} key(s) updated`);
+
+				const message =
+					details.length > 0
+						? `Import successful! ${details.join(', ')}`
+						: 'Import successful! No changes made';
+
+				toast.success(message, 10000);
+			} else {
+				toast.error(`Import failed: ${result.message}`);
+			}
+		} catch (error) {
+			console.error('Import failed:', error);
+			toast.error('Import failed');
+		} finally {
+			isImporting = false;
+		}
+	}
 </script>
 
 <div class="flex h-full">
@@ -736,11 +889,11 @@
 			<div class="flex items-center justify-between">
 				<h2 class="text-xl font-bold text-white">Sync Settings</h2>
 				<div class="flex gap-2">
-					<Button variant="secondary" onclick={() => {}}>
-						<span class="text-sm">Export</span>
+					<Button size="sm" variant="secondary" onclick={handleExport} disabled={isExporting}>
+						{isExporting ? 'Exporting...' : 'Export'}
 					</Button>
-					<Button variant="secondary" onclick={() => {}}>
-						<span class="text-sm">Import from file</span>
+					<Button size="sm" variant="secondary" onclick={handleImport} disabled={isImporting}>
+						{isImporting ? 'Importing...' : 'Import'}
 					</Button>
 				</div>
 			</div>
@@ -805,10 +958,11 @@
 
 					<!-- Action Buttons -->
 					<div class="flex gap-2">
-						<Button variant="primary" onclick={handleSave} disabled={isValidating}>
+						<Button size="sm" variant="primary" onclick={handleSave} disabled={isValidating}>
 							{isValidating ? 'Validating...' : 'Save'}
 						</Button>
 						<Button
+							size="sm"
 							variant="secondary"
 							onclick={handleUpload}
 							disabled={!$syncSettingsStore.github.isValidated || isValidating}
@@ -819,6 +973,7 @@
 							Upload settings
 						</Button>
 						<Button
+							size="sm"
 							variant="secondary"
 							onclick={handleDownload}
 							disabled={!$syncSettingsStore.github.isValidated || isValidating || isDownloading}
@@ -837,12 +992,21 @@
 							</span>
 						</Button>
 						<Button
+							size="sm"
 							variant="secondary"
 							onclick={handleShowHistory}
 							disabled={!$syncSettingsStore.github.isValidated || !$syncSettingsStore.github.gist}
 							title="View upload history and rollback"
 						>
 							History
+						</Button>
+						<Button
+							size="sm"
+							variant="secondary"
+							onclick={() => (showClearConfirmModal = true)}
+							title="Clear sync settings"
+						>
+							Clear
 						</Button>
 					</div>
 
@@ -1063,6 +1227,33 @@
 				{/if}
 			</div>
 		</div>
+	{/if}
+
+	<!-- Clear Sync Settings Confirmation Modal -->
+	{#if showClearConfirmModal}
+		<Modal open={showClearConfirmModal} onClose={() => (showClearConfirmModal = false)}>
+			<ModalHeader>Clear Sync Settings</ModalHeader>
+			<ModalBody>
+				<p class="text-sm text-white/70">
+					Are you sure you want to clear all sync settings? This will remove:
+				</p>
+				<ul class="list-disc list-inside text-sm text-white/70 mt-3 space-y-1">
+					<li>GitHub credentials (token, gist ID)</li>
+					<li>Encryption password</li>
+					<li>Sync options configuration</li>
+				</ul>
+				<p class="text-sm text-red-400 mt-3">
+					⚠️ Your synced data (hosts, snippets, keys) will NOT be affected - only sync
+					configuration will be cleared.
+				</p>
+			</ModalBody>
+			<ModalFooter>
+				<Button variant="danger" onclick={handleClearSyncSettings}>Clear Settings</Button>
+				<Button variant="secondary" onclick={() => (showClearConfirmModal = false)}>
+					Cancel
+				</Button>
+			</ModalFooter>
+		</Modal>
 	{/if}
 
 	<!-- Rollback Options Modal -->

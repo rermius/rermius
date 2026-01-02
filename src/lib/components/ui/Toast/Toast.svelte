@@ -6,6 +6,7 @@
 		type = 'info', // 'info' | 'success' | 'error' | 'warning'
 		duration = 3000,
 		dismissible = true,
+		action = null, // NEW: { label: string, onClick: function }
 		ondismiss
 	} = $props();
 
@@ -44,6 +45,19 @@
 	<div class="flex-1 text-sm">
 		{message}
 	</div>
+
+	{#if action}
+		<button
+			type="button"
+			class="shrink-0 px-3 py-1 text-xs font-medium rounded bg-white/20 hover:bg-white/30 transition-colors"
+			onclick={(e) => {
+				e.stopPropagation();
+				action.onClick();
+			}}
+		>
+			{action.label}
+		</button>
+	{/if}
 
 	{#if dismissible}
 		<button
