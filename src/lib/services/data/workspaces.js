@@ -361,24 +361,16 @@ export function getCurrentWorkspaceId() {
  * @param {string} workspaceId - Workspace ID
  */
 export async function setCurrentWorkspace(workspaceId) {
-	console.log('[setCurrentWorkspace] Setting current workspace:', workspaceId);
-
 	// Update localStorage for quick access
 	localStorage.set(STORAGE_KEYS.CURRENT_WORKSPACE_ID, workspaceId);
-	console.log('[setCurrentWorkspace] ✓ Updated localStorage');
 
 	// Update store
 	if (workspacesStoreInstance) {
 		workspacesStoreInstance.setCurrentWorkspace(workspaceId);
-		console.log('[setCurrentWorkspace] ✓ Updated store');
-	} else {
-		console.warn('[setCurrentWorkspace] Workspace store instance not available');
 	}
 
 	// Save to file
 	await saveWorkspaces();
-	console.log('[setCurrentWorkspace] ✓ Saved to file');
-	console.log('[setCurrentWorkspace] Current workspace set successfully');
 }
 
 /**
@@ -520,16 +512,11 @@ export async function createDefaultWorkspace() {
  * @returns {Promise<boolean>} Success status
  */
 export async function switchWorkspace(targetWorkspaceId) {
-	console.log('[switchWorkspace] ===== START SWITCH WORKSPACE =====');
-	console.log('[switchWorkspace] Target workspace ID:', targetWorkspaceId);
-
 	try {
 		// Get current workspace ID for comparison
 		const currentWorkspaceId = getCurrentWorkspaceId();
-		console.log('[switchWorkspace] Current workspace ID:', currentWorkspaceId);
 
 		if (targetWorkspaceId === currentWorkspaceId) {
-			console.log('[switchWorkspace] Already on target workspace, skipping switch');
 			return true;
 		}
 
@@ -544,9 +531,6 @@ export async function switchWorkspace(targetWorkspaceId) {
 		if (!targetWorkspace) {
 			throw new Error(`Workspace with ID ${targetWorkspaceId} not found`);
 		}
-
-		console.log('[switchWorkspace] Target workspace found:', targetWorkspace.name);
-		console.log('[switchWorkspace] Loading workspace data...');
 
 		// Import auto-sync markers
 		const { markLoadingStart, markLoadingComplete } = await import('../sync/auto.js');
@@ -563,39 +547,22 @@ export async function switchWorkspace(targetWorkspaceId) {
 			const { loadSettings } = await import('./app-settings.js');
 
 			// Load all workspace-specific data
-			console.log('[switchWorkspace] Loading keychain...');
-			await loadKeychain(targetWorkspaceId);
-			console.log('[switchWorkspace] ✓ Keychain loaded');
-
-			console.log('[switchWorkspace] Loading hosts...');
-			await loadHosts(targetWorkspaceId);
-			console.log('[switchWorkspace] ✓ Hosts loaded');
-
-			console.log('[switchWorkspace] Loading sync settings...');
-			await loadSyncSettings(targetWorkspaceId);
-			console.log('[switchWorkspace] ✓ Sync settings loaded');
-
-			console.log('[switchWorkspace] Loading snippets...');
-			await loadSnippets(targetWorkspaceId);
-			console.log('[switchWorkspace] ✓ Snippets loaded');
-
-			console.log('[switchWorkspace] Loading app settings...');
-			await loadSettings(targetWorkspaceId);
-			console.log('[switchWorkspace] ✓ App settings loaded');
+			await new Promise.all([
+				loadKeychain(targetWorkspaceId),
+				loadHosts(targetWorkspaceId),
+				loadSyncSettings(targetWorkspaceId),
+				loadSnippets(targetWorkspaceId),
+				loadSettings(targetWorkspaceId)
+			]);
 		} finally {
 			// Always mark complete, even if loading fails
 			markLoadingComplete();
 		}
 
 		// Set current workspace after data is loaded
-		console.log('[switchWorkspace] Setting current workspace...');
 		await setCurrentWorkspace(targetWorkspaceId);
-		console.log('[switchWorkspace] ✓ Current workspace set');
-
-		console.log('[switchWorkspace] ===== SWITCH COMPLETE =====');
 		return true;
 	} catch (error) {
-		console.error('[switchWorkspace] ===== SWITCH FAILED =====');
 		console.error('[switchWorkspace] Error:', error);
 		console.error('[switchWorkspace] Stack:', error.stack);
 		throw error;
