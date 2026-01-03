@@ -4,6 +4,25 @@
  */
 
 /**
+ * Validate snippet execution requirements
+ * @param {Object} snippet - Snippet object
+ * @param {string} snippet.command - Snippet command
+ * @param {string|null} sessionId - Active terminal session ID
+ * @returns {{valid: boolean, error?: string}}
+ */
+export function validateSnippetExecution(snippet, sessionId) {
+	if (!sessionId) {
+		return { valid: false, error: 'No active terminal session' };
+	}
+
+	if (!snippet?.command?.trim()) {
+		return { valid: false, error: 'Snippet has no command' };
+	}
+
+	return { valid: true };
+}
+
+/**
  * Validates hostname format (domain or IP)
  * @param {string} hostname - Hostname to validate
  * @returns {string|null} Error message or null
@@ -205,6 +224,7 @@ export function validateWorkspaceName(name) {
 	// Prevent filesystem-breaking characters
 	// Characters not allowed in Windows/Linux/macOS filenames: <>:"|?*\/
 	// Also prevent control characters (\x00-\x1f)
+	// eslint-disable-next-line no-control-regex
 	const invalidChars = /[<>:"|?*\x00-\x1f/\\]/;
 	if (invalidChars.test(trimmed)) {
 		return 'Workspace name contains invalid characters';

@@ -34,6 +34,7 @@
 		}
 
 		// Basic validation: check for invalid characters
+		// eslint-disable-next-line no-control-regex
 		const invalidChars = /[<>:"|?*\x00-\x1f]/;
 		if (invalidChars.test(trimmedName)) {
 			error = 'Name contains invalid characters';
