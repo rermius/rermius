@@ -461,7 +461,7 @@ export async function deleteWorkspaceDirectory(workspaceId) {
  * @returns {Promise<string>} Relative path to saved avatar
  */
 export async function saveWorkspaceAvatar(workspaceId, imageFile) {
-	const { processAvatarFile } = await import('$lib/utils/avatar-handler.js');
+	const { processAvatarFile } = await import('$lib/utils');
 
 	const result = await processAvatarFile(workspaceId, imageFile);
 
@@ -477,7 +477,7 @@ export async function saveWorkspaceAvatar(workspaceId, imageFile) {
  * @param {string} workspaceId - Workspace ID
  */
 export async function deleteWorkspaceAvatar(workspaceId) {
-	const { deleteAvatarFromFileSystem } = await import('$lib/utils/avatar-handler.js');
+	const { deleteAvatarFromFileSystem } = await import('$lib/utils');
 	await deleteAvatarFromFileSystem(workspaceId);
 }
 
