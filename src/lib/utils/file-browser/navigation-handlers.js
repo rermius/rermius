@@ -3,7 +3,7 @@
  * Separated from FilePanel for reusability
  */
 
-import { getParentPath, isWindowsPath } from '$lib/services/file-browser';
+import { getParentPath, isWindowsPath } from '$lib/services';
 import { isWin } from '$lib/utils/path/file-utils';
 
 /**

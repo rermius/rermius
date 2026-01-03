@@ -1,7 +1,7 @@
 /**
  * Keychain service for managing SSH keys
  */
-import { tauriFs } from './tauri/fs';
+import { tauriFs } from '../infra/tauri/fs';
 import { writable, get } from 'svelte/store';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';

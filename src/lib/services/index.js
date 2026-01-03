@@ -3,16 +3,45 @@
  * Usage: import { tauriCommands, localStorage, terminalCommands, etc. } from '$lib/services';
  */
 
+// Infrastructure Services
 export {
 	tauriCommands,
 	tauriEvents,
 	tauriDialog,
 	tauriFs,
 	terminalCommands,
-	terminalEvents
-} from './tauri/index.js';
-export { localStorage, fileStorage } from './storage/index.js';
+	terminalEvents,
+	localStorage,
+	fileStorage,
+	networkStateMonitor,
+	networkOnline,
+	detectAvailableShells,
+	getCurrentPlatform
+} from './infra/index.js';
+
+// Data Services
 export {
+	setWorkspacesStore,
+	getWorkspaceDataPath,
+	getWorkspaceAvatarPath,
+	loadWorkspaces,
+	saveWorkspaces,
+	addWorkspace,
+	updateWorkspace,
+	deleteWorkspace,
+	getWorkspaces,
+	getWorkspaceById,
+	getCurrentWorkspaceId,
+	setCurrentWorkspace,
+	isWorkspaceNameDuplicate,
+	createWorkspaceDirectory,
+	deleteWorkspaceDirectory,
+	saveWorkspaceAvatar,
+	deleteWorkspaceAvatar,
+	isFirstLaunch,
+	createDefaultWorkspace,
+	switchWorkspace,
+	getWorkspaceInitials,
 	keychainStore,
 	loadKeychain,
 	saveKeychain,
@@ -26,10 +55,7 @@ export {
 	isLabelDuplicate,
 	isKeyDuplicate,
 	findDuplicateKey,
-	importKeyFromFile
-} from './keychain.js';
-export { parseSSHConfig } from './ssh-config.js';
-export {
+	importKeyFromFile,
 	hostsStore,
 	loadHosts,
 	saveHosts,
@@ -47,9 +73,7 @@ export {
 	deleteGroup,
 	getGroupById,
 	isGroupNameDuplicate,
-	getHostTags
-} from './hosts.js';
-export {
+	getHostTags,
 	snippetsStore,
 	loadSnippets,
 	saveSnippets,
@@ -61,23 +85,129 @@ export {
 	getSnippetById,
 	isSnippetNameDuplicate,
 	getSnippetTags,
-	incrementSnippetClickCount
-} from './snippets.js';
-export { connectSSH, retrySSHConnection } from './ssh-connection.js';
-export { connectTelnet, retryTelnetConnection } from './telnet-connection.js';
-export { connectionFactory } from './connection/index.js';
-export { loadSyncSettings, saveSyncSettings, clearSyncSettings } from './sync-settings.js';
-export { exportSyncData, generateExportFilename } from './sync-export.js';
-export { importSyncData } from './sync-import.js';
-export {
+	incrementSnippetClickCount,
 	appSettingsStore,
 	loadSettings,
 	saveSettings,
 	getAutoReconnectSettings,
 	getHeartbeatSettings,
-	updateAutoReconnectSettings
-} from './app-settings.js';
-export { attemptReconnect, cancelReconnect, isReconnecting } from './auto-reconnect.js';
-export { connectionHeartbeat } from './connection-heartbeat.js';
-export { networkStateMonitor, networkOnline } from './network-state.js';
-export { createLocalTerminal } from './terminal-manager.js';
+	updateAutoReconnectSettings,
+	getUiSettings,
+	updateUiSettings,
+	getShortcuts,
+	getShellPreferences,
+	updateShortcuts,
+	updateShellPreferences,
+	getDefaultShell
+} from './data/index.js';
+
+// Connection Services
+export {
+	connectionFactory,
+	BaseConnectionHandler,
+	SSHConnectionHandler,
+	FileTransferConnectionHandler,
+	TelnetConnectionHandler,
+	connectSSH,
+	retrySSHConnection,
+	writeTempKeyFile,
+	prepareHopConfig,
+	resolveChain,
+	cleanupTempKeys,
+	connectTelnet,
+	retryTelnetConnection,
+	connectFileTransfer,
+	isFileTransferType,
+	isTerminalType,
+	connectionHeartbeat,
+	attemptReconnect,
+	cancelReconnect,
+	isReconnecting
+} from './connection/index.js';
+
+// Sync Services
+export {
+	loadSyncSettings,
+	saveSyncSettings,
+	clearSyncSettings,
+	validateGitHubCredentials,
+	downloadFromGitHub,
+	getGistHistory,
+	downloadGistVersion,
+	uploadToGitHub,
+	buildEncryptedParts,
+	initAutoSync,
+	stopAutoSync,
+	triggerManualSync,
+	markLoadingStart,
+	markLoadingComplete,
+	exportSyncData,
+	generateExportFilename,
+	importSyncData,
+	syncCheckerFactory,
+	performCheckForUpdates,
+	performGetLatestVersion,
+	performUpload,
+	performDownload
+} from './sync/index.js';
+
+// Utility Services
+export {
+	createTempFilePath,
+	registerTempFile,
+	unregisterTempFile,
+	cleanupTempFile,
+	cleanupAllTempFiles,
+	getActiveTempFiles,
+	getTempFileInfo,
+	startWatching,
+	stopWatching,
+	checkMigrationNeeded,
+	migrateExistingUser,
+	restoreFromBackup,
+	createLocalTerminal,
+	keyboardShortcutManager,
+	parseSSHConfig
+} from './utils/index.js';
+
+// File Services
+export {
+	createFileService,
+	listLocalFiles,
+	listRemoteFiles,
+	downloadFile,
+	uploadFile,
+	deleteLocalFile,
+	deleteRemoteFile,
+	createLocalDirectory,
+	createRemoteDirectory,
+	renameLocalFile,
+	renameRemoteFile,
+	getLocalFileStat,
+	getRemoteFileStat,
+	closeFileSession,
+	getParentPath,
+	isWindowsPath,
+	getHomeDirectory,
+	joinPath,
+	showInFileManager,
+	openFileWithSystem,
+	openFileWithApp,
+	showOpenWithDialog,
+	formatFileSize,
+	getFileExtension,
+	isAbsolutePath,
+	chmodRemote,
+	readFileContent,
+	writeFileContent,
+	copyLocalPath,
+	moveLocalPath,
+	copyRemotePath,
+	moveRemotePath,
+	createFileSession,
+	getAppPreference,
+	setAppPreference,
+	clearAppPreference,
+	getAllAppPreferences,
+	initFileTransferProgressListener
+} from './files/index.js';

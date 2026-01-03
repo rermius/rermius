@@ -14,8 +14,13 @@
 		stopAutoSync,
 		markLoadingStart,
 		markLoadingComplete
-	} from '$lib/services/auto-sync.js';
-	import { initFileTransferProgressListener } from '$lib/services/file-transfer-events';
+	} from '$lib/services';
+	import {
+		initFileTransferProgressListener,
+		checkMigrationNeeded,
+		migrateExistingUser,
+		keyboardShortcutManager
+	} from '$lib/services';
 	import { themeStore, workspaceStore, tabsStore } from '$lib/stores';
 	import {
 		loadWorkspaces,
@@ -23,11 +28,9 @@
 		getCurrentWorkspaceId,
 		setWorkspacesStore,
 		addWorkspace
-	} from '$lib/services/workspaces.js';
-	import { checkMigrationNeeded, migrateExistingUser } from '$lib/services/workspace-migration.js';
+	} from '$lib/services';
 	import { WorkspaceCreationModal } from '$lib/components/features/workspace';
 	import { useToast } from '$lib/composables/useToast.svelte.js';
-	import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
 	import { get } from 'svelte/store';
 
 	const toast = useToast();

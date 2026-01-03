@@ -5,8 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { Tab } from '$lib/components/ui/Tab';
 	import { tabsStore, terminalStore } from '$lib/stores';
-	import { createLocalTerminal, hostsStore, terminalCommands } from '$lib/services';
-	import { closeFileSession } from '$lib/services/file-browser';
+	import { createLocalTerminal, hostsStore, terminalCommands, closeFileSession } from '$lib/services';
 	import { Menu, Minus, Square, X, Plus, Files, Sun, Moon } from 'lucide-svelte';
 	import { themeStore, updateStore } from '$lib/stores';
 	import AppMenu from './AppMenu.svelte';

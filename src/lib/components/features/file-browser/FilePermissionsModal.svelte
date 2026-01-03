@@ -156,7 +156,7 @@
 		});
 
 		try {
-			const { chmodRemote, getRemoteFileStat } = await import('$lib/services/file-browser');
+			const { chmodRemote, getRemoteFileStat } = await import('$lib/services');
 			await chmodRemote(sessionId, file.path, mode);
 
 			// Verify permissions were actually changed by statting the file

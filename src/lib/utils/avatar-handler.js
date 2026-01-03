@@ -3,7 +3,7 @@
  * Handles avatar image processing, validation, and filesystem operations
  */
 
-import { tauriFs } from '$lib/services/tauri/fs.js';
+import { tauriFs } from '$lib/services';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';
 

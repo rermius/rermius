@@ -2,9 +2,7 @@
 	import { Key, Info, Upload } from 'lucide-svelte';
 	import { Input, Textarea, Button, IconInput, TagInput } from '$lib/components/ui';
 	import { createEventDispatcher } from 'svelte';
-	import { tauriDialog } from '$lib/services/tauri/dialog';
-	import { tauriFs } from '$lib/services/tauri/fs';
-	import { addKey, updateKey, findDuplicateKey } from '$lib/services';
+	import { tauriDialog, tauriFs, addKey, updateKey, findDuplicateKey } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
 	import { useSaveQueue } from '$lib/composables';
 

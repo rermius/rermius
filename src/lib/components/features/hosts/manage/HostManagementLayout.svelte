@@ -7,8 +7,7 @@
 	import { handleHostConnect } from '$lib/composables';
 	import { get } from 'svelte/store';
 	import { tabsStore } from '$lib/stores';
-	import { connectFileTransfer } from '$lib/services/file-connection';
-	import { duplicateHost } from '$lib/services/hosts';
+	import { connectFileTransfer, duplicateHost } from '$lib/services';
 	import { useToast } from '$lib/composables';
 
 	// Props

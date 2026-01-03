@@ -9,8 +9,14 @@
 		ImportScanModal
 	} from '$lib/components/features/hosts';
 	import { useHostManagement } from '$lib/composables';
-	import { hostsStore, deleteGroup, deleteHost, getHostTags } from '$lib/services';
-	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
+	import {
+		hostsStore,
+		deleteGroup,
+		deleteHost,
+		getHostTags,
+		getUiSettings,
+		updateUiSettings
+	} from '$lib/services';
 
 	const {
 		showPanel,

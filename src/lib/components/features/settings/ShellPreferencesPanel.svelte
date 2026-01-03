@@ -2,8 +2,13 @@
 	import { onMount } from 'svelte';
 	import { ScrollArea } from '$lib/components/ui/ScrollArea';
 	import ShellSelect from '$lib/components/ui/ShellSelect/ShellSelect.svelte';
-	import * as appSettingsService from '$lib/services/app-settings';
-	import { detectAvailableShells, getCurrentPlatform } from '$lib/services/shell-detection';
+	import {
+		loadSettings,
+		getShellPreferences,
+		updateShellPreferences,
+		detectAvailableShells,
+		getCurrentPlatform
+	} from '$lib/services';
 	import { workspaceStore } from '$lib/stores';
 	import { toastStore } from '$lib/stores/toast.store';
 	import { get } from 'svelte/store';
@@ -28,13 +33,13 @@
 		try {
 			platform = getCurrentPlatform();
 			const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
-			const settings = await appSettingsService.loadSettings(workspaceId);
+			const settings = await loadSettings(workspaceId);
 
 			// Get available shells from settings with fallback for missing shellPreferences
 			const platformPrefs = settings.shellPreferences?.[platform];
 			if (!platformPrefs) {
 				// Settings file doesn't have shellPreferences yet, use defaults
-				const defaultPrefs = appSettingsService.getShellPreferences(platform);
+				const defaultPrefs = getShellPreferences(platform);
 				availableShells = defaultPrefs.availableShells || [];
 				selectedShell = defaultPrefs.defaultShell || '';
 			} else {
@@ -62,7 +67,7 @@
 	async function handleShellChange(newShell) {
 		try {
 			const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
-			await appSettingsService.updateShellPreferences(workspaceId, platform, {
+			await updateShellPreferences(workspaceId, platform, {
 				defaultShell: newShell
 			});
 			selectedShell = newShell;

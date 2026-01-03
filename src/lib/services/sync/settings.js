@@ -3,13 +3,13 @@
  * Handles loading/saving sync configuration from/to JSON file
  */
 
-import { tauriFs } from './tauri/fs.js';
-import { syncSettingsStore } from '../stores/sync-settings.store.js';
+import { tauriFs } from '../infra/tauri/fs.js';
+import { syncSettingsStore } from '$lib/stores/sync-settings.store.js';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';
 import { get } from 'svelte/store';
-import { decryptData, encryptData } from '../utils/crypto.js';
-import { getCurrentWorkspaceId } from './workspaces.js';
+import { decryptData, encryptData } from '$lib/utils/crypto.js';
+import { getCurrentWorkspaceId } from '../data/workspaces.js';
 
 /**
  * Deep merge two objects

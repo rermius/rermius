@@ -2,7 +2,7 @@
 	import { ContentWithPanel } from '$lib/components/layout';
 	import SnippetPanel from './SnippetPanel.svelte';
 	import SnippetPageList from './SnippetPageList.svelte';
-	import { deleteSnippet, duplicateSnippet, snippetsStore } from '$lib/services';
+	import { deleteSnippet, duplicateSnippet, snippetsStore, getUiSettings, updateUiSettings } from '$lib/services';
 	import { useToast } from '$lib/composables';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
 	import {
@@ -14,7 +14,6 @@
 		ScrollArea,
 		ContextMenu
 	} from '$lib/components/ui';
-	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
 	import { Play, ClipboardCopy, Pencil, Copy, Trash2 } from 'lucide-svelte';
 
 	const toast = useToast();

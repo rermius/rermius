@@ -1,8 +1,7 @@
 <script>
 	import { Clock, Loader2 } from 'lucide-svelte';
-	import { terminalCommands } from '$lib/services';
+	import { terminalCommands, addSnippet } from '$lib/services';
 	import { terminalStore } from '$lib/stores';
-	import { addSnippet } from '$lib/services';
 	import { useToast } from '$lib/composables';
 	import { SNIPPET_BUTTON_FONT_SIZE } from '$lib/constants/snippet-ui.js';
 	import { SearchInput, ScrollArea } from '$lib/components/ui';

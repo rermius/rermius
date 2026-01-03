@@ -1,6 +1,6 @@
 <script>
 	import { workspaceStore } from '$lib/stores';
-	import { switchWorkspace } from '$lib/services/workspaces.js';
+	import { switchWorkspace } from '$lib/services';
 	import { loadAvatarAsDataUrl } from '$lib/utils/avatar-handler.js';
 	import * as avatarCache from '$lib/utils/avatar-cache.js';
 	import { WorkspaceCreationModal } from '$lib/components/features/workspace';
@@ -101,7 +101,7 @@
 	}
 
 	async function handleWorkspaceUpdated(workspaceData) {
-		const { updateWorkspace } = await import('$lib/services/workspaces.js');
+		const { updateWorkspace } = await import('$lib/services');
 		await updateWorkspace(editingWorkspace.id, workspaceData);
 
 		const updated = $workspaceStore.workspaces.find(w => w.id === editingWorkspace.id);
@@ -120,7 +120,7 @@
 	}
 
 	async function handleWorkspaceCreated(workspaceData) {
-		const { addWorkspace } = await import('$lib/services/workspaces.js');
+		const { addWorkspace } = await import('$lib/services');
 		const newWorkspace = await addWorkspace(workspaceData);
 		toast.success(`Created workspace: ${newWorkspace.name}`);
 		await switchWorkspace(newWorkspace.id);

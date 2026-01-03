@@ -6,9 +6,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { appDataDir, join } from '@tauri-apps/api/path';
-import { tauriFs } from './tauri/fs';
-import { getKey } from './keychain';
-import { getHostById } from './hosts';
+import { tauriFs } from '../infra/tauri/fs';
+import { getKey } from '../data/keychain';
+import { getHostById } from '../data/hosts';
 import { parseChain } from '$lib/utils/host-chaining';
 
 /**

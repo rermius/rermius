@@ -1,5 +1,5 @@
 import { BaseConnectionHandler } from './base.js';
-import { connectSSH } from '$lib/services/ssh-connection';
+import { connectSSH } from '../ssh.js';
 import { terminalCommands } from '$lib/services';
 
 /**

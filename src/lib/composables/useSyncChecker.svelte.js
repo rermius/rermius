@@ -19,7 +19,7 @@
 import { get } from 'svelte/store';
 import { syncVersionStore, hasNewSyncVersion } from '$lib/stores/sync-version.store.js';
 import { syncSettingsStore } from '$lib/stores/sync-settings.store.js';
-import { performCheckForUpdates, performGetLatestVersion } from '$lib/services/sync-checker';
+import { performCheckForUpdates, performGetLatestVersion } from '$lib/services';
 
 // Check interval: 1 minute
 const CHECK_INTERVAL_MS = 60 * 1000;

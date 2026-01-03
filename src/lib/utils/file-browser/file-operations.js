@@ -11,7 +11,7 @@ export async function createEmptyFile(path, type, sessionId = null) {
 		const { writeTextFile } = await import('@tauri-apps/plugin-fs');
 		await writeTextFile(path, '');
 	} else if (sessionId) {
-		const { writeFileContent } = await import('$lib/services/file-browser');
+		const { writeFileContent } = await import('$lib/services');
 		await writeFileContent(sessionId, path, '', false);
 	} else {
 		throw new Error('No session ID provided for remote file creation');

@@ -7,7 +7,7 @@
 
 import { writable, derived, get } from 'svelte/store';
 import { syncSettingsStore } from './sync-settings.store.js';
-import { saveSyncSettings } from '$lib/services/sync-settings.js';
+import { saveSyncSettings } from '$lib/services';
 
 function serializeState(state) {
 	return {

@@ -4,7 +4,7 @@ import {
 	downloadFromGitHub,
 	downloadGistVersion,
 	buildEncryptedParts
-} from '$lib/services/sync-settings.js';
+} from '../../settings.js';
 
 /**
  * GitHub Gist Sync Driver

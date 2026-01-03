@@ -26,10 +26,9 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 	import { onMount } from 'svelte';
 	import { RemoteTerminal, ConnectionEditWrapper } from '$lib/components/features/terminal';
 	import { FilePanel } from '$lib/components/features/file-browser';
-	import { createFileService } from '$lib/services/file-browser';
+	import { createFileService, getUiSettings, updateUiSettings } from '$lib/services';
 	import { SnippetSidebar } from '$lib/components/features/snippets';
 	import { browser } from '$app/environment';
-	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
 
 	const { tab, activeTabId, host = null, onRetry, onEdit, onClose } = $props();
 

@@ -18,24 +18,23 @@
 		validateGitHubCredentials,
 		getGistHistory,
 		downloadGistVersion,
-		clearSyncSettings
-	} from '$lib/services/sync-settings.js';
-	import { useToast } from '$lib/composables';
-	import {
+		clearSyncSettings,
 		hostsStore,
 		snippetsStore,
 		saveHosts,
 		keychainStore,
 		saveSnippets,
-		saveKeychain
+		saveKeychain,
+		performUpload,
+		performDownload,
+		exportSyncData,
+		importSyncData,
+		tauriDialog,
+		showInFileManager
 	} from '$lib/services';
+	import { useToast } from '$lib/composables';
 	import { workspaceStore, syncLogsStore, hasNewSyncVersion, syncVersionStore } from '$lib/stores';
 	import { get } from 'svelte/store';
-	import { performUpload, performDownload } from '$lib/services/sync-checker';
-	import { exportSyncData } from '$lib/services/sync-export.js';
-	import { importSyncData } from '$lib/services/sync-import.js';
-	import { tauriDialog } from '$lib/services/tauri/dialog.js';
-	import { showInFileManager } from '$lib/services/file-browser.js';
 
 	const toast = useToast();
 

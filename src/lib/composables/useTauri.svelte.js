@@ -1,5 +1,5 @@
 import { onMount, onDestroy } from 'svelte';
-import { tauriCommands, tauriEvents } from '$lib/services/tauri/index.js';
+import { tauriCommands, tauriEvents } from '$lib/services';
 
 /**
  * Tauri composable for easy access to Tauri commands and events

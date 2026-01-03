@@ -2,7 +2,7 @@
 	import { Upload, X } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { loadAvatarAsDataUrl } from '$lib/utils/avatar-handler.js';
-	import { getWorkspaceInitials } from '$lib/services/workspaces.js';
+	import { getWorkspaceInitials } from '$lib/services';
 	import Button from '../Button/Button.svelte';
 
 	let {

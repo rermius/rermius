@@ -1,9 +1,9 @@
 import { get } from 'svelte/store';
-import { hostsStore } from './hosts.js';
-import { snippetsStore } from './snippets.js';
-import { keychainStore } from './keychain.js';
-import { workspaceStore } from '../stores/workspace.store.js';
-import { tauriFs } from './tauri/fs.js';
+import { hostsStore } from '../data/hosts.js';
+import { snippetsStore } from '../data/snippets.js';
+import { keychainStore } from '../data/keychain.js';
+import { workspaceStore } from '$lib/stores/workspace.store.js';
+import { tauriFs } from '../infra/tauri/fs.js';
 import { join } from '@tauri-apps/api/path';
 
 /**

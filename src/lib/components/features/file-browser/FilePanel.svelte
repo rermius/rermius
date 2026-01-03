@@ -21,7 +21,7 @@
 		moveRemotePath,
 		uploadFile,
 		downloadFile
-	} from '$lib/services/file-browser';
+	} from '$lib/services';
 	import { isWin } from '$lib/utils/path/file-utils';
 	import { sortFiles, filterFiles } from '$lib/utils/file-browser/file-sorting';
 	import {
@@ -632,7 +632,7 @@
 
 			case 'showInExplorer':
 				try {
-					const { showInFileManager } = await import('$lib/services/file-browser');
+					const { showInFileManager } = await import('$lib/services');
 					await showInFileManager(file.path);
 				} catch (e) {
 					console.error('[FilePanel] Failed to show in explorer:', e);
@@ -976,7 +976,7 @@
 						await remove(file.path);
 					}
 				} else {
-					const { deleteRemotePath } = await import('$lib/services/file-browser');
+					const { deleteRemotePath } = await import('$lib/services');
 					await deleteRemotePath(sessionIdForRemote, file.path, file.isDirectory);
 				}
 			} catch (e) {

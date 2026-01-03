@@ -9,7 +9,7 @@
  * - Configurable interval and timeout
  */
 
-import { terminalCommands } from './tauri/index.js';
+import { terminalCommands } from '../infra/tauri/index.js';
 import { get } from 'svelte/store';
 import { tabsStore } from '$lib/stores';
 import { attemptReconnect } from './auto-reconnect.js';

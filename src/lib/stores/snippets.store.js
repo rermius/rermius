@@ -4,4 +4,4 @@
  * Following the pattern where the store is defined in the service file
  */
 
-export { snippetsStore } from '../services/snippets.js';
+export { snippetsStore } from '$lib/services';

@@ -4,7 +4,7 @@ Displays workspace avatar with fallback to initials
 -->
 <script>
 	import { Check } from 'lucide-svelte';
-	import { getWorkspaceInitials } from '$lib/services/workspaces.js';
+	import { getWorkspaceInitials } from '$lib/services';
 
 	let {
 		workspace = null,

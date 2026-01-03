@@ -2,7 +2,7 @@
  * SSH Config parser service
  * Parses SSH config file (~/.ssh/config) and extracts host configurations
  */
-import { tauriFs } from './tauri/fs';
+import { tauriFs } from '../infra/tauri/fs';
 import { homeDir, join } from '@tauri-apps/api/path';
 
 /**

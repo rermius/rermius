@@ -6,13 +6,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { parseChain } from '$lib/utils/host-chaining';
-import { getKey } from './keychain';
+import { getKey } from '../data/keychain';
 import {
 	writeTempKeyFile,
 	prepareHopConfig,
 	resolveChain,
 	cleanupTempKeys
-} from './ssh-connection';
+} from './ssh';
 
 /**
  * Connect to FTP/SFTP host for file transfer

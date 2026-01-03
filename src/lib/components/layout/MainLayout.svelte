@@ -1,10 +1,7 @@
 <script>
 	import { tabsStore } from '$lib/stores';
-	import { hostsStore } from '$lib/services';
-	import { connectionFactory } from '$lib/services/connection';
+	import { hostsStore, connectionFactory, closeFileSession, connectFileTransfer } from '$lib/services';
 	import Header from './Header.svelte';
-	import { closeFileSession } from '$lib/services/file-browser';
-	import { connectFileTransfer } from '$lib/services/file-connection';
 	import { ToastContainer, ScrollArea } from '$lib/components/ui';
 	import StatusBar from '$lib/components/ui/StatusBar.svelte';
 	import UpdateNotification from '$lib/components/features/update/UpdateNotification.svelte';

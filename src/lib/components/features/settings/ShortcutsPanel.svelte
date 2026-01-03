@@ -2,11 +2,15 @@
 	import { onMount } from 'svelte';
 	import { ScrollArea } from '$lib/components/ui/ScrollArea';
 	import ShortcutInput from '$lib/components/ui/ShortcutInput/ShortcutInput.svelte';
-	import * as appSettingsService from '$lib/services/app-settings';
+	import {
+		loadSettings,
+		getShortcuts,
+		updateShortcuts,
+		keyboardShortcutManager
+	} from '$lib/services';
 	import { workspaceStore } from '$lib/stores';
 	import { toastStore } from '$lib/stores/toast.store';
 	import { get } from 'svelte/store';
-	import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
 
 	let shortcuts = $state({
 		newTerminal: '',
@@ -70,9 +74,9 @@
 	async function loadShortcuts() {
 		try {
 			const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
-			const settings = await appSettingsService.loadSettings(workspaceId);
+			const settings = await loadSettings(workspaceId);
 			// Get shortcuts from settings or use service to get defaults
-			shortcuts = appSettingsService.getShortcuts();
+			shortcuts = getShortcuts();
 		} catch (error) {
 			console.error('Failed to load shortcuts:', error);
 			toastStore.error('Failed to load shortcuts');
@@ -101,7 +105,7 @@
 		if (!error) {
 			try {
 				const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
-				await appSettingsService.updateShortcuts(workspaceId, { [actionName]: newValue });
+				await updateShortcuts(workspaceId, { [actionName]: newValue });
 				// Reload shortcuts in keyboard manager
 				await keyboardShortcutManager.init();
 				toastStore.success('Shortcut updated');
@@ -136,7 +140,7 @@
 				refreshFileList: 'F5'
 			};
 
-			await appSettingsService.updateShortcuts(workspaceId, defaultShortcuts);
+			await updateShortcuts(workspaceId, defaultShortcuts);
 			// Reload shortcuts in keyboard manager
 			await keyboardShortcutManager.init();
 			shortcuts = defaultShortcuts;

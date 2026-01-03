@@ -2,8 +2,7 @@
  * Composable for executing snippets in terminal
  * Handles validation, execution, and error handling
  */
-import { terminalCommands } from '$lib/services';
-import { incrementSnippetClickCount } from '$lib/services';
+	import { terminalCommands, incrementSnippetClickCount } from '$lib/services';
 import { validateSnippetExecution } from '$lib/utils/snippet-validators';
 import { useToast } from './useToast.svelte.js';
 import { SNIPPET_ERRORS } from '$lib/constants/snippet-ui.js';

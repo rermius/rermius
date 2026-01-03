@@ -4,7 +4,7 @@
  * Pattern: filename (1).ext, filename (2).ext, etc.
  */
 
-import { getRemoteFileStat, getLocalFileStat } from '$lib/services/file-browser';
+import { getRemoteFileStat, getLocalFileStat } from '$lib/services';
 
 const MAX_DUPLICATE_COUNTER = 1000;
 const MAX_FILENAME_LENGTH = 255;

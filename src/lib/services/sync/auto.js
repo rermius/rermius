@@ -4,12 +4,12 @@
  */
 
 import { get } from 'svelte/store';
-import { syncSettingsStore } from '../stores/sync-settings.store.js';
-import { hostsStore } from './hosts.js';
-import { snippetsStore } from './snippets.js';
-import { keychainStore } from './keychain.js';
-import { saveSyncSettings } from './sync-settings.js';
-import { performUpload } from './sync-checker';
+import { syncSettingsStore } from '$lib/stores/sync-settings.store.js';
+import { hostsStore } from '../data/hosts.js';
+import { snippetsStore } from '../data/snippets.js';
+import { keychainStore } from '../data/keychain.js';
+import { saveSyncSettings } from './settings.js';
+import { performUpload } from './checker';
 import { syncVersionStore } from '$lib/stores/sync-version.store.js';
 
 const DEBOUNCE_MS = 30000; // 30s

@@ -1,7 +1,7 @@
 /**
  * Hosts service for managing SSH hosts and groups
  */
-import { tauriFs } from './tauri/fs';
+import { tauriFs } from '../infra/tauri/fs';
 import { writable, get } from 'svelte/store';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';

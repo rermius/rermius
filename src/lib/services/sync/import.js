@@ -1,8 +1,8 @@
 import { get } from 'svelte/store';
-import { hostsStore, saveHosts } from './hosts.js';
-import { snippetsStore, saveSnippets } from './snippets.js';
-import { keychainStore, saveKeychain } from './keychain.js';
-import { tauriFs } from './tauri/fs.js';
+import { hostsStore, saveHosts } from '../data/hosts.js';
+import { snippetsStore, saveSnippets } from '../data/snippets.js';
+import { keychainStore, saveKeychain } from '../data/keychain.js';
+import { tauriFs } from '../infra/tauri/fs.js';
 
 /**
  * Merge imported items with existing items (update if ID exists, add if new)

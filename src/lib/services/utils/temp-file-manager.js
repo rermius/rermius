@@ -222,7 +222,7 @@ async function handleFileChange(tempFilePath) {
 		statusBarStore.showUpload(fileName, 0, 'uploading');
 
 		// Upload file back to remote
-		const { uploadFile } = await import('./file-browser');
+		const { uploadFile } = await import('../files/browser');
 		await uploadFile(sessionId, tempFilePath, remotePath, crypto.randomUUID());
 
 		// Notify upload complete via store

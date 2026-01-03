@@ -1,5 +1,5 @@
 import { BaseConnectionHandler } from './base.js';
-import { connectTelnet } from '$lib/services/telnet-connection.js';
+import { connectTelnet } from '../telnet.js';
 import { terminalCommands } from '$lib/services';
 
 /**

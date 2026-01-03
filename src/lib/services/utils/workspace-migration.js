@@ -3,10 +3,10 @@
  * Migrates existing users' data to workspace structure
  */
 
-import { tauriFs } from './tauri/fs.js';
+import { tauriFs } from '../infra/tauri/fs.js';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';
-import { createDefaultWorkspace } from './workspaces.js';
+import { createDefaultWorkspace } from '../data/workspaces.js';
 
 /**
  * Check if migration is needed

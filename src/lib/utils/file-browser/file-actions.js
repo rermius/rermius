@@ -4,7 +4,7 @@
  */
 
 import { createEmptyFile, buildNewPath } from './file-operations';
-import { getLocalFileStat, getRemoteFileStat } from '$lib/services/file-browser';
+import { getLocalFileStat, getRemoteFileStat } from '$lib/services';
 
 /**
  * Convert stat info to file object format

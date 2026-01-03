@@ -4,8 +4,8 @@
  */
 
 import { get } from 'svelte/store';
-import { terminalCommands } from './tauri/index.js';
-import * as appSettingsService from './app-settings.js';
+import { terminalCommands } from '../infra/tauri/index.js';
+import { getDefaultShell } from '../data/app-settings.js';
 import { workspaceStore, tabsStore } from '$lib/stores';
 
 /**
@@ -21,7 +21,7 @@ export async function createLocalTerminal(options = {}) {
 
 	// Get shell preference from settings
 	const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
-	const preferredShell = await appSettingsService.getDefaultShell(workspaceId);
+	const preferredShell = await getDefaultShell(workspaceId);
 
 	// Create backend terminal session
 	const sessionId = await terminalCommands.createTerminal({

@@ -12,8 +12,8 @@
 import { get } from 'svelte/store';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';
-import { tauriFs } from './tauri/fs.js';
-import { localStorage } from './storage/index.js';
+import { tauriFs } from '../infra/tauri/fs.js';
+import { localStorage } from '../infra/storage/index.js';
 import { STORAGE_KEYS, FILE_PATHS } from '$lib/constants/storage-keys.js';
 
 // Workspace store will be imported after it's created
@@ -549,7 +549,7 @@ export async function switchWorkspace(targetWorkspaceId) {
 		console.log('[switchWorkspace] Loading workspace data...');
 
 		// Import auto-sync markers
-		const { markLoadingStart, markLoadingComplete } = await import('./auto-sync.js');
+		const { markLoadingStart, markLoadingComplete } = await import('../sync/auto.js');
 
 		// Mark loading start BEFORE loading data
 		markLoadingStart();
@@ -558,7 +558,7 @@ export async function switchWorkspace(targetWorkspaceId) {
 			// Import load functions dynamically to avoid circular dependencies
 			const { loadKeychain } = await import('./keychain.js');
 			const { loadHosts } = await import('./hosts.js');
-			const { loadSyncSettings } = await import('./sync-settings.js');
+			const { loadSyncSettings } = await import('../sync/settings.js');
 			const { loadSnippets } = await import('./snippets.js');
 			const { loadSettings } = await import('./app-settings.js');
 

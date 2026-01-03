@@ -3,7 +3,7 @@
  * Separated from components for reusability
  */
 import * as LucideIcons from 'lucide-svelte';
-import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
+import { keyboardShortcutManager } from '$lib/services';
 
 const maxEditFileSize = 1024 * 3000; // 3MB
 

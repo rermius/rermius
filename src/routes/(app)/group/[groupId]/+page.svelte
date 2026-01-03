@@ -6,8 +6,7 @@
 	import { SortIcon, LayoutIcon } from '$lib/components/ui';
 	import { ConfirmRemoveModal, HostManagementLayout } from '$lib/components/features/hosts';
 	import { useHostManagement } from '$lib/composables';
-	import { hostsStore, deleteGroup, deleteHost } from '$lib/services';
-	import { getUiSettings, updateUiSettings } from '$lib/services/app-settings.js';
+	import { hostsStore, deleteGroup, deleteHost, getUiSettings, updateUiSettings } from '$lib/services';
 
 	// Get groupId from URL params
 	const groupId = $derived($page.params.groupId);

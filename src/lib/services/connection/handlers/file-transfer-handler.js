@@ -1,6 +1,6 @@
 import { BaseConnectionHandler } from './base.js';
-import { connectFileTransfer } from '$lib/services/file-connection';
-import { closeFileSession } from '$lib/services/file-browser';
+import { connectFileTransfer } from '../file.js';
+import { closeFileSession } from '../../files/browser.js';
 
 /**
  * File Transfer Connection Handler

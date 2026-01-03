@@ -1,6 +1,12 @@
 <script>
 	import { onMount } from 'svelte';
-	import { initFileTransferProgressListener } from '$lib/services/file-transfer-events';
+	import {
+		initFileTransferProgressListener,
+		createFileService,
+		getHomeDirectory,
+		joinPath,
+		hostsStore
+	} from '$lib/services';
 
 	// Initialize file transfer progress listener when component mounts
 	onMount(async () => {
@@ -11,8 +17,6 @@
 		}
 	});
 	import FilePanel from './FilePanel.svelte';
-	import { createFileService, getHomeDirectory, joinPath } from '$lib/services/file-browser';
-	import { hostsStore } from '$lib/services/hosts';
 	import { getDropFileList } from '$lib/utils/file-drop';
 	import { statusBarStore } from '$lib/stores/status-bar';
 	import { generateUniqueRemotePath, generateUniqueLocalPath } from '$lib/utils/path/unique-path';
@@ -181,7 +185,7 @@
 
 		// Import modules first (before using joinPath)
 		const [{ downloadFile, uploadFile, joinPath: joinPathFn }, { join, downloadDir }] =
-			await Promise.all([import('$lib/services/file-browser'), import('@tauri-apps/api/path')]);
+			await Promise.all([import('$lib/services'), import('@tauri-apps/api/path')]);
 
 		// Get paths for transfer
 		const localPath = file.path;

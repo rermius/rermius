@@ -21,13 +21,17 @@ import {
 	terminalEvents,
 	getAutoReconnectSettings,
 	getHeartbeatSettings,
-	attemptReconnect
+	attemptReconnect,
+	connectionHeartbeat,
+	keyboardShortcutManager,
+	appSettingsStore,
+	loadSettings,
+	saveSettings,
+	updateAutoReconnectSettings,
+	getDefaultShell
 } from '$lib/services';
-import { connectionHeartbeat } from '$lib/services/connection-heartbeat.js';
 import { terminalStore, tabsStore, workspaceStore } from '$lib/stores';
 import { useToast } from './useToast.svelte.js';
-import * as appSettingsService from '$lib/services/app-settings';
-import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
 
 export function useXtermTerminal(config = {}) {
 	const {
@@ -231,7 +235,7 @@ export function useXtermTerminal(config = {}) {
 		if (!preferredShell) {
 			try {
 				const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
-				preferredShell = await appSettingsService.getDefaultShell(workspaceId);
+				preferredShell = await getDefaultShell(workspaceId);
 			} catch (error) {
 				console.error('Failed to get shell preference:', error);
 			}

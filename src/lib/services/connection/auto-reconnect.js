@@ -12,9 +12,9 @@
  */
 import { get } from 'svelte/store';
 import { tabsStore } from '$lib/stores';
-import { getAutoReconnectSettings } from './app-settings.js';
-import { connectionFactory } from './connection/index.js';
-import { networkStateMonitor } from './network-state.js';
+import { getAutoReconnectSettings } from '../data/app-settings.js';
+import { connectionFactory } from './index.js';
+import { networkStateMonitor } from '../infra/network-state.js';
 
 // Track active reconnect operations to prevent duplicates
 const activeReconnects = new Set();
