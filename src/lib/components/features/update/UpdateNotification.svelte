@@ -4,9 +4,9 @@
 	import { Rocket, ExternalLink, X } from 'lucide-svelte';
 	import { formatRelativeTime } from '$lib/utils';
 
-	let status = $derived($updateStore.status);
-	let manifest = $derived($updateStore.manifest);
-	let progress = $derived($updateStore.progress);
+	const status = $derived($updateStore.status);
+	const manifest = $derived($updateStore.manifest);
+	const progress = $derived($updateStore.progress);
 
 	function handleUpdate() {
 		if (status === 'available') {
