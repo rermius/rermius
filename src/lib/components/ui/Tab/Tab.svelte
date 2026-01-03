@@ -58,11 +58,11 @@
 {:else}
 	<!-- Regular tab with label -->
 	<div
-		class="tab-item flex rounded-lg items-center gap-1 py-1 transition-all cursor-pointer! select-none {active
+		class="tab-item flex rounded-lg items-center gap-1 py-1 cursor-pointer! select-none {active
 			? 'tab-active'
 			: 'bg-(--color-bg-tertiary) hover:bg-(--color-bg-hover)'}"
-		style:padding-left={active ? 'calc(0.75rem * 2)' : '0.75rem'}
-		style:padding-right={active ? 'calc(0.75rem * 2)' : '0.75rem'}
+		style:padding-left='0.75rem'
+		style:padding-right='0.75rem'
 		style:background-color={active ? bgColor : undefined}
 		style:--tab-bg={bgColor}
 		role="button"
@@ -81,26 +81,27 @@
 		{#if trailingIconComponent}
 			{@const TrailingIcon = trailingIconComponent}
 			<button
-				class="ml-1 p-1 rounded hover:bg-(--color-bg-tertiary) transition-colors {active
+				class="ml-1 p-1 rounded hover:bg-(--color-bg-tertiary) cursor-pointer transition-colors {active
 					? 'text-tab-active-icon'
 					: 'text-text-secondary'}"
 				title={trailingTitle}
 				onclick={handleTrailingClick}
 				onmousedown={e => e.stopPropagation()}
 			>
-				<TrailingIcon size={12} />
+				<TrailingIcon size={14} />
 			</button>
 		{/if}
 		{#if closeable}
 			<button
-				class="ml-1 hover:bg-(--color-bg-tertiary) rounded cursor-pointer flex items-center {active
+				class="ml-1 p-1  transition-all  hover:bg-(--color-bg-tertiary) rounded cursor-pointer flex items-center {active
 					? 'text-tab-active-icon'
 					: 'text-text-secondary'}"
+				style:margin-left={active ? 'calc(0.75rem * 3	)' : '0.75rem'}
 				onclick={handleClose}
 				onmousedown={e => e.stopPropagation()}
 				aria-label="Close tab"
 			>
-				<X size={15} />
+				<X size={14} />
 			</button>
 		{/if}
 	</div>
@@ -127,20 +128,4 @@
 		height: 8px;
 		background: transparent;
 	}
-
-	/* Left curve
-	.tab-active::before {
-		left: -8px;
-		border-bottom-right-radius: 8px;
-		box-shadow: 4px 4px 0 4px var(--tab-bg, var(--color-bg-primary, #1a1d29));
-	}
-	*/
-
-	/* Right curve 
-	.tab-active::after {
-		right: -8px;
-		border-bottom-left-radius: 8px;
-		box-shadow: -4px 4px 0 4px var(--tab-bg, var(--color-bg-primary, #1a1d29));
-	}
-	*/
 </style>

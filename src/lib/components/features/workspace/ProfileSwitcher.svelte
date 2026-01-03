@@ -96,9 +96,7 @@
 		try {
 			isSwitching = true;
 			isOpen = false;
-			toast.info(`Switching to ${workspace.name}...`);
 			await switchWorkspace(workspace.id);
-			toast.success(`Switched to ${workspace.name}`);
 		} catch (error) {
 			toast.error(`Failed to switch workspace: ${error.message}`);
 		} finally {
