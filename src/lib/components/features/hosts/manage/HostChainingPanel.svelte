@@ -3,7 +3,7 @@
 	import { quintOut } from 'svelte/easing';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
 	import { Input, Button, ScrollArea } from '$lib/components/ui';
-	import { getConnectionIcon } from '$lib/utils/connection-icons.js';
+	import { getConnectionIcon } from '$lib/utils';
 	import { ChevronLeft } from 'lucide-svelte';
 
 	const {

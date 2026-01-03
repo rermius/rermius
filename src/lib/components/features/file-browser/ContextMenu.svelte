@@ -1,5 +1,5 @@
 <script>
-	import { adjustDropdownPosition } from '$lib/utils/dropdown-position';
+	import { adjustDropdownPosition } from '$lib/utils';
 
 	let {
 		open = $bindable(false),

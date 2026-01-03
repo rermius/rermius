@@ -13,7 +13,7 @@ ConnectionLogViewer) without prop drilling.
 -->
 <script>
 	import { Button } from '$lib/components/ui';
-	import { getConnectionIcon } from '$lib/utils/connection-icons.js';
+	import { getConnectionIcon } from '$lib/utils';
 	import { X } from 'lucide-svelte';
 	import { tabsStore } from '$lib/stores';
 	import ConnectionProgressBar from './ConnectionProgressBar.svelte';

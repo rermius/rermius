@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { isWin } from '$lib/utils/path/file-utils';
+import { isWin } from '$lib/utils';
 
 /**
  * File Browser Service

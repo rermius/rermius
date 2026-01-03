@@ -1,7 +1,6 @@
 <script>
-	import { getFileIcon } from '$lib/utils/file-icons';
+	import { getFileIcon, modeToPermissionsString } from '$lib/utils';
 	import * as LucideIcons from 'lucide-svelte';
-	import { modeToPermissionsString } from '$lib/utils/permissions';
 
 	const {
 		file,

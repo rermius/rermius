@@ -7,7 +7,7 @@ import { writable, get } from 'svelte/store';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';
 import { getCurrentWorkspaceId } from './workspaces.js';
-import { isWin } from '$lib/utils/path/file-utils';
+import { isWin } from '$lib/utils';
 
 // Platform detection
 const isMac =

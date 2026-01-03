@@ -1,6 +1,6 @@
 <script>
 	import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from '$lib/components/ui';
-	import { getFileIcon } from '$lib/utils/file-icons';
+	import { getFileIcon } from '$lib/utils';
 	import * as LucideIcons from 'lucide-svelte';
 
 	let {

@@ -11,7 +11,7 @@
 		Loader2
 	} from 'lucide-svelte';
 	import { ScrollArea } from '$lib/components/ui';
-	import resolve from '$lib/utils/path/resolve';
+	import { resolve } from '$lib/utils';
 
 	let {
 		// Path state

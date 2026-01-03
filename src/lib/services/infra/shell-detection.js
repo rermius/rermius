@@ -3,7 +3,7 @@
  * Detects available shells on the system per platform
  */
 import { invoke } from '@tauri-apps/api/core';
-import { isWin } from '$lib/utils/path/file-utils';
+import { isWin } from '$lib/utils';
 
 const isMac =
 	typeof window !== 'undefined' &&

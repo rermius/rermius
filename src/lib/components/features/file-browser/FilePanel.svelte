@@ -8,7 +8,6 @@
 	import InputNameModal from './InputNameModal.svelte';
 	import DeleteConfirmModal from './DeleteConfirmModal.svelte';
 	import { fileClipboardStore } from '$lib/stores/file-clipboard.store';
-	import resolve from '$lib/utils/path/resolve';
 	import {
 		getHomeDirectory,
 		getParentPath,
@@ -22,21 +21,22 @@
 		uploadFile,
 		downloadFile
 	} from '$lib/services';
-	import { isWin } from '$lib/utils/path/file-utils';
-	import { sortFiles, filterFiles } from '$lib/utils/file-browser/file-sorting';
 	import {
+		resolve,
+		isWin,
+		sortFiles,
+		filterFiles,
 		handleCreateFile,
 		handleCreateFolder,
-		handleDeleteFiles
-	} from '$lib/utils/file-browser/file-actions';
-	import { handleOpenFile, handleOpenWithFile } from '$lib/utils/file-browser/file-open-handlers';
-	import { handleRenameFile } from '$lib/utils/file-browser/file-rename-handler';
-	import {
+		handleDeleteFiles,
+		handleOpenFile,
+		handleOpenWithFile,
+		handleRenameFile,
 		handleNavigateFile,
 		handleGoToParent,
 		handleGoToHome,
 		handlePathNavigation
-	} from '$lib/utils/file-browser/navigation-handlers';
+	} from '$lib/utils';
 
 	const {
 		// Session info

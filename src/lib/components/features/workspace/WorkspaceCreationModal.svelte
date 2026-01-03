@@ -6,10 +6,9 @@
 	import { AvatarUpload } from '$lib/components/ui/AvatarUpload';
 	import { ScrollArea } from '$lib/components/ui';
 	import { useForm } from '$lib/composables/useForm.svelte.js';
-	import { validateWorkspaceName } from '$lib/utils/validators.js';
+	import { validateWorkspaceName, validateImageFile } from '$lib/utils';
 	import { isWorkspaceNameDuplicate } from '$lib/services';
 	import { useToast } from '$lib/composables/useToast.svelte.js';
-	import { validateImageFile } from '$lib/utils/avatar-handler.js';
 	import { workspaceStore } from '$lib/stores';
 
 	let {

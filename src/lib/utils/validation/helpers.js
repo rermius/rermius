@@ -1,4 +1,4 @@
-import { debounce } from './debounce.js';
+import { debounce } from '../functions/debounce.js';
 
 /**
  * Creates a debounced validation function

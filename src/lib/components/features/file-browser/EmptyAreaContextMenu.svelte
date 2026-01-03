@@ -1,6 +1,6 @@
 <script>
 	import * as LucideIcons from 'lucide-svelte';
-	import { adjustDropdownPosition } from '$lib/utils/dropdown-position';
+	import { adjustDropdownPosition } from '$lib/utils';
 	import { keyboardShortcutManager } from '$lib/services/keyboard-shortcuts';
 	import { onMount } from 'svelte';
 

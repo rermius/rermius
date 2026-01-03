@@ -5,7 +5,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { parseChain } from '$lib/utils/host-chaining';
+import { parseChain } from '$lib/utils';
 import { getKey } from '../data/keychain';
 import {
 	writeTempKeyFile,

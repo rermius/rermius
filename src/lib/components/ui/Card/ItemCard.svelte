@@ -1,6 +1,6 @@
 <script>
 	import { File, Pencil, Plus, Server } from 'lucide-svelte';
-	import { getConnectionIcon } from '$lib/utils/connection-icons.js';
+	import { getConnectionIcon } from '$lib/utils';
 
 	const {
 		label = '',

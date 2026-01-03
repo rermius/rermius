@@ -1,8 +1,14 @@
 <script>
 	import { workspaceStore } from '$lib/stores';
 	import { switchWorkspace } from '$lib/services';
-	import { loadAvatarAsDataUrl } from '$lib/utils/avatar-handler.js';
-	import * as avatarCache from '$lib/utils/avatar-cache.js';
+	import {
+		loadAvatarAsDataUrl,
+		getAvatar,
+		setAvatar,
+		hasAvatar,
+		deleteAvatar,
+		getCacheKeys
+	} from '$lib/utils';
 	import { WorkspaceCreationModal } from '$lib/components/features/workspace';
 	import WorkspaceSwitcherButton from './WorkspaceSwitcherButton.svelte';
 	import WorkspaceDropdown from './WorkspaceDropdown.svelte';
@@ -25,11 +31,11 @@
 
 	// Restore avatarUrls from cache on mount
 	onMount(() => {
-		const cachedKeys = avatarCache.getCacheKeys();
+		const cachedKeys = getCacheKeys();
 		if (cachedKeys.length > 0 && Object.keys(avatarUrls).length === 0) {
 			const restored = {};
 			for (const key of cachedKeys) {
-				restored[key] = avatarCache.getAvatar(key);
+				restored[key] = getAvatar(key);
 			}
 			avatarUrls = restored;
 		}
@@ -41,8 +47,8 @@
 			return null;
 		}
 
-		if (avatarCache.hasAvatar(workspace.id)) {
-			const cached = avatarCache.getAvatar(workspace.id);
+		if (hasAvatar(workspace.id)) {
+			const cached = getAvatar(workspace.id);
 			if (!avatarUrls[workspace.id]) {
 				avatarUrls = { ...avatarUrls, [workspace.id]: cached };
 			}
@@ -51,7 +57,7 @@
 
 		try {
 			const url = await loadAvatarAsDataUrl(workspace.avatarPath);
-			avatarCache.setAvatar(workspace.id, url);
+			setAvatar(workspace.id, url);
 			avatarUrls = { ...avatarUrls, [workspace.id]: url };
 			return url;
 		} catch (error) {
@@ -65,16 +71,16 @@
 		const workspaces = $workspaceStore.workspaces;
 
 		for (const workspace of workspaces) {
-			const hasCache = avatarCache.hasAvatar(workspace.id);
+			const hasCache = hasAvatar(workspace.id);
 			const hasState = !!avatarUrls[workspace.id];
 
 			if (workspace.avatarPath && !hasCache) {
 				loadWorkspaceAvatar(workspace);
 			} else if (workspace.avatarPath && hasCache && !hasState) {
-				const cached = avatarCache.getAvatar(workspace.id);
+				const cached = getAvatar(workspace.id);
 				avatarUrls = { ...avatarUrls, [workspace.id]: cached };
 			} else if (!workspace.avatarPath && hasCache) {
-				avatarCache.deleteAvatar(workspace.id);
+				deleteAvatar(workspace.id);
 				avatarUrls = { ...avatarUrls };
 				delete avatarUrls[workspace.id];
 			}
@@ -106,10 +112,10 @@
 
 		const updated = $workspaceStore.workspaces.find(w => w.id === editingWorkspace.id);
 		if (updated?.avatarPath) {
-			avatarCache.deleteAvatar(updated.id); // Force reload
+			deleteAvatar(updated.id); // Force reload
 			await loadWorkspaceAvatar(updated);
 		} else {
-			avatarCache.deleteAvatar(editingWorkspace.id);
+			deleteAvatar(editingWorkspace.id);
 			avatarUrls = { ...avatarUrls };
 			delete avatarUrls[editingWorkspace.id];
 		}

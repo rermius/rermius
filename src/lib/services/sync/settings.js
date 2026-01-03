@@ -8,7 +8,7 @@ import { syncSettingsStore } from '$lib/stores/sync-settings.store.js';
 import { appDataDir } from '@tauri-apps/api/path';
 import { join } from '@tauri-apps/api/path';
 import { get } from 'svelte/store';
-import { decryptData, encryptData } from '$lib/utils/crypto.js';
+import { decryptData, encryptData } from '$lib/utils';
 import { getCurrentWorkspaceId } from '../data/workspaces.js';
 
 /**

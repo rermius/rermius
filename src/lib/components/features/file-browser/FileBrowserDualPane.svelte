@@ -17,9 +17,8 @@
 		}
 	});
 	import FilePanel from './FilePanel.svelte';
-	import { getDropFileList } from '$lib/utils/file-drop';
+	import { getDropFileList, generateUniqueRemotePath, generateUniqueLocalPath } from '$lib/utils';
 	import { statusBarStore } from '$lib/stores/status-bar';
-	import { generateUniqueRemotePath, generateUniqueLocalPath } from '$lib/utils/path/unique-path';
 	import { toastStore } from '$lib/stores/toast.store';
 
 	const {

@@ -2,7 +2,7 @@
 	import { fade, slide } from 'svelte/transition';
 	import { updateStore } from '$lib/stores';
 	import { Rocket, ExternalLink, X } from 'lucide-svelte';
-	import { formatRelativeTime } from '$lib/utils/formatters';
+	import { formatRelativeTime } from '$lib/utils';
 
 	let status = $derived($updateStore.status);
 	let manifest = $derived($updateStore.manifest);

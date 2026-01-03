@@ -30,7 +30,7 @@ import { get } from 'svelte/store';
 import { addHost, updateHost, hostsStore } from '$lib/services';
 import { hostDraftStore } from '$lib/stores';
 import { handleHostConnect, useSaveQueue } from '$lib/composables';
-import { parseChain, serializeChain, getChainSummary } from '$lib/utils/host-chaining.js';
+import { parseChain, serializeChain, getChainSummary } from '$lib/utils';
 
 const HOST_FORM_CTX = Symbol('host-form');
 

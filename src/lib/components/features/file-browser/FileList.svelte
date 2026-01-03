@@ -2,11 +2,7 @@
 	import FileRow from './FileRow.svelte';
 	import ContextMenu from './ContextMenu.svelte';
 	import { fileClipboardStore } from '$lib/stores/file-clipboard.store';
-	import {
-		getFileMenuItems,
-		getEmptyAreaMenuItems
-	} from '$lib/utils/file-browser/context-menu-items';
-	import { handleFileSelection } from '$lib/utils/file-browser/file-selection';
+	import { getFileMenuItems, getEmptyAreaMenuItems, handleFileSelection } from '$lib/utils';
 	import { Button, ScrollArea } from '$lib/components/ui';
 	import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-svelte';
 

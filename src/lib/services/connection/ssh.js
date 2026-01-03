@@ -9,7 +9,7 @@ import { appDataDir, join } from '@tauri-apps/api/path';
 import { tauriFs } from '../infra/tauri/fs';
 import { getKey } from '../data/keychain';
 import { getHostById } from '../data/hosts';
-import { parseChain } from '$lib/utils/host-chaining';
+import { parseChain } from '$lib/utils';
 
 /**
  * Write temporary SSH key file

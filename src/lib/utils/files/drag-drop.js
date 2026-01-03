@@ -1,7 +1,7 @@
 /**
  * File drop utilities - ADAPTED FROM ELECTERM
  */
-import { getFolderFromFilePath } from './path/file-utils';
+import { getFolderFromFilePath } from './paths.js';
 
 export const getFilePath = file => {
 	if (file.path) return file.path;

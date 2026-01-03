@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { generateUniqueTabLabel } from '$lib/utils/filename-utils';
+import { generateUniqueTabLabel } from '$lib/utils';
 
 /**
  * Tab types
