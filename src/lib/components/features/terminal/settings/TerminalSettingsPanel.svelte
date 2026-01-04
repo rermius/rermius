@@ -3,6 +3,7 @@
 	import { debounce } from '$lib/utils';
 	import { updateHost, getHostById } from '$lib/services';
 	import { terminalStore } from '$lib/stores/terminal.store';
+	import { tabsStore } from '$lib/stores';
 	import { terminalThemes, getThemeById } from '$lib/constants/terminal-themes';
 	import {
 		terminalFonts,
@@ -14,6 +15,7 @@
 	import { Button } from '$lib/components/ui';
 	import { ChevronDown, ChevronRight, Plus, Minus } from 'lucide-svelte';
 	import ThemeList from './ThemeList.svelte';
+	import { useActiveTabTheme } from '$lib/composables/useActiveTabTheme.svelte.js';
 
 	const { sessionId = null, hostId = null } = $props();
 
@@ -22,6 +24,9 @@
 	let themeId = $state('default-dark');
 	let isInitialLoad = $state(true);
 	let fontSectionOpen = $state(false);
+
+	// Initialize tab theme watcher for force updates
+	const tabThemeWatcher = useActiveTabTheme();
 
 	// Load settings from host config (only once)
 	$effect(() => {
@@ -76,12 +81,27 @@
 							}
 						}
 
-						// Trigger resize to re-fit terminal after font changes
-						setTimeout(() => {
-							window.dispatchEvent(new Event('resize'));
-						}, 50);
+						// Re-fit terminal after font/theme changes
+						if (session.fitAddon) {
+							setTimeout(() => {
+								session.fitAddon.fit();
+							}, 100);
+						}
 					});
 				});
+			}
+
+			// Force theme update if this terminal is currently active
+			if (sessionId) {
+				const currentTab = $tabsStore.tabs.find(t => t.sessionId === sessionId);
+				const isActive = currentTab && currentTab.id === $tabsStore.activeTabId;
+
+				if (isActive) {
+					// Small delay to ensure host store is updated
+					setTimeout(() => {
+						tabThemeWatcher.forceUpdate();
+					}, 50);
+				}
 			}
 		} catch (error) {
 			console.error('Failed to save terminal settings:', error);

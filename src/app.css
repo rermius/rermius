@@ -269,6 +269,12 @@ input[type='number'] {
 	height: 100%;
 }
 
+/* Disable horizontal overflow on viewport */
+.xterm .xterm-viewport {
+	overflow-x: hidden !important;
+	background-color: var(--color-bg-primary) !important;
+}
+
 /* Vertical scrollbar - thin 8px container */
 .xterm .xterm-scrollable-element > .scrollbar.vertical {
 	width: 8px !important;
@@ -286,12 +292,6 @@ input[type='number'] {
 	display: none !important;
 	height: 0 !important;
 	visibility: hidden !important;
-}
-
-/* Disable horizontal overflow on viewport */
-.xterm .xterm-viewport {
-	overflow-x: hidden !important;
-	background-color: var(--color-bg-primary) !important;
 }
 
 /* Disable horizontal overflow on scrollable element */

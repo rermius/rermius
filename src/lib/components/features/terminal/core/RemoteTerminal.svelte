@@ -72,5 +72,6 @@ Connects to remote servers and provides interactive shell access.
 		padding: 0px 8px;
 		box-sizing: border-box;
 		overflow: hidden;
+		scrollbar: none !important;
 	}
 </style>

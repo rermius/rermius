@@ -327,6 +327,7 @@ export function useXtermTerminal(config = {}) {
 			type: 'local',
 			shell: preferredShell || null,
 			xterm: terminal,
+			fitAddon: fitAddon,
 			cleanup: close
 		});
 	}
@@ -404,6 +405,7 @@ export function useXtermTerminal(config = {}) {
 			title: 'SSH',
 			type: 'ssh',
 			xterm: terminal,
+			fitAddon: fitAddon,
 			cleanup: close
 		});
 

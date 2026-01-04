@@ -8,7 +8,8 @@
 	import { RemoteTerminalContainer } from '$lib/components/features/terminal/containers';
 	import FileBrowserTabContainer from './FileBrowserTabContainer.svelte';
 	import { updateStore } from '$lib/stores';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
+	import { useActiveTabTheme } from '$lib/composables/useActiveTabTheme.svelte.js';
 
 	const tabs = $derived($tabsStore.tabs);
 	const activeTabId = $derived($tabsStore.activeTabId);
@@ -19,6 +20,11 @@
 
 	// Track file-manager session creation to avoid duplicate calls
 	const fileSessionLoading = $state(new Set());
+
+	// Initialize active tab theme watcher and apply theme immediately
+	// The subscription runs IMMEDIATELY with current value, so theme is synced on first load
+	const tabThemeWatcher = useActiveTabTheme();
+	tabThemeWatcher.init();
 
 	// Get host data for a tab
 	function getHostForTab(tab) {
@@ -176,9 +182,15 @@
 		// Remove tab after session is closed
 		tabsStore.removeTab(tab.id);
 	}
+
 	onMount(() => {
 		// Check for app updates
 		updateStore.checkForUpdates();
+	});
+
+	onDestroy(() => {
+		// Cleanup theme watcher subscription
+		tabThemeWatcher.destroy();
 	});
 </script>
 

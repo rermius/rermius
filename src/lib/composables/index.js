@@ -1,6 +1,6 @@
 /**
  * Barrel export for composables
- * Usage: import { useForm, useToast, useModal, useTauri, useXtermTerminal, handleHostConnect } from '$lib/composables';
+ * Usage: import { useForm, useToast, useModal, useTauri, useXtermTerminal, handleHostConnect, useActiveTabTheme } from '$lib/composables';
  */
 
 export { useForm } from './useForm.svelte.js';
@@ -12,3 +12,4 @@ export { handleHostConnect } from './useHostConnection.svelte.js';
 export { useHostManagement } from './useHostManagement.js';
 export { useSyncChecker, initSyncChecker } from './useSyncChecker.svelte.js';
 export { useSaveQueue } from './useSaveQueue.svelte.js';
+export { useActiveTabTheme } from './useActiveTabTheme.svelte.js';

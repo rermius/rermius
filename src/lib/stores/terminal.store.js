@@ -85,7 +85,8 @@ function createTerminalStore() {
 		 * @param {Function} callback - Called with session state
 		 */
 		getSession: (sessionId, callback) => {
-			const unsubscribe = subscribe(state => {
+			let unsubscribe;
+			unsubscribe = subscribe(state => {
 				const session = state.sessions.find(s => s.id === sessionId);
 				callback(session);
 				if (unsubscribe) unsubscribe();
