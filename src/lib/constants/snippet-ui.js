@@ -9,7 +9,8 @@ export const SNIPPET_COMMAND_PREVIEW_LENGTH = 50;
 
 export const SNIPPET_TABS = {
 	CODE: 'code',
-	CLOCK: 'clock'
+	CLOCK: 'clock',
+	SETTINGS: 'settings'
 };
 
 export const SNIPPET_ERRORS = {

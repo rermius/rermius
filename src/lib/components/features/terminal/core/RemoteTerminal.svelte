@@ -16,12 +16,13 @@ Connects to remote servers and provides interactive shell access.
 @prop {boolean} [active=false] - Whether this terminal is currently active
 @prop {string|null} [homeDirectory=null] - Initial directory to cd into after connection
 @prop {boolean} [isLocal=false] - Whether this is a local terminal (vs SSH)
+@prop {string|null} [hostId=null] - Host ID for loading custom terminal settings
 -->
 <script>
 	import { onMount } from 'svelte';
 	import { useXtermTerminal } from '$lib/composables';
 	const props = $props();
-	const { active = false, isLocal = false } = props;
+	const { active = false, isLocal = false, hostId = null } = props;
 
 	let terminalContainer;
 
@@ -39,7 +40,7 @@ Connects to remote servers and provides interactive shell access.
 		if (!terminalContainer || !props.sessionId) return;
 
 		try {
-			await terminal.initialize(terminalContainer);
+			await terminal.initialize(terminalContainer, { hostId });
 			terminal.focus();
 		} catch (error) {
 			console.error('Failed to initialize terminal session:', error);

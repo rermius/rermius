@@ -1,5 +1,5 @@
 <script>
-	import { Code, Clock, PanelRightClose } from 'lucide-svelte';
+	import { Code, Clock, PanelRightClose, Palette } from 'lucide-svelte';
 	import { SNIPPET_TABS } from '$lib/constants/snippet-ui.js';
 
 	let { activeTab = $bindable(SNIPPET_TABS.CODE), oncollapse = () => {} } = $props();
@@ -39,14 +39,15 @@
 		>
 			<Clock size={16} />
 		</button>
-	</div>
-	{#if activeTab === SNIPPET_TABS.CODE}
 		<button
 			type="button"
-			class="flex items-center gap-1.5 px-2 py-1 text-xs text-text-primary bg-bg-tertiary hover:bg-bg-hover rounded transition-colors"
+			onclick={() => (activeTab = SNIPPET_TABS.SETTINGS)}
+			class="p-1.5 rounded transition-colors {activeTab === SNIPPET_TABS.SETTINGS
+				? 'text-active bg-bg-tertiary'
+				: 'text-text-tertiary hover:text-text-primary hover:bg-bg-hover'}"
+			title="Theme"
 		>
-			<Code size={14} />
-			<span>New Snippet</span>
+			<Palette size={16} />
 		</button>
-	{/if}
+	</div>
 </div>

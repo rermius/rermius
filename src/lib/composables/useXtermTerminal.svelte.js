@@ -28,10 +28,13 @@ import {
 	loadSettings,
 	saveSettings,
 	updateAutoReconnectSettings,
-	getDefaultShell
+	getDefaultShell,
+	getHostById
 } from '$lib/services';
 import { terminalStore, tabsStore, workspaceStore } from '$lib/stores';
 import { useToast } from './useToast.svelte.js';
+import { getThemeById } from '$lib/constants/terminal-themes';
+import { defaultFontFamily, defaultFontSize, minFontSize } from '$lib/constants/terminal-fonts';
 
 export function useXtermTerminal(config = {}) {
 	const {
@@ -130,16 +133,50 @@ export function useXtermTerminal(config = {}) {
 	 */
 	async function initialize(container, options = {}) {
 		try {
+			const { hostId = null, ...otherOptions } = options;
+
 			// Get theme colors
-			const themeColors = getThemeColors();
+			let themeColors = getThemeColors();
+			let fontSize = defaultFontSize;
+			let fontFamily = defaultFontFamily;
+
+			// Override with host-specific settings if available
+			if (hostId) {
+				const host = getHostById(hostId);
+				if (host?.terminalAppearance) {
+					const {
+						themeId,
+						fontSize: customSize,
+						fontFamily: customFont
+					} = host.terminalAppearance;
+
+					// Apply custom theme
+					if (themeId) {
+						const theme = getThemeById(themeId);
+						if (theme) {
+							themeColors = theme.colors;
+						}
+					}
+
+					// Apply custom font size
+					if (customSize) {
+						fontSize = customSize;
+					}
+
+					// Apply custom font family
+					if (customFont && customFont !== 'default') {
+						fontFamily = customFont;
+					}
+				}
+			}
 
 			// Create xterm.js instance with current theme
 			terminal = new Terminal({
 				cursorBlink: true,
-				fontSize: 14,
-				fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+				fontSize,
+				fontFamily,
 				theme: themeColors,
-				...options
+				...otherOptions
 			});
 
 			// Setup fit addon
@@ -532,6 +569,42 @@ export function useXtermTerminal(config = {}) {
 		terminal?.clear();
 	}
 
+	/**
+	 * Apply custom terminal settings (font, theme) at runtime
+	 * @param {Object} settings - Terminal appearance settings
+	 * @param {string} settings.fontFamily - Font family
+	 * @param {number} settings.fontSize - Font size
+	 * @param {string} settings.themeId - Theme ID
+	 */
+	function applyCustomSettings({ fontFamily, fontSize, themeId }) {
+		if (!terminal) return;
+
+		// Apply font family
+		if (fontFamily && fontFamily !== 'default') {
+			terminal.options.fontFamily = fontFamily;
+		} else if (fontFamily === 'default') {
+			terminal.options.fontFamily = defaultFontFamily;
+		}
+
+		// Apply font size
+		if (fontSize && fontSize >= minFontSize) {
+			terminal.options.fontSize = fontSize;
+		}
+
+		// Apply theme
+		if (themeId) {
+			const theme = getThemeById(themeId);
+			if (theme) {
+				terminal.options.theme = theme.colors;
+			}
+		}
+
+		// Trigger re-fit after font changes
+		if (fitAddon) {
+			setTimeout(() => fitAddon.fit(), 100);
+		}
+	}
+
 	// Cleanup on component unmount
 	onDestroy(() => {
 		close();
@@ -544,6 +617,7 @@ export function useXtermTerminal(config = {}) {
 		write,
 		clear,
 		updateTheme,
+		applyCustomSettings,
 		get terminal() {
 			return terminal;
 		},

@@ -9,8 +9,14 @@
 	import SnippetToggleBar from './SnippetToggleBar.svelte';
 	import HistoryList from './HistoryList.svelte';
 	import SnippetPanel from './SnippetPanel.svelte';
+	import TerminalSettingsPanel from '../terminal/settings/TerminalSettingsPanel.svelte';
 
-	let { sessionId: propSessionId = null, collapsed = false, ontoggle = () => {} } = $props();
+	const {
+		sessionId: propSessionId = null,
+		hostId = null,
+		collapsed = false,
+		ontoggle = () => {}
+	} = $props();
 
 	let activeTab = $state(SNIPPET_TABS.CODE);
 	let showSnippetModal = $state(false);
@@ -70,6 +76,8 @@
 			<SnippetSidebarList {snippets} {selectedTags} onRun={run} onPaste={paste} />
 		{:else if activeTab === SNIPPET_TABS.CLOCK}
 			<HistoryList sessionId={activeSessionId} onPaste={paste} />
+		{:else if activeTab === SNIPPET_TABS.SETTINGS}
+			<TerminalSettingsPanel sessionId={activeSessionId} {hostId} />
 		{/if}
 	</div>
 {/if}

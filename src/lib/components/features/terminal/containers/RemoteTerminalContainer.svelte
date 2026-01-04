@@ -184,11 +184,13 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 					active={tab.id === activeTabId}
 					homeDirectory={terminalHomeDir}
 					isLocal={tab.isLocal || false}
+					hostId={host?.id}
 				/>
 			</div>
 			<!-- Snippet Sidebar -->
 			<SnippetSidebar
 				sessionId={tab.sessionId}
+				hostId={host?.id}
 				collapsed={snippetCollapsed}
 				ontoggle={() => (snippetCollapsed = !snippetCollapsed)}
 			/>
@@ -232,11 +234,13 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 				active={tab.id === activeTabId}
 				homeDirectory={homeDir}
 				isLocal={tab.isLocal || false}
+				hostId={host?.id}
 			/>
 		</div>
 		<!-- Snippet Sidebar -->
 		<SnippetSidebar
 			sessionId={tab.sessionId}
+			hostId={host?.id}
 			collapsed={snippetCollapsed}
 			ontoggle={() => (snippetCollapsed = !snippetCollapsed)}
 		/>

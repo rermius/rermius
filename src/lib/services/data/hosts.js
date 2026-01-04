@@ -180,6 +180,13 @@ export async function addHost(hostData) {
 			totalUptime: 0
 		},
 
+		// Terminal Appearance (per-host customization)
+		terminalAppearance: hostData.terminalAppearance || {
+			fontFamily: null,
+			fontSize: null,
+			themeId: null
+		},
+
 		notes: hostData.notes || ''
 	};
 
