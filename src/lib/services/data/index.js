@@ -98,5 +98,7 @@ export {
 	getShellPreferences,
 	updateShortcuts,
 	updateShellPreferences,
-	getDefaultShell
+	getDefaultShell,
+	getLocalTerminalSettings,
+	updateLocalTerminalSettings
 } from './app-settings.js';

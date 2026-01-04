@@ -1,7 +1,13 @@
 <script>
 	import { untrack } from 'svelte';
 	import { debounce } from '$lib/utils';
-	import { updateHost, getHostById } from '$lib/services';
+	import {
+		updateHost,
+		getHostById,
+		getLocalTerminalSettings,
+		updateLocalTerminalSettings,
+		appSettingsStore
+	} from '$lib/services';
 	import { terminalStore } from '$lib/stores/terminal.store';
 	import { tabsStore } from '$lib/stores';
 	import { terminalThemes, getThemeById } from '$lib/constants/terminal-themes';
@@ -21,36 +27,108 @@
 
 	let fontFamily = $state('default');
 	let fontSize = $state(defaultFontSize);
-	let themeId = $state('default-dark');
+	let themeId = $state(null);
 	let isInitialLoad = $state(true);
 	let fontSectionOpen = $state(false);
 
 	// Initialize tab theme watcher for force updates
 	const tabThemeWatcher = useActiveTabTheme();
 
-	// Load settings from host config (only once)
+	// Track if we're currently saving or syncing to prevent feedback loops
+	let isSaving = $state(false);
+	let isSyncing = $state(false);
+	let hasLoadedOnce = $state(false);
+
+	// Track previous values to detect actual changes (initialized after load)
+	let prevFontFamily = $state(null);
+	let prevFontSize = $state(null);
+	let prevThemeId = $state(null);
+
+	// Load settings (once on mount)
 	$effect(() => {
+		// Only run once
+		if (hasLoadedOnce) return;
+
 		if (hostId) {
+			// SSH terminal: load from host config
 			const host = getHostById(hostId);
 			fontFamily = host?.terminalAppearance?.fontFamily ?? 'default';
 			fontSize = host?.terminalAppearance?.fontSize ?? defaultFontSize;
 			themeId = host?.terminalAppearance?.themeId ?? 'default-dark';
+		} else {
+			// Local terminal: load from global settings (once)
+			const settings = getLocalTerminalSettings();
 
-			// Mark as loaded after initial values are set
-			setTimeout(() => {
-				isInitialLoad = false;
-			}, 0);
+			isSyncing = true; // Prevent auto-save during initial load
+			fontFamily = settings.fontFamily;
+			fontSize = settings.fontSize;
+			themeId = settings.themeId;
+			isSyncing = false;
+		}
+
+		// Initialize prev values AFTER loading to prevent initial auto-save
+		prevFontFamily = fontFamily;
+		prevFontSize = fontSize;
+		prevThemeId = themeId;
+
+		hasLoadedOnce = true;
+
+		// Mark as loaded after initial values are set
+		setTimeout(() => {
+			isInitialLoad = false;
+		}, 0);
+	});
+
+	// For local terminals: sync UI when store changes externally (not from our own saves)
+	$effect(() => {
+		if (!hostId && !isSaving && !isInitialLoad && hasLoadedOnce) {
+			const settings = $appSettingsStore.localTerminal;
+
+			if (settings) {
+				// Check if actually different before syncing
+				// Use untrack() to avoid making local state variables dependencies
+				const isDifferent = untrack(() =>
+					fontFamily !== settings.fontFamily ||
+					fontSize !== settings.fontSize ||
+					themeId !== settings.themeId
+				);
+
+				if (isDifferent) {
+					isSyncing = true;
+					fontFamily = settings.fontFamily;
+					fontSize = settings.fontSize;
+					themeId = settings.themeId;
+
+					// Update prev values to prevent auto-save from triggering
+					prevFontFamily = fontFamily;
+					prevFontSize = fontSize;
+					prevThemeId = themeId;
+
+					isSyncing = false;
+				}
+			}
 		}
 	});
 
-	// Debounced auto-save (500ms)
+	// Debounced auto-save for SSH terminals (500ms)
 	const saveSettings = debounce(async (settings) => {
-		if (!hostId || isInitialLoad) return;
+		if (isInitialLoad) {
+			return;
+		}
+
+		// Set flag to prevent sync effect from overwriting during save
+		isSaving = true;
 
 		try {
-			await updateHost(hostId, {
-				terminalAppearance: settings
-			});
+			if (hostId) {
+				// SSH terminal: save to host config
+				await updateHost(hostId, {
+					terminalAppearance: settings
+				});
+			} else {
+				// Local terminal: save to global settings
+				await updateLocalTerminalSettings(settings);
+			}
 
 			// Apply to current terminal immediately
 			if (sessionId) {
@@ -97,7 +175,15 @@
 				const isActive = currentTab && currentTab.id === $tabsStore.activeTabId;
 
 				if (isActive) {
-					// Small delay to ensure host store is updated
+					// Small delay to ensure settings are updated
+					setTimeout(() => {
+						tabThemeWatcher.forceUpdate();
+					}, 50);
+				}
+			} else if (!hostId) {
+				// For local terminals without specific session, force update if any local terminal is active
+				const activeTab = $tabsStore.tabs.find(t => t.id === $tabsStore.activeTabId);
+				if (activeTab && activeTab.type === 'terminal' && !activeTab.hostId) {
 					setTimeout(() => {
 						tabThemeWatcher.forceUpdate();
 					}, 50);
@@ -105,6 +191,11 @@
 			}
 		} catch (error) {
 			console.error('Failed to save terminal settings:', error);
+		} finally {
+			// Reset flag after save completes (success or error)
+			setTimeout(() => {
+				isSaving = false;
+			}, 100);
 		}
 	}, 500);
 
@@ -121,10 +212,22 @@
 		}
 	}
 
-	// Auto-save when values change (skip initial load)
+	// Auto-save when values change (skip initial load and syncing)
 	$effect(() => {
-		if (hostId && !isInitialLoad) {
+		// Only save if values actually changed AND not during initial load/sync
+		const hasChanged =
+			fontFamily !== prevFontFamily || fontSize !== prevFontSize || themeId !== prevThemeId;
+
+		// For local terminals: only save if this panel's session is active (prevent multiple instances conflicting)
+		const isActiveSession = !hostId ? sessionId === $terminalStore.activeSessionId : true;
+
+		if (hasChanged && hasLoadedOnce && !isSyncing && isActiveSession) {
 			saveSettings({ fontFamily, fontSize, themeId });
+
+			// Update tracked values
+			prevFontFamily = fontFamily;
+			prevFontSize = fontSize;
+			prevThemeId = themeId;
 		}
 	});
 
@@ -134,13 +237,16 @@
 </script>
 
 <div class="terminal-settings-panel h-full flex flex-col p-4 gap-4">
+	<!-- Show settings for both SSH and local terminals -->
 	{#if !hostId}
-		<div class="text-center py-8 text-white/60">
-			<p>Terminal settings only available for remote hosts</p>
-			<p class="text-sm mt-2">Local terminals use global theme</p>
+		<div class="text-center py-2 px-4 bg-bg-secondary border border-border rounded">
+			<p class="text-xs text-text-secondary">
+				Global settings for all local terminals
+			</p>
 		</div>
-	{:else}
-		<!-- Font Settings (Collapsible) -->
+	{/if}
+
+	<!-- Font Settings (Collapsible) -->
 		<div class="setting-group">
 			<button
 				type="button"
@@ -206,10 +312,9 @@
 			{/if}
 		</div>
 
-		<!-- Theme Selector -->
-		<div class="setting-group flex-1 flex flex-col min-h-0">
-			<label class="block text-sm font-medium text-text-primary mb-2">Terminal Theme</label>
-			<ThemeList themes={terminalThemes} selectedId={themeId} onSelect={handleThemeSelect} />
-		</div>
-	{/if}
+	<!-- Theme Selector -->
+	<div class="setting-group flex-1 flex flex-col min-h-0">
+		<label class="block text-sm font-medium text-text-primary mb-2">Terminal Theme</label>
+		<ThemeList themes={terminalThemes} selectedId={themeId} onSelect={handleThemeSelect} />
+	</div>
 </div>

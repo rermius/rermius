@@ -29,7 +29,8 @@ import {
 	saveSettings,
 	updateAutoReconnectSettings,
 	getDefaultShell,
-	getHostById
+	getHostById,
+	getLocalTerminalSettings
 } from '$lib/services';
 import { terminalStore, tabsStore, workspaceStore } from '$lib/stores';
 import { useToast } from './useToast.svelte.js';
@@ -140,7 +141,7 @@ export function useXtermTerminal(config = {}) {
 			let fontSize = defaultFontSize;
 			let fontFamily = defaultFontFamily;
 
-			// Override with host-specific settings if available
+			// For SSH terminals: use host-specific settings
 			if (hostId) {
 				const host = getHostById(hostId);
 				if (host?.terminalAppearance) {
@@ -167,6 +168,27 @@ export function useXtermTerminal(config = {}) {
 					if (customFont && customFont !== 'default') {
 						fontFamily = customFont;
 					}
+				}
+			} else if (mode === 'local') {
+				// For local terminals: use global local terminal settings
+				const localSettings = getLocalTerminalSettings();
+
+				// Apply local terminal theme
+				if (localSettings.themeId) {
+					const theme = getThemeById(localSettings.themeId);
+					if (theme) {
+						themeColors = theme.colors;
+					}
+				}
+
+				// Apply local terminal font size
+				if (localSettings.fontSize) {
+					fontSize = localSettings.fontSize;
+				}
+
+				// Apply local terminal font family
+				if (localSettings.fontFamily && localSettings.fontFamily !== 'default') {
+					fontFamily = localSettings.fontFamily;
 				}
 			}
 

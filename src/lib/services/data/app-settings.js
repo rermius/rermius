@@ -83,6 +83,12 @@ const defaultSettings = {
 				{ label: 'Fish', value: '/usr/bin/fish', icon: null }
 			]
 		}
+	},
+	// Local terminal appearance (shared by all local terminals)
+	localTerminal: {
+		themeId: 'catppuccin-mocha',
+		fontSize: 14,
+		fontFamily: 'default'
 	}
 };
 
@@ -114,14 +120,24 @@ export async function loadSettings(workspaceId = null) {
 		const content = await tauriFs.readFile(filePath);
 		const data = JSON.parse(content);
 
-		// Migration: Merge with defaults if shortcuts are missing or empty
+		// Migration: Merge with defaults if missing properties
+		let needsSave = false;
+
 		if (!data.shortcuts || Object.keys(data.shortcuts).length === 0) {
 			data.shortcuts = { ...defaultSettings.shortcuts };
-			// Save the migrated data
-			appSettingsStore.set(data);
+			needsSave = true;
+		}
+
+		if (!data.localTerminal) {
+			data.localTerminal = { ...defaultSettings.localTerminal };
+			needsSave = true;
+		}
+
+		appSettingsStore.set(data);
+
+		// Save migrated data if needed
+		if (needsSave) {
 			await saveSettings(workspaceId);
-		} else {
-			appSettingsStore.set(data);
 		}
 
 		return data;
@@ -336,9 +352,8 @@ export async function updateShellPreferences(workspaceId = null, platform, prefe
  */
 export async function getDefaultShell(workspaceId = null) {
 	try {
-		// Load settings to ensure we have the latest
-		await loadSettings(workspaceId);
-		// Use getShellPreferences which merges with defaults
+		// Don't reload settings - just read from store (settings loaded at app init)
+		// Reloading here causes race condition with pending saves
 		const platform = isWin ? 'windows' : isMac ? 'macos' : 'linux';
 		const prefs = getShellPreferences(platform);
 		const defaultShell = prefs.defaultShell || null;
@@ -347,4 +362,41 @@ export async function getDefaultShell(workspaceId = null) {
 		console.error('Failed to get default shell:', error);
 		return null;
 	}
+}
+
+/**
+ * Get local terminal appearance settings (shared by all local terminals)
+ * @returns {Object} Local terminal appearance configuration
+ */
+export function getLocalTerminalSettings() {
+	const data = get(appSettingsStore);
+	return {
+		themeId: data.localTerminal?.themeId ?? defaultSettings.localTerminal.themeId,
+		fontSize: data.localTerminal?.fontSize ?? defaultSettings.localTerminal.fontSize,
+		fontFamily: data.localTerminal?.fontFamily ?? defaultSettings.localTerminal.fontFamily
+	};
+}
+
+/**
+ * Update local terminal appearance settings
+ * @param {Object} updates - Settings to update
+ * @param {string} [updates.themeId] - Terminal theme ID
+ * @param {number} [updates.fontSize] - Font size
+ * @param {string} [updates.fontFamily] - Font family
+ * @returns {Promise<Object>} Updated settings
+ */
+export async function updateLocalTerminalSettings(updates) {
+	const data = get(appSettingsStore);
+
+	const updatedData = {
+		...data,
+		localTerminal: {
+			...data.localTerminal,
+			...updates
+		}
+	};
+
+	appSettingsStore.set(updatedData);
+	await saveSettings();
+	return updatedData.localTerminal;
 }

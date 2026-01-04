@@ -2,7 +2,7 @@
  * Keyboard Shortcut Manager
  * Handles global keyboard shortcuts with integration to app settings
  */
-import { loadSettings, updateShortcuts } from '../data/app-settings.js';
+import { getShortcuts, updateShortcuts } from '../data/app-settings.js';
 import { workspaceStore } from '$lib/stores';
 import { get } from 'svelte/store';
 
@@ -16,9 +16,10 @@ class KeyboardShortcutManager {
 	 * Initialize shortcut manager and load shortcuts from settings
 	 */
 	async init() {
-		const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
-		const settings = await loadSettings(workspaceId);
-		this.shortcuts = new Map(Object.entries(settings.shortcuts || {}));
+		// Don't reload settings - just read from store (settings loaded at app init)
+		// Reloading here causes race condition with pending saves
+		const shortcuts = getShortcuts();
+		this.shortcuts = new Map(Object.entries(shortcuts || {}));
 	}
 
 	/**

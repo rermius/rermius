@@ -68,16 +68,30 @@
 	>
 		<SnippetSidebarHeader bind:activeTab oncollapse={ontoggle} />
 
-		{#if activeTab === SNIPPET_TABS.CODE}
+		<!-- Always render all tabs, hide/show with CSS to preserve state -->
+		<div
+			class="flex flex-col flex-1 min-h-0"
+			class:hidden={activeTab !== SNIPPET_TABS.CODE}
+		>
 			<!-- Tag Filter -->
 			<div class="px-3 py-2 border-b border-border">
 				<TagFilter {allTags} bind:selectedTags showClearButton={true} />
 			</div>
 			<SnippetSidebarList {snippets} {selectedTags} onRun={run} onPaste={paste} />
-		{:else if activeTab === SNIPPET_TABS.CLOCK}
+		</div>
+
+		<div
+			class="flex flex-col flex-1 min-h-0"
+			class:hidden={activeTab !== SNIPPET_TABS.CLOCK}
+		>
 			<HistoryList sessionId={activeSessionId} onPaste={paste} />
-		{:else if activeTab === SNIPPET_TABS.SETTINGS}
+		</div>
+
+		<div
+			class="flex flex-col flex-1 min-h-0"
+			class:hidden={activeTab !== SNIPPET_TABS.SETTINGS}
+		>
 			<TerminalSettingsPanel sessionId={activeSessionId} {hostId} />
-		{/if}
+		</div>
 	</div>
 {/if}

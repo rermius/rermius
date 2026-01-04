@@ -2,7 +2,7 @@
  * Reactive composable that watches active tab and applies its terminal theme to app
  */
 import { tabsStore, themeStore } from '$lib/stores';
-import { getHostById } from '$lib/services';
+import { getHostById, getLocalTerminalSettings } from '$lib/services';
 import { getThemeById } from '$lib/constants/terminal-themes.js';
 import { readTerminalColorsFromCSS } from '$lib/theme';
 
@@ -35,16 +35,23 @@ export function useActiveTabTheme() {
 
 		let terminalTheme = null;
 
-		// Try to get theme from host config
+		// SSH terminal: get theme from host config
 		if (activeTab.hostId) {
 			const host = getHostById(activeTab.hostId);
 			if (host?.terminalAppearance?.themeId) {
 				const theme = getThemeById(host.terminalAppearance.themeId);
 				terminalTheme = theme?.colors;
 			}
+		} else {
+			// Local terminal: use global local terminal settings
+			const localSettings = getLocalTerminalSettings();
+			if (localSettings.themeId) {
+				const theme = getThemeById(localSettings.themeId);
+				terminalTheme = theme?.colors;
+			}
 		}
 
-		// Fallback to CSS variables
+		// Fallback to CSS variables if no theme found
 		if (!terminalTheme) {
 			terminalTheme = readTerminalColorsFromCSS();
 		}

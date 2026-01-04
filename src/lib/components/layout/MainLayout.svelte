@@ -1,6 +1,9 @@
 <script>
 	import { tabsStore } from '$lib/stores';
-	import { hostsStore, connectionFactory, closeFileSession, connectFileTransfer } from '$lib/services';
+	import { hostsStore, connectionFactory, closeFileSession, connectFileTransfer, appSettingsStore } from '$lib/services';
+	import { terminalStore } from '$lib/stores/terminal.store';
+	import { getThemeById } from '$lib/constants/terminal-themes';
+	import { defaultFontFamily } from '$lib/constants/terminal-fonts';
 	import Header from './Header.svelte';
 	import { ToastContainer, ScrollArea } from '$lib/components/ui';
 	import StatusBar from '$lib/components/ui/StatusBar.svelte';
@@ -25,6 +28,79 @@
 	// The subscription runs IMMEDIATELY with current value, so theme is synced on first load
 	const tabThemeWatcher = useActiveTabTheme();
 	tabThemeWatcher.init();
+
+	// Track previous local terminal settings to detect changes
+	let prevLocalSettings = $state(null);
+
+	// Watch for local terminal settings changes and sync all local terminals
+	$effect(() => {
+		const settings = $appSettingsStore.localTerminal;
+
+		// Skip if settings not loaded yet
+		if (!settings) return;
+
+		// Skip first run (initialization)
+		if (!prevLocalSettings) {
+			prevLocalSettings = { ...settings };
+			return;
+		}
+
+		// Check if settings actually changed
+		const hasChanged =
+			prevLocalSettings.themeId !== settings.themeId ||
+			prevLocalSettings.fontSize !== settings.fontSize ||
+			prevLocalSettings.fontFamily !== settings.fontFamily;
+
+		if (!hasChanged) return;
+
+		// Update all local terminal sessions
+		const allSessions = $terminalStore.sessions;
+
+		allSessions.forEach(session => {
+			// Only update local terminals (type === 'local')
+			if (session.type === 'local' && session.xterm) {
+				const terminal = session.xterm;
+
+				// Apply theme
+				if (settings.themeId) {
+					const theme = getThemeById(settings.themeId);
+					if (theme) {
+						terminal.options.theme = theme.colors;
+					}
+				}
+
+				// Apply font family
+				if (settings.fontFamily && settings.fontFamily !== 'default') {
+					terminal.options.fontFamily = settings.fontFamily;
+				} else if (settings.fontFamily === 'default') {
+					terminal.options.fontFamily = defaultFontFamily;
+				}
+
+				// Apply font size
+				if (settings.fontSize) {
+					terminal.options.fontSize = settings.fontSize;
+				}
+
+				// Re-fit terminal after font changes
+				if (session.fitAddon) {
+					setTimeout(() => {
+						session.fitAddon.fit();
+					}, 100);
+				}
+			}
+		});
+
+		// Update tracked settings
+		prevLocalSettings = { ...settings };
+
+		// Force app theme update if a local terminal is active
+		const activeTab = tabs.find(t => t.id === activeTabId);
+		if (activeTab && activeTab.type === 'terminal' && !activeTab.hostId) {
+			setTimeout(() => {
+				tabThemeWatcher.forceUpdate();
+			}, 150);
+		}
+	});
 
 	// Get host data for a tab
 	function getHostForTab(tab) {
