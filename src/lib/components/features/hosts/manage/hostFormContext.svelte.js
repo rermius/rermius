@@ -27,7 +27,7 @@
 
 import { setContext, getContext } from 'svelte';
 import { get } from 'svelte/store';
-import { addHost, updateHost, hostsStore } from '$lib/services';
+import { addHost, updateHost, hostsStore, getHostById } from '$lib/services';
 import { hostDraftStore } from '$lib/stores';
 import { handleHostConnect, useSaveQueue } from '$lib/composables';
 import { parseChain, serializeChain, getChainSummary } from '$lib/utils';
@@ -138,6 +138,7 @@ export function createHostFormContext(options) {
 			return savedHost;
 		},
 		{
+			debounceMs: 1000,
 			onAutoSave: result => {
 				console.log('Auto-saved host:', result);
 
@@ -164,9 +165,13 @@ export function createHostFormContext(options) {
 	);
 
 	// Auto-save on form changes - Debounced
+	// Watch both formData and hostChainIds for changes
 	$effect(() => {
 		// Watch formData for changes (only trigger if there's meaningful content)
 		if (formData.label || formData.hostname) {
+			// Access hostChainIds to include it in reactivity tracking
+			// This ensures save is triggered when host chaining changes
+			const _ = hostChainIds;
 			saveQueue.save(formData); // Debounced auto-save
 		}
 	});
@@ -361,13 +366,20 @@ export function createHostFormContext(options) {
 			return;
 		}
 
-		// Get the host to connect to
+		// Get the host to connect to - always get latest from store to ensure we have
+		// the most up-to-date data (including hostChainIds from auto-save)
 		let hostToConnect;
-		if (result.skipped) {
-			// Data unchanged, use effective editing host
-			hostToConnect = effectiveEditingHost();
-		} else {
+		if (result.result) {
+			// Use the saved host from result
 			hostToConnect = result.result;
+		} else {
+			// If skipped, get from store to ensure we have latest data
+			const effective = effectiveEditingHost();
+			if (effective?.id) {
+				hostToConnect = getHostById(effective.id);
+			} else {
+				hostToConnect = effective;
+			}
 		}
 
 		if (!hostToConnect) {
