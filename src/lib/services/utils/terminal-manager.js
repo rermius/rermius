@@ -6,7 +6,7 @@
 import { get } from 'svelte/store';
 import { terminalCommands } from '../infra/tauri/index.js';
 import { getDefaultShell } from '../data/app-settings.js';
-import { workspaceStore, tabsStore } from '$lib/stores';
+import { workspaceStore, tabsStore, terminalStore } from '$lib/stores';
 
 /**
  * Create a new local terminal with shell preferences
@@ -30,9 +30,21 @@ export async function createLocalTerminal(options = {}) {
 		shell: preferredShell
 	});
 
+	// Add placeholder session to terminalStore so useXtermTerminal knows it's a local terminal
+	// The xterm instance and other properties will be populated when TerminalComponent initializes
+	terminalStore.addSession({
+		id: sessionId,
+		title: title || 'Terminal',
+		type: 'local',
+		shell: preferredShell,
+		xterm: null, // Will be set by useXtermTerminal.initialize()
+		fitAddon: null,
+		cleanup: null
+	});
+
 	const terminalCount = get(tabsStore).tabs.filter(t => t.type === 'terminal').length;
 	const terminalTitle = title || `Terminal ${terminalCount + 1}`;
-	tabsStore.addTerminalTab(sessionId, terminalTitle, true);
+	tabsStore.addTerminalTab(sessionId, terminalTitle);
 
 	return sessionId;
 }

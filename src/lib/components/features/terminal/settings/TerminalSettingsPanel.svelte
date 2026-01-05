@@ -218,10 +218,10 @@
 		const hasChanged =
 			fontFamily !== prevFontFamily || fontSize !== prevFontSize || themeId !== prevThemeId;
 
-		// For local terminals: only save if this panel's session is active (prevent multiple instances conflicting)
-		const isActiveSession = !hostId ? sessionId === $terminalStore.activeSessionId : true;
-
-		if (hasChanged && hasLoadedOnce && !isSyncing && isActiveSession) {
+		// Save if values changed and not during initial load/sync
+		// For local terminals: save regardless of active session (settings are global)
+		// The isSyncing flag prevents feedback loops between multiple settings panels
+		if (hasChanged && hasLoadedOnce && !isSyncing) {
 			saveSettings({ fontFamily, fontSize, themeId });
 
 			// Update tracked values

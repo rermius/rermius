@@ -1,14 +1,15 @@
 /**
- * Unified xterm.js Terminal Composable
- * Handles both local and SSH terminal initialization with shared logic
- * Theme-aware terminal that responds to terminal theme changes
+ * Unified xterm.js Terminal Composable (Refactored)
+ * Single composable for all terminal types (local, SSH, telnet)
+ * Uses extracted utilities to eliminate code duplication
  *
  * @param {Object} config - Terminal configuration
- * @param {'local'|'ssh'} config.mode - Terminal mode
  * @param {string} [config.shell] - Shell path (local mode)
  * @param {string} [config.title] - Terminal title
- * @param {string} [config.sessionId] - Existing session ID (SSH mode)
+ * @param {string} [config.sessionId] - Existing session ID (for SSH/telnet)
+ * @param {string} [config.sessionType] - Session type override: 'local' | 'ssh' | 'telnet'
  * @param {string} [config.homeDirectory] - Home directory for cd command (SSH mode)
+ * @param {string} [config.hostId] - Host ID (for SSH sessions, used for theme/font)
  * @returns {Object} Terminal interface
  */
 
@@ -19,186 +20,95 @@ import { FitAddon } from '@xterm/addon-fit';
 import {
 	terminalCommands,
 	terminalEvents,
-	getAutoReconnectSettings,
 	getHeartbeatSettings,
-	attemptReconnect,
 	connectionHeartbeat,
 	keyboardShortcutManager,
-	appSettingsStore,
-	loadSettings,
-	saveSettings,
-	updateAutoReconnectSettings,
-	getDefaultShell,
-	getHostById,
-	getLocalTerminalSettings
+	getDefaultShell
 } from '$lib/services';
 import { terminalStore, tabsStore, workspaceStore } from '$lib/stores';
 import { useToast } from './useToast.svelte.js';
+import { defaultFontFamily, defaultFontSize } from '$lib/constants/terminal-fonts';
 import { getThemeById } from '$lib/constants/terminal-themes';
-import { defaultFontFamily, defaultFontSize, minFontSize } from '$lib/constants/terminal-fonts';
+
+// Import utilities from utils/terminal
+import {
+	loadTerminalTheme,
+	loadTerminalFont,
+	setupOutputListener,
+	setupErrorListener,
+	setupUserInput,
+	setupResizeObserver,
+	setupIMEInterception,
+	getThemeFromCSS
+} from '$lib/utils/terminal/theme-and-events';
+
+import { setupExitListener } from '$lib/utils/terminal/exit-handlers';
 
 export function useXtermTerminal(config = {}) {
 	const {
-		mode = 'local',
 		shell = null,
 		title = 'Terminal',
 		sessionId: existingSessionId = null,
-		homeDirectory = null
+		sessionType: explicitSessionType = null,
+		homeDirectory = null,
+		hostId = null
 	} = config;
 
 	const toast = useToast();
 	const eventListeners = [];
 
 	// Terminal state
-	let terminal = $state(null);
+	let terminal = null;  // Don't use $state for object references
 	let fitAddon = null;
 	let sessionId = $state(existingSessionId);
+	let sessionType = $state(explicitSessionType || (existingSessionId ? null : 'local'));
 	let resizeObserver = null;
-	let isClosing = false;
 	let onDataDisposable = null;
-	let isHandlingIME = false; // Track if we're handling IME input
 
-	/**
-	 * Get terminal colors from CSS variables
-	 * @returns {Object} xterm.js theme object
-	 */
-	function getThemeColors() {
-		if (typeof window === 'undefined' || typeof document === 'undefined') {
-			// Fallback colors for SSR
-			return {
-				background: '#1e1e2e',
-				foreground: '#cdd6f4',
-				cursor: '#f5e0dc',
-				cursorAccent: '#1e1e2e',
-				selectionBackground: '#585b7099',
-				scrollbarSliderBackground: 'rgba(255, 255, 255, 0.2)',
-				scrollbarSliderHoverBackground: 'rgba(255, 255, 255, 0.35)',
-				scrollbarSliderActiveBackground: 'rgba(255, 255, 255, 0.5)',
-				black: '#45475a',
-				red: '#f38ba8',
-				green: '#a6e3a1',
-				yellow: '#f9e2af',
-				blue: '#89b4fa',
-				magenta: '#f5c2e7',
-				cyan: '#94e2d5',
-				white: '#bac2de',
-				brightBlack: '#585b70',
-				brightRed: '#f38ba8',
-				brightGreen: '#a6e3a1',
-				brightYellow: '#f9e2af',
-				brightBlue: '#89b4fa',
-				brightMagenta: '#f5c2e7',
-				brightCyan: '#94e2d5',
-				brightWhite: '#a6adc8'
-			};
-		}
-
-		const root = document.documentElement;
-		const getColor = (varName, fallback) => {
-			const color = getComputedStyle(root).getPropertyValue(varName).trim();
-			return color || fallback;
-		};
-
-		return {
-			background: getColor('--terminal-bg', '#1e1e2e'),
-			foreground: getColor('--terminal-fg', '#cdd6f4'),
-			cursor: getColor('--terminal-cursor', '#f5e0dc'),
-			cursorAccent: getColor('--terminal-cursor-accent', '#1e1e2e'),
-			selectionBackground: getColor('--terminal-selection', '#585b7099'),
-			scrollbarSliderBackground: 'rgba(255, 255, 255, 0.2)',
-			scrollbarSliderHoverBackground: 'rgba(255, 255, 255, 0.35)',
-			scrollbarSliderActiveBackground: 'rgba(255, 255, 255, 0.5)',
-			black: getColor('--terminal-black', '#45475a'),
-			red: getColor('--terminal-red', '#f38ba8'),
-			green: getColor('--terminal-green', '#a6e3a1'),
-			yellow: getColor('--terminal-yellow', '#f9e2af'),
-			blue: getColor('--terminal-blue', '#89b4fa'),
-			magenta: getColor('--terminal-magenta', '#f5c2e7'),
-			cyan: getColor('--terminal-cyan', '#94e2d5'),
-			white: getColor('--terminal-white', '#bac2de'),
-			brightBlack: getColor('--terminal-bright-black', '#585b70'),
-			brightRed: getColor('--terminal-bright-red', '#f38ba8'),
-			brightGreen: getColor('--terminal-bright-green', '#a6e3a1'),
-			brightYellow: getColor('--terminal-bright-yellow', '#f9e2af'),
-			brightBlue: getColor('--terminal-bright-blue', '#89b4fa'),
-			brightMagenta: getColor('--terminal-bright-magenta', '#f5c2e7'),
-			brightCyan: getColor('--terminal-bright-cyan', '#94e2d5'),
-			brightWhite: getColor('--terminal-bright-white', '#a6adc8')
-		};
-	}
+	// Shared state for utility functions
+	const sharedState = {
+		isClosing: false,
+		isHandlingIME: false
+	};
 
 	/**
 	 * Initialize terminal session
+	 * Works for all session types (local, SSH, telnet)
+	 *
 	 * @param {HTMLElement} container - DOM element to mount terminal
 	 * @param {Object} options - Additional xterm.js options
 	 */
 	async function initialize(container, options = {}) {
 		try {
-			const { hostId = null, ...otherOptions } = options;
-
-			// Get theme colors
-			let themeColors = getThemeColors();
-			let fontSize = defaultFontSize;
-			let fontFamily = defaultFontFamily;
-
-			// For SSH terminals: use host-specific settings
-			if (hostId) {
-				const host = getHostById(hostId);
-				if (host?.terminalAppearance) {
-					const {
-						themeId,
-						fontSize: customSize,
-						fontFamily: customFont
-					} = host.terminalAppearance;
-
-					// Apply custom theme
-					if (themeId) {
-						const theme = getThemeById(themeId);
-						if (theme) {
-							themeColors = theme.colors;
-						}
-					}
-
-					// Apply custom font size
-					if (customSize) {
-						fontSize = customSize;
-					}
-
-					// Apply custom font family
-					if (customFont && customFont !== 'default') {
-						fontFamily = customFont;
-					}
-				}
-			} else if (mode === 'local') {
-				// For local terminals: use global local terminal settings
-				const localSettings = getLocalTerminalSettings();
-
-				// Apply local terminal theme
-				if (localSettings.themeId) {
-					const theme = getThemeById(localSettings.themeId);
-					if (theme) {
-						themeColors = theme.colors;
-					}
-				}
-
-				// Apply local terminal font size
-				if (localSettings.fontSize) {
-					fontSize = localSettings.fontSize;
-				}
-
-				// Apply local terminal font family
-				if (localSettings.fontFamily && localSettings.fontFamily !== 'default') {
-					fontFamily = localSettings.fontFamily;
+			// Determine session type if not explicitly provided
+			if (!sessionType && existingSessionId) {
+				// Query session type from store (for existing sessions)
+				const sessions = get(terminalStore).sessions;
+				const existingSession = sessions.find(s => s.id === existingSessionId);
+				if (existingSession) {
+					sessionType = existingSession.type;
+				} else {
+					// Default to SSH for existing session IDs (backend-created sessions)
+					sessionType = 'ssh';
 				}
 			}
 
-			// Create xterm.js instance with current theme
+			// Load theme colors
+			const themeColors = loadTerminalTheme(sessionType, hostId, getThemeFromCSS);
+			const finalTheme = themeColors || getThemeFromCSS();
+
+			// Load font configuration
+			const fontConfig = loadTerminalFont(sessionType, hostId);
+			const fontSize = fontConfig.fontSize || defaultFontSize;
+			const fontFamily = fontConfig.fontFamily || defaultFontFamily;
+
+			// Create xterm.js instance
 			terminal = new Terminal({
 				cursorBlink: true,
 				fontSize,
 				fontFamily,
-				theme: themeColors,
-				...otherOptions
+				theme: finalTheme,
+				...options
 			});
 
 			// Setup fit addon
@@ -209,36 +119,39 @@ export function useXtermTerminal(config = {}) {
 			terminal.open(container);
 			fitAddon.fit();
 
-			// Intercept keyboard events for app shortcuts (Ctrl+T, Ctrl+W, etc.)
+			// Intercept keyboard events for app shortcuts
 			terminal.attachCustomKeyEventHandler(event => {
-				// Check if this is an app shortcut using dynamic shortcuts from settings
 				const isAppShortcut = keyboardShortcutManager.isAppShortcut(event);
-
-				// If it's an app shortcut, don't send to terminal (let it bubble to global handler)
 				if (isAppShortcut) {
-					return false; // Block terminal from processing, let global handler work
+					return false; // Block terminal, let global handler work
 				}
-
-				// Otherwise, let terminal process the key normally
-				return true;
+				return true; // Let terminal process normally
 			});
 
-			// Setup IME interception for Vietnamese, Chinese, Japanese, etc.
-			setupIMEInterception(container);
+			// Setup IME interception for CJK languages
+			setupIMEInterception(container, sessionId, sharedState, terminal);
 
-			// Mode-specific initialization
-			if (mode === 'local') {
-				await initializeLocalTerminal();
-			} else if (mode === 'ssh') {
-				await initializeSSHTerminal();
+			// Session-specific initialization
+			if (sessionType === 'local') {
+				await initializeLocalSession();
+			} else if (sessionType === 'ssh') {
+				await initializeSSHSession();
+			} else if (sessionType === 'telnet') {
+				await initializeTelnetSession();
 			}
 
-			// Handle window resize (common for both modes)
-			setupResizeObserver(container);
+			// Setup resize observer (common for all types)
+			resizeObserver = setupResizeObserver(
+				container,
+				fitAddon,
+				terminal,
+				sessionId,
+				sharedState
+			);
 
 			return sessionId;
 		} catch (error) {
-			console.error('Failed to initialize terminal:', error);
+			console.error('[useXtermTerminal] Failed to initialize:', error);
 			toast.show({
 				message: `Failed to create terminal: ${error.message}`,
 				type: 'error'
@@ -248,58 +161,22 @@ export function useXtermTerminal(config = {}) {
 	}
 
 	/**
-	 * Setup IME interception from textarea (for Vietnamese, Chinese, Japanese, etc.)
-	 * @param {HTMLElement} container - Terminal container element
+	 * Initialize local terminal session
+	 * Creates new PTY session via backend
 	 */
-	function setupIMEInterception(container) {
-		// Wait for xterm.js to create textarea
-		setTimeout(() => {
-			const textarea = container.querySelector('.xterm-helper-textarea');
-			if (textarea) {
-				textarea.addEventListener('input', e => {
-					// Handle IME-replaced text (Vietnamese, Chinese, Japanese, etc.)
-					if (e.inputType === 'insertReplacementText' && e.data) {
-						isHandlingIME = true;
-						const imeText = e.data;
-
-						// Send IME text directly to backend (sessionId will be available after initialization)
-						if (!isClosing && terminal) {
-							// Use a small delay to ensure sessionId is set (for local terminals)
-							setTimeout(() => {
-								if (sessionId) {
-									terminalCommands.writeTerminal(sessionId, imeText).catch(error => {
-										if (!isClosing && terminal && !error.message?.includes('callback')) {
-											console.error('Failed to write IME text to terminal:', error);
-										}
-									});
-								}
-							}, 0);
-						}
-
-						// Clear textarea to prevent xterm.js from processing it
-						e.target.value = '';
-
-						// Reset flag
-						setTimeout(() => {
-							isHandlingIME = false;
-						}, 0);
-					}
-				});
-			}
-		}, 100); // Small delay to ensure textarea is created
-	}
-
-	async function initializeLocalTerminal() {
+	async function initializeLocalSession() {
+		// Get preferred shell
 		let preferredShell = shell;
 		if (!preferredShell) {
 			try {
 				const workspaceId = get(workspaceStore).activeWorkspaceId || 'default';
 				preferredShell = await getDefaultShell(workspaceId);
 			} catch (error) {
-				console.error('Failed to get shell preference:', error);
+				console.error('[useXtermTerminal] Failed to get shell preference:', error);
 			}
 		}
 
+		// Create backend session
 		if (!sessionId) {
 			const { cols, rows } = terminal;
 			sessionId = await terminalCommands.createTerminal({
@@ -309,20 +186,14 @@ export function useXtermTerminal(config = {}) {
 			});
 		}
 
-		const outputUnlisten = await terminalEvents.onTerminalOutput(sessionId, data => {
-			terminal?.write(data);
-		});
+		// Setup event listeners (using extracted utilities)
+		const outputUnlisten = await setupOutputListener(sessionId, terminal);
 		eventListeners.push(outputUnlisten);
 
-		const exitUnlisten = await terminalEvents.onTerminalExit(sessionId, exitCode => {
-			toast.show({
-				message: `Terminal exited with code ${exitCode}`,
-				type: 'info'
-			});
-		});
+		const exitUnlisten = await setupExitListener(sessionId, 'local', terminalEvents);
 		eventListeners.push(exitUnlisten);
 
-		const errorUnlisten = await terminalEvents.onTerminalError(sessionId, error => {
+		const errorUnlisten = await setupErrorListener(sessionId, error => {
 			toast.show({
 				message: `Terminal error: ${error}`,
 				type: 'error'
@@ -330,107 +201,74 @@ export function useXtermTerminal(config = {}) {
 		});
 		eventListeners.push(errorUnlisten);
 
-		onDataDisposable = terminal.onData(data => {
-			if (isHandlingIME) {
-				return;
-			}
-			if (isClosing || !sessionId || !terminal) {
-				return;
-			}
-			terminalCommands.writeTerminal(sessionId, data).catch(error => {
-				if (!isClosing && terminal && !error.message?.includes('callback')) {
-					console.error('Failed to write to terminal:', error);
-				}
+		// Setup user input (using extracted utility)
+		onDataDisposable = setupUserInput(terminal, sessionId, sharedState);
+
+		// Register or update session in store
+		// Check if session already exists (created by terminal-manager)
+		const sessions = get(terminalStore).sessions;
+		const existingSession = sessions.find(s => s.id === sessionId);
+
+		if (existingSession) {
+			// Update existing session with xterm instance and other properties
+			terminalStore.updateSession(sessionId, {
+				xterm: terminal,
+				fitAddon: fitAddon,
+				cleanup: close
 			});
-		});
-		terminalStore.addSession({
-			id: sessionId,
-			title: title || 'Terminal',
-			type: 'local',
-			shell: preferredShell || null,
-			xterm: terminal,
-			fitAddon: fitAddon,
-			cleanup: close
-		});
+		} else {
+
+			// Add new session (fallback for old code paths)
+			terminalStore.addSession({
+				id: sessionId,
+				title: title || 'Terminal',
+				type: 'local',
+				shell: preferredShell || null,
+				xterm: terminal,
+				fitAddon: fitAddon,
+				cleanup: close
+			});
+		}
 	}
 
 	/**
-	 * Initialize SSH terminal (uses existing backend session)
+	 * Initialize SSH terminal session
+	 * Uses existing backend session created during connection
 	 */
-	async function initializeSSHTerminal() {
+	async function initializeSSHSession() {
 		if (!sessionId) {
 			throw new Error('SSH mode requires a sessionId');
 		}
 
-		// Listen for terminal output
-		const outputUnlisten = await terminalEvents.onTerminalOutput(sessionId, data => {
-			terminal?.write(data);
-		});
+		// Setup event listeners (using extracted utilities)
+		const outputUnlisten = await setupOutputListener(sessionId, terminal);
 		eventListeners.push(outputUnlisten);
 
-		// Listen for terminal exit
-		const exitUnlisten = await terminalEvents.onTerminalExit(sessionId, async exitEvent => {
-			const exitCode = typeof exitEvent === 'number' ? exitEvent : exitEvent.exit_code;
-			const reason = typeof exitEvent === 'object' ? exitEvent.reason : null;
-			if (mode === 'ssh' && sessionId) {
-				// Find tab by sessionId
-				const tabs = get(tabsStore);
-				const tab = tabs.tabs.find(t => t.sessionId === sessionId);
-
-				if (tab) {
-					// Check if this is a user-initiated disconnect
-					const isUserClosed = reason === 'user-closed' || tab.reconnectCancelled;
-
-					if (isUserClosed) {
-						tabsStore.updateTabConnectionState(tab.id, {
-							connectionState: 'FAILED',
-							connectionError: 'Connection closed by user'
-						});
-						return;
-					}
-
-					// Check if tab is still in tabs list and not cancelled
-					const currentTabs = get(tabsStore);
-					const currentTab = currentTabs.tabs.find(t => t.id === tab.id);
-
-					if (currentTab && !currentTab.reconnectCancelled) {
-						// Get global auto-reconnect settings
-						const settings = getAutoReconnectSettings();
-
-						if (settings.enabled) {
-							attemptReconnect(tab.id).catch(error => {
-								console.error('[useXtermTerminal] Failed to trigger reconnect:', error);
-							});
-						} else {
-							tabsStore.updateTabConnectionState(tab.id, {
-								connectionState: 'FAILED',
-								connectionError: 'Connection lost'
-							});
-						}
-					}
-				} else {
-					console.warn('[useXtermTerminal] Tab not found for sessionId:', sessionId);
-				}
-			}
-		});
+		const exitUnlisten = await setupExitListener(sessionId, 'ssh', terminalEvents);
 		eventListeners.push(exitUnlisten);
 
-		// Listen for terminal errors
-		const errorUnlisten = await terminalEvents.onTerminalError(sessionId, console.error);
+		const errorUnlisten = await setupErrorListener(sessionId, error => {
+			console.error('[useXtermTerminal] SSH terminal error:', error);
+		});
 		eventListeners.push(errorUnlisten);
 
-		// Signal backend that FE is ready to receive data
+		// Signal backend that frontend is ready to receive data
 		await terminalCommands.startStreaming(sessionId);
 
+		// Setup user input (using extracted utility)
+		onDataDisposable = setupUserInput(terminal, sessionId, sharedState);
+
+		// Register session in store
 		terminalStore.addSession({
 			id: sessionId,
-			title: 'SSH',
+			title: title || 'SSH',
 			type: 'ssh',
 			xterm: terminal,
 			fitAddon: fitAddon,
 			cleanup: close
 		});
 
+		// Start connection heartbeat if enabled
 		const tabs = get(tabsStore);
 		const tab = tabs.tabs.find(t => t.sessionId === sessionId);
 		if (tab) {
@@ -444,49 +282,53 @@ export function useXtermTerminal(config = {}) {
 			}
 		}
 
-		// Change to home directory if specified (for SSH connections)
+		// Change to home directory if specified
 		if (homeDirectory && homeDirectory.trim()) {
-			// Wait a bit for shell to be ready, then send cd command
 			setTimeout(() => {
 				const cdCommand = `cd "${homeDirectory.trim()}"\r`;
 				terminalCommands.writeTerminal(sessionId, cdCommand).catch(e => {
-					console.error('[FE] Failed to send cd command:', e);
+					console.error('[useXtermTerminal] Failed to send cd command:', e);
 				});
-			}, 500); // Small delay to ensure shell is ready
+			}, 500);
 		}
-
-		// Handle user input
-		onDataDisposable = terminal.onData(data => {
-			// Skip if we're handling IME (to avoid duplicate)
-			if (isHandlingIME) {
-				return;
-			}
-			terminalCommands.writeTerminal(sessionId, data).catch(e => {
-				console.error('[FE] Write error:', e);
-			});
-		});
 	}
 
 	/**
-	 * Setup resize observer for terminal auto-sizing
-	 * @param {HTMLElement} container - Terminal container element
+	 * Initialize Telnet terminal session
+	 * Similar to SSH but without heartbeat
 	 */
-	function setupResizeObserver(container) {
-		resizeObserver = new ResizeObserver(() => {
-			// Prevent operations if closing
-			if (isClosing || !fitAddon || !terminal || !sessionId) {
-				return;
-			}
-			fitAddon.fit();
-			const { cols, rows } = terminal;
-			terminalCommands.resizeTerminal(sessionId, cols, rows).catch(error => {
-				// Silently ignore errors if closing or callback not found (component unmounted)
-				if (!isClosing && terminal && !error.message?.includes('callback')) {
-					console.error('Failed to resize terminal:', error);
-				}
-			});
+	async function initializeTelnetSession() {
+		if (!sessionId) {
+			throw new Error('Telnet mode requires a sessionId');
+		}
+
+		// Setup event listeners (using extracted utilities)
+		const outputUnlisten = await setupOutputListener(sessionId, terminal);
+		eventListeners.push(outputUnlisten);
+
+		const exitUnlisten = await setupExitListener(sessionId, 'telnet', terminalEvents);
+		eventListeners.push(exitUnlisten);
+
+		const errorUnlisten = await setupErrorListener(sessionId, error => {
+			console.error('[useXtermTerminal] Telnet terminal error:', error);
 		});
-		resizeObserver.observe(container);
+		eventListeners.push(errorUnlisten);
+
+		// Signal backend that frontend is ready
+		await terminalCommands.startStreaming(sessionId);
+
+		// Setup user input (using extracted utility)
+		onDataDisposable = setupUserInput(terminal, sessionId, sharedState);
+
+		// Register session in store
+		terminalStore.addSession({
+			id: sessionId,
+			title: title || 'Telnet',
+			type: 'telnet',
+			xterm: terminal,
+			fitAddon: fitAddon,
+			cleanup: close
+		});
 	}
 
 	/**
@@ -494,10 +336,49 @@ export function useXtermTerminal(config = {}) {
 	 * Call this when app theme changes (dark/light mode)
 	 */
 	function updateTheme() {
-		const colors = getThemeColors();
-		if (terminal && colors) {
+		const colors = getThemeFromCSS();
+		if (terminal && colors && fitAddon) {
 			terminal.options.theme = colors;
-			terminal.write(''); // Force refresh
+			// Force repaint via fit() instead of write()
+			setTimeout(() => fitAddon.fit(), 50);
+		}
+	}
+
+	/**
+	 * Apply custom terminal settings (font, theme) at runtime
+	 * Used when user changes settings while terminal is active
+	 *
+	 * @param {Object} settings - Terminal appearance settings
+	 * @param {string} settings.fontFamily - Font family
+	 * @param {number} settings.fontSize - Font size
+	 * @param {string} settings.themeId - Theme ID
+	 */
+	function applyCustomSettings({ fontFamily, fontSize, themeId }) {
+		if (!terminal) return;
+
+		// Apply font family
+		if (fontFamily && fontFamily !== 'default') {
+			terminal.options.fontFamily = fontFamily;
+		} else if (fontFamily === 'default') {
+			terminal.options.fontFamily = defaultFontFamily;
+		}
+
+		// Apply font size
+		if (fontSize && fontSize >= 8) {
+			terminal.options.fontSize = fontSize;
+		}
+
+		// Apply theme
+		if (themeId) {
+			const theme = getThemeById(themeId);
+			if (theme) {
+				terminal.options.theme = theme.colors;
+			}
+		}
+
+		// Force repaint after theme/font changes - fit() triggers full redraw
+		if (fitAddon) {
+			setTimeout(() => fitAddon.fit(), 50);
 		}
 	}
 
@@ -505,14 +386,14 @@ export function useXtermTerminal(config = {}) {
 	 * Close terminal session and cleanup all resources
 	 */
 	async function close() {
-		if (isClosing) {
+		if (sharedState.isClosing) {
 			return;
 		}
-		isClosing = true;
+		sharedState.isClosing = true;
 
 		try {
 			// Stop heartbeat for SSH connections
-			if (sessionId && mode === 'ssh') {
+			if (sessionId && sessionType === 'ssh') {
 				connectionHeartbeat.stop(sessionId);
 			}
 
@@ -546,19 +427,19 @@ export function useXtermTerminal(config = {}) {
 					await terminalCommands.closeTerminal(sessionId);
 				} catch (error) {
 					if (!error.message?.includes('callback')) {
-						console.error('Error closing terminal backend:', error);
+						console.error('[useXtermTerminal] Error closing backend:', error);
 					}
 				}
 				terminalStore.removeSession(sessionId);
 			}
 
-			// Dispose FitAddon before terminal
+			// Dispose FitAddon
 			if (fitAddon) {
 				fitAddon.dispose();
 				fitAddon = null;
 			}
 
-			// Clear buffer and dispose terminal
+			// Dispose terminal
 			if (terminal) {
 				terminal.clear();
 				terminal.dispose();
@@ -567,7 +448,7 @@ export function useXtermTerminal(config = {}) {
 
 			sessionId = null;
 		} catch (error) {
-			console.error('Failed to close terminal:', error);
+			console.error('[useXtermTerminal] Failed to close terminal:', error);
 		}
 	}
 
@@ -591,42 +472,6 @@ export function useXtermTerminal(config = {}) {
 	 */
 	function clear() {
 		terminal?.clear();
-	}
-
-	/**
-	 * Apply custom terminal settings (font, theme) at runtime
-	 * @param {Object} settings - Terminal appearance settings
-	 * @param {string} settings.fontFamily - Font family
-	 * @param {number} settings.fontSize - Font size
-	 * @param {string} settings.themeId - Theme ID
-	 */
-	function applyCustomSettings({ fontFamily, fontSize, themeId }) {
-		if (!terminal) return;
-
-		// Apply font family
-		if (fontFamily && fontFamily !== 'default') {
-			terminal.options.fontFamily = fontFamily;
-		} else if (fontFamily === 'default') {
-			terminal.options.fontFamily = defaultFontFamily;
-		}
-
-		// Apply font size
-		if (fontSize && fontSize >= minFontSize) {
-			terminal.options.fontSize = fontSize;
-		}
-
-		// Apply theme
-		if (themeId) {
-			const theme = getThemeById(themeId);
-			if (theme) {
-				terminal.options.theme = theme.colors;
-			}
-		}
-
-		// Trigger re-fit after font changes
-		if (fitAddon) {
-			setTimeout(() => fitAddon.fit(), 100);
-		}
 	}
 
 	// Cleanup on component unmount

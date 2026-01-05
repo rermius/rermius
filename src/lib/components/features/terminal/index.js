@@ -4,7 +4,7 @@
  * Organized terminal components for managing local and remote terminal sessions.
  *
  * Structure:
- * - core/        - Base terminal components (LocalTerminal, RemoteTerminal)
+ * - core/        - Unified terminal component (TerminalComponent)
  * - views/       - High-level views and layouts (LocalTerminalView)
  * - containers/  - Connection/tab orchestration (RemoteTerminalContainer)
  * - tabs/        - Tab UI components (TerminalTabBar, TerminalTabItem)
@@ -12,7 +12,7 @@
  *
  * @example
  * ```js
- * import { LocalTerminal, RemoteTerminal } from '$lib/components/features/terminal';
+ * import { TerminalComponent } from '$lib/components/features/terminal';
  * import { LocalTerminalView } from '$lib/components/features/terminal';
  * import { RemoteTerminalContainer } from '$lib/components/features/terminal';
  * import { TerminalTabBar, TerminalTabItem } from '$lib/components/features/terminal';
@@ -21,7 +21,7 @@
  */
 
 // Core terminal components
-export { LocalTerminal, RemoteTerminal } from './core';
+export { TerminalComponent } from './core';
 
 // View components
 export { LocalTerminalView } from './views';

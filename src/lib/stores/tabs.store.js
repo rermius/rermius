@@ -70,17 +70,17 @@ function createTabsStore() {
 		 * Add a new terminal tab
 		 * @param {string} sessionId - Terminal session ID
 		 * @param {string} [label] - Tab label
-		 * @param {boolean} [isLocal=false] - Whether this is a local terminal (vs SSH)
 		 */
-		addTerminalTab: (sessionId, label = 'Terminal', isLocal = false) => {
+		addTerminalTab: (sessionId, label = 'Terminal') => {
 			update(state => {
 				const newTab = {
 					id: `terminal-${sessionId}`,
 					type: 'terminal',
 					label,
 					closeable: true,
-					sessionId,
-					isLocal
+					sessionId
+					// Note: Session type ('local' | 'ssh' | 'telnet') is determined by
+					// querying terminalStore.getSession(sessionId).type
 				};
 
 				return {

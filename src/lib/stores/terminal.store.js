@@ -80,6 +80,17 @@ function createTerminalStore() {
 			})),
 
 		/**
+		 * Update session properties
+		 * @param {string} sessionId
+		 * @param {Object} updates - Properties to update
+		 */
+		updateSession: (sessionId, updates) =>
+			update(state => ({
+				...state,
+				sessions: state.sessions.map(s => (s.id === sessionId ? { ...s, ...updates } : s))
+			})),
+
+		/**
 		 * Get session by ID
 		 * @param {string} sessionId
 		 * @param {Function} callback - Called with session state

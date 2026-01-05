@@ -28,3 +28,7 @@ export * from './data/errors.js';
 export * from './functions/debounce.js';
 export * from './functions/helpers.js';
 export * from './functions/ssh-chain.js';
+
+// Terminal Utilities
+export * from './terminal/theme-and-events.js';
+export * from './terminal/exit-handlers.js';

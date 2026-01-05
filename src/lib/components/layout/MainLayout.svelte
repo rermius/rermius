@@ -37,7 +37,9 @@
 		const settings = $appSettingsStore.localTerminal;
 
 		// Skip if settings not loaded yet
-		if (!settings) return;
+		if (!settings) {
+			return;
+		}
 
 		// Skip first run (initialization)
 		if (!prevLocalSettings) {
@@ -51,7 +53,9 @@
 			prevLocalSettings.fontSize !== settings.fontSize ||
 			prevLocalSettings.fontFamily !== settings.fontFamily;
 
-		if (!hasChanged) return;
+		if (!hasChanged) {
+			return;
+		}
 
 		// Update all local terminal sessions
 		const allSessions = $terminalStore.sessions;
@@ -81,11 +85,11 @@
 					terminal.options.fontSize = settings.fontSize;
 				}
 
-				// Re-fit terminal after font changes
+				// Force visual refresh - use fitAddon.fit() which triggers full repaint
 				if (session.fitAddon) {
 					setTimeout(() => {
 						session.fitAddon.fit();
-					}, 100);
+					}, 50);
 				}
 			}
 		});

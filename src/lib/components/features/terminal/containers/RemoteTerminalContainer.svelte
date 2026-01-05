@@ -24,7 +24,7 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 -->
 <script>
 	import { onMount } from 'svelte';
-	import { RemoteTerminal, ConnectionEditWrapper } from '$lib/components/features/terminal';
+	import { TerminalComponent, ConnectionEditWrapper } from '$lib/components/features/terminal';
 	import { FilePanel } from '$lib/components/features/file-browser';
 	import { createFileService, getUiSettings, updateUiSettings } from '$lib/services';
 	import { SnippetSidebar } from '$lib/components/features/snippets';
@@ -179,11 +179,10 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 		>
 			<!-- Terminal -->
 			<div class="flex-1 relative bg-bg-primary min-w-0 overflow-hidden">
-				<RemoteTerminal
+				<TerminalComponent
 					sessionId={tab.sessionId}
 					active={tab.id === activeTabId}
 					homeDirectory={terminalHomeDir}
-					isLocal={tab.isLocal || false}
 					hostId={host?.id}
 				/>
 			</div>
@@ -229,11 +228,10 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 	{@const homeDir = host?.homeDirectory || null}
 	<div class="h-full pb-2 flex overflow-hidden">
 		<div class="flex-1 min-w-0 overflow-hidden">
-			<RemoteTerminal
+			<TerminalComponent
 				sessionId={tab.sessionId}
 				active={tab.id === activeTabId}
 				homeDirectory={homeDir}
-				isLocal={tab.isLocal || false}
 				hostId={host?.id}
 			/>
 		</div>
