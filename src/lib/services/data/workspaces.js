@@ -547,7 +547,7 @@ export async function switchWorkspace(targetWorkspaceId) {
 			const { loadSettings } = await import('./app-settings.js');
 
 			// Load all workspace-specific data
-			await new Promise.all([
+			await Promise.all([
 				loadKeychain(targetWorkspaceId),
 				loadHosts(targetWorkspaceId),
 				loadSyncSettings(targetWorkspaceId),
