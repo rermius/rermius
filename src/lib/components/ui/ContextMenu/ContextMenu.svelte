@@ -62,10 +62,13 @@
 			};
 
 			// Use capture phase to handle before other handlers
+			// Listen to both click and mousedown to catch all interactions
 			window.addEventListener('click', handleClickOutside, true);
+			window.addEventListener('mousedown', handleClickOutside, true);
 
 			return () => {
 				window.removeEventListener('click', handleClickOutside, true);
+				window.removeEventListener('mousedown', handleClickOutside, true);
 			};
 		}
 	});

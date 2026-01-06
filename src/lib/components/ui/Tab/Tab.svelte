@@ -14,7 +14,8 @@
 		onTrailingClick = null,
 		onclick,
 		onkeypress,
-		onclose
+		onclose,
+		oncontextmenu = null
 	} = $props();
 
 	function handleClose(e) {
@@ -34,6 +35,14 @@
 		e.stopPropagation();
 		onTrailingClick?.({ tabId, event: e });
 	}
+
+	function handleContextMenu(e) {
+		if (oncontextmenu) {
+			e.preventDefault();
+			e.stopPropagation();
+			oncontextmenu({ tabId, event: e });
+		}
+	}
 </script>
 
 {#if (icon || iconComponent) && !label}
@@ -49,6 +58,7 @@
 		onclick={e => onclick?.(e)}
 		onkeypress={e => onkeypress?.(e)}
 		onmousedown={handleMouseDown}
+		oncontextmenu={handleContextMenu}
 	>
 		{#if iconComponent}
 			{@const Icon = iconComponent}
@@ -70,6 +80,7 @@
 		onclick={e => onclick?.(e)}
 		onkeypress={e => onkeypress?.(e)}
 		onmousedown={handleMouseDown}
+		oncontextmenu={handleContextMenu}
 	>
 		{#if iconComponent}
 			{@const Icon = iconComponent}

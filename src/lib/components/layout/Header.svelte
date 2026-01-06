@@ -5,8 +5,10 @@
 	import { goto } from '$app/navigation';
 	import { Tab } from '$lib/components/ui/Tab';
 	import { tabsStore, terminalStore } from '$lib/stores';
-	import { createLocalTerminal, hostsStore, terminalCommands, closeFileSession } from '$lib/services';
-	import { Menu, Minus, Square, X, Plus, Files, Sun, Moon } from 'lucide-svelte';
+	import { createLocalTerminal, hostsStore, terminalCommands, closeFileSession, getHostById as getHostByIdService } from '$lib/services';
+	import { handleHostConnect } from '$lib/composables';
+	import { ContextMenu } from '$lib/components/ui/ContextMenu';
+	import { Menu, Minus, Square, X, Plus, Files, Sun, Moon, Copy, RefreshCw, XCircle, Columns } from 'lucide-svelte';
 	import { themeStore, updateStore } from '$lib/stores';
 	import AppMenu from './AppMenu.svelte';
 	import { SettingsModal } from '$lib/components/features/settings';
@@ -21,8 +23,22 @@
 	let showSettingsModal = $state(false);
 	let menuButtonRef = $state(null);
 
+	// Context menu state for terminal tabs
+	let contextMenuOpen = $state(false);
+	let contextMenuPosition = $state({ x: 0, y: 0 });
+	let contextMenuTab = $state(null);
+	let contextMenuRef = $state(null);
+	let portalContainer = $state(null);
+
+	// Portal pattern - mount menu to document.body to escape all stacking contexts
 	// Initialize event listeners for global shortcuts
 	onMount(() => {
+		// Create portal container for context menu
+		portalContainer = document.createElement('div');
+		portalContainer.className = 'terminal-tab-context-menu-portal';
+		document.body.appendChild(portalContainer);
+
+		// Initialize event listeners for global shortcuts
 		const handleNewTerminal = () => openNewTerminal();
 		const handleCloseTab = e => handleTabClose(e.detail);
 		const handleOpenSettings = () => openSettingsModal();
@@ -37,11 +53,35 @@
 		window.addEventListener('app:toggle-file-manager', handleToggleFileManager);
 
 		return () => {
+			// Cleanup portal container
+			if (portalContainer && document.body.contains(portalContainer)) {
+				document.body.removeChild(portalContainer);
+			}
+			// Cleanup event listeners
 			window.removeEventListener('app:new-terminal', handleNewTerminal);
 			window.removeEventListener('app:close-tab', handleCloseTab);
 			window.removeEventListener('app:open-settings', handleOpenSettings);
 			window.removeEventListener('app:toggle-file-manager', handleToggleFileManager);
 		};
+	});
+
+	// Mount/unmount menu in portal
+	$effect(() => {
+		if (!portalContainer || !contextMenuOpen || !contextMenuRef) return;
+
+		// Find the context-menu-container and move it to portal
+		const container = contextMenuRef.closest('.terminal-tab-context-menu-container');
+		if (container && container.parentElement !== portalContainer) {
+			const originalParent = container.parentElement;
+			portalContainer.appendChild(container);
+
+			// Cleanup: move back when menu closes
+			return () => {
+				if (container && portalContainer.contains(container) && originalParent) {
+					originalParent.appendChild(container);
+				}
+			};
+		}
 	});
 
 	let tabs = $derived($tabsStore.tabs);
@@ -133,13 +173,9 @@
 		tabsStore.setTabs(newTabs);
 	}
 
-	function getHostById(hostId) {
-		return hosts.find(h => h.id === hostId);
-	}
-
 	function handleToggleFileManager(tab) {
 		// Only for terminal tabs with SSH host
-		const host = tab?.hostId ? getHostById(tab.hostId) : null;
+		const host = tab?.hostId ? getHostByIdService(tab.hostId) : null;
 		if (!tab || tab.type !== 'terminal' || !host) return;
 
 		// Toggle split view flag without affecting tab focus
@@ -200,6 +236,119 @@
 			console.error('Failed to create new window:', error);
 		}
 	}
+
+	// Context menu helpers
+	function closeContextMenu() {
+		contextMenuOpen = false;
+		contextMenuTab = null;
+	}
+
+	// Context menu handlers for terminal tabs
+	function handleTabContextMenu({ tabId, event }) {
+		const tab = tabs.find(t => t.id === tabId);
+		if (!tab || tab.type !== 'terminal') return;
+
+		event.preventDefault();
+		event.stopPropagation();
+		contextMenuTab = tab;
+		contextMenuOpen = true;
+		contextMenuPosition = { x: event.clientX, y: event.clientY };
+	}
+
+	async function handleDuplicate() {
+		if (!contextMenuTab) return;
+		const tab = contextMenuTab;
+
+		// Check if it's a local or SSH terminal
+		if (tab.hostId) {
+			// SSH terminal: get host and create new connection
+			const host = getHostByIdService(tab.hostId);
+			if (host) {
+				await handleHostConnect(host);
+			}
+		} else {
+			// Local terminal: create new local terminal
+			await createLocalTerminal();
+		}
+		contextMenuOpen = false;
+		contextMenuTab = null;
+	}
+
+	function handleRefresh() {
+		if (!contextMenuTab) return;
+		const tab = contextMenuTab;
+
+		// Get terminal session and clear it
+		if (tab.sessionId) {
+			const storeValue = get(terminalStore);
+			const terminalSession = storeValue?.sessions?.find(s => s.id === tab.sessionId);
+			if (terminalSession?.xterm) {
+				terminalSession.xterm.clear();
+			}
+		}
+		contextMenuOpen = false;
+		contextMenuTab = null;
+	}
+
+	async function handleCloseFromMenu() {
+		if (!contextMenuTab) return;
+		await handleTabClose({ tabId: contextMenuTab.id });
+		contextMenuOpen = false;
+		contextMenuTab = null;
+	}
+
+	async function handleCloseAll() {
+		// Close all terminal tabs
+		const terminalTabs = tabs.filter(t => t.type === 'terminal');
+		for (const tab of terminalTabs) {
+			await handleTabClose({ tabId: tab.id });
+		}
+		contextMenuOpen = false;
+		contextMenuTab = null;
+	}
+
+	// Context menu items for terminal tabs
+	const terminalContextMenuItems = $derived([
+		{
+			id: 'duplicate',
+			label: 'Duplicate',
+			icon: Copy,
+			onclick: handleDuplicate
+		},
+		{
+			id: 'split-view',
+			label: 'Split View',
+			icon: Columns,
+			disabled: true, // TODO
+			onclick: () => {}
+		},
+		{
+			id: 'divider-1',
+			divider: true
+		},
+		{
+			id: 'refresh',
+			label: 'Refresh',
+			icon: RefreshCw,
+			onclick: handleRefresh
+		},
+		{
+			id: 'divider-2',
+			divider: true
+		},
+		{
+			id: 'close',
+			label: 'Close',
+			icon: X,
+			onclick: handleCloseFromMenu
+		},
+		{
+			id: 'close-all',
+			label: 'Close All',
+			icon: XCircle,
+			onclick: handleCloseAll
+		}
+	]);
 </script>
 
 <header
@@ -254,6 +403,7 @@
 							bgColor="var(--color-tab-active-bg)"
 							onclick={() => handleTabClick(tab.id)}
 							onclose={handleTabClose}
+							oncontextmenu={tab.type === 'terminal' ? handleTabContextMenu : null}
 							trailingIconComponent={tab.type === 'terminal' && tab.hostId ? Files : null}
 							trailingTitle="Toggle remote file manager"
 							onTrailingClick={() => handleToggleFileManager(tab)}
@@ -285,6 +435,19 @@
 			{/if}
 		</button>
 	</div> -->
+
+	<!-- Context Menu for Terminal Tabs - Portal container -->
+	{#if contextMenuOpen && contextMenuTab}
+		<div class="terminal-tab-context-menu-container" bind:this={contextMenuRef}>
+			<ContextMenu
+				open={contextMenuOpen}
+				position={contextMenuPosition}
+				items={terminalContextMenuItems}
+				zIndex="var(--z-menu)"
+				onClose={closeContextMenu}
+			/>
+		</div>
+	{/if}
 
 	<!-- macOS-style Window Controls -->
 	<div class="absolute top-[10px] right-[5px] flex items-center gap-1.5 px-2">
