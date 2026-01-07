@@ -8,6 +8,7 @@
 	import { createLocalTerminal, hostsStore, terminalCommands, closeFileSession, getHostById as getHostByIdService } from '$lib/services';
 	import { handleHostConnect } from '$lib/composables';
 	import { ContextMenu } from '$lib/components/ui/ContextMenu';
+	import { NewTabDropdown } from '$lib/components/ui/NewTabDropdown';
 	import { Menu, Minus, Square, X, Plus, Files, Sun, Moon, Copy, RefreshCw, XCircle, Columns } from 'lucide-svelte';
 	import { themeStore, updateStore } from '$lib/stores';
 	import AppMenu from './AppMenu.svelte';
@@ -29,6 +30,12 @@
 	let contextMenuTab = $state(null);
 	let contextMenuRef = $state(null);
 	let portalContainer = $state(null);
+
+	// New tab dropdown state
+	let newTabDropdownOpen = $state(false);
+	let newTabDropdownPosition = $state({ x: 0, y: 0 });
+	let newTabDropdownRef = $state(null);
+	let newTabButtonRef = $state(null);
 
 	// Portal pattern - mount menu to document.body to escape all stacking contexts
 	// Initialize event listeners for global shortcuts
@@ -110,6 +117,37 @@
 		} catch (error) {
 			console.error('[Header] Failed to create terminal:', error);
 		}
+	}
+
+	// New tab dropdown handlers
+	function toggleNewTabDropdown(event) {
+		if (!newTabButtonRef) return;
+
+		const rect = newTabButtonRef.getBoundingClientRect();
+		// Position dropdown below the button, aligned to left edge of button
+		newTabDropdownPosition = {
+			x: rect.left,
+			y: rect.bottom + 4
+		};
+		newTabDropdownOpen = !newTabDropdownOpen;
+	}
+
+	function handleSelectLocalTerminal() {
+		openNewTerminal();
+		closeNewTabDropdown();
+	}
+
+	async function handleSelectHost(host) {
+		try {
+			await handleHostConnect(host);
+		} catch (error) {
+			console.error('[Header] Failed to connect to host:', error);
+		}
+		closeNewTabDropdown();
+	}
+
+	function closeNewTabDropdown() {
+		newTabDropdownOpen = false;
 	}
 
 	function handleTabClick(tabId) {
@@ -413,8 +451,12 @@
 			</div>
 		{/if}
 
-		<div>
-			<Tab iconComponent={Plus} size={15} onclick={openNewTerminal} />
+		<div bind:this={newTabButtonRef}>
+			<Tab
+				iconComponent={Plus}
+				size={15}
+				onclick={toggleNewTabDropdown}
+			/>
 		</div>
 	</div>
 
@@ -445,6 +487,19 @@
 				items={terminalContextMenuItems}
 				zIndex="var(--z-menu)"
 				onClose={closeContextMenu}
+			/>
+		</div>
+	{/if}
+
+	<!-- New Tab Dropdown - Portal container -->
+	{#if newTabDropdownOpen}
+		<div class="new-tab-dropdown-container" bind:this={newTabDropdownRef}>
+			<NewTabDropdown
+				open={newTabDropdownOpen}
+				position={newTabDropdownPosition}
+				onClose={closeNewTabDropdown}
+				onSelectLocalTerminal={handleSelectLocalTerminal}
+				onSelectHost={handleSelectHost}
 			/>
 		</div>
 	{/if}
