@@ -9,12 +9,7 @@
 		loadSnippets,
 		loadSettings
 	} from '$lib/services';
-	import {
-		initAutoSync,
-		stopAutoSync,
-		markLoadingStart,
-		markLoadingComplete
-	} from '$lib/services';
+	import { initAutoSync, stopAutoSync, markLoadingStart, markLoadingComplete } from '$lib/services';
 	import {
 		initFileTransferProgressListener,
 		checkMigrationNeeded,

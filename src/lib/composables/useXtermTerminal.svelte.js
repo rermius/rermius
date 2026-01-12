@@ -58,7 +58,7 @@ export function useXtermTerminal(config = {}) {
 	const eventListeners = [];
 
 	// Terminal state
-	let terminal = null;  // Don't use $state for object references
+	let terminal = null; // Don't use $state for object references
 	let fitAddon = null;
 	let sessionId = $state(existingSessionId);
 	let sessionType = $state(explicitSessionType || (existingSessionId ? null : 'local'));
@@ -141,13 +141,7 @@ export function useXtermTerminal(config = {}) {
 			}
 
 			// Setup resize observer (common for all types)
-			resizeObserver = setupResizeObserver(
-				container,
-				fitAddon,
-				terminal,
-				sessionId,
-				sharedState
-			);
+			resizeObserver = setupResizeObserver(container, fitAddon, terminal, sessionId, sharedState);
 
 			return sessionId;
 		} catch (error) {
@@ -217,7 +211,6 @@ export function useXtermTerminal(config = {}) {
 				cleanup: close
 			});
 		} else {
-
 			// Add new session (fallback for old code paths)
 			terminalStore.addSession({
 				id: sessionId,

@@ -777,16 +777,14 @@ export async function handleOpenFile(file, type, sessionId) {
 	if (type === 'local' || type === 'ftp' || type === 'sftp') {
 		const { openFileWithApp, openFileWithSystem, showOpenWithDialog } =
 			await import('$lib/services');
-		const { getAppPreference, getFileExtension, setAppPreference } =
-			await import('$lib/services');
+		const { getAppPreference, getFileExtension, setAppPreference } = await import('$lib/services');
 
 		let filePath = file.path;
 
 		// For remote files, download to temp first
 		if (type !== 'local' && sessionId) {
 			const { downloadFile } = await import('$lib/services');
-			const { createTempFilePath, registerTempFile, startWatching } =
-				await import('$lib/services');
+			const { createTempFilePath, registerTempFile, startWatching } = await import('$lib/services');
 
 			const tempFilePath = await createTempFilePath(file.path, file.name);
 			await downloadFile(sessionId, file.path, tempFilePath, crypto.randomUUID());
@@ -834,16 +832,14 @@ export async function handleOpenFile(file, type, sessionId) {
 export async function handleOpenWithFile(file, type, sessionId) {
 	if (type === 'local' || type === 'ftp' || type === 'sftp') {
 		const { openFileWithApp, showOpenWithDialog } = await import('$lib/services');
-		const { getFileExtension, setAppPreference } =
-			await import('$lib/services');
+		const { getFileExtension, setAppPreference } = await import('$lib/services');
 
 		let filePath = file.path;
 
 		// For remote files, download to temp first
 		if (type !== 'local' && sessionId) {
 			const { downloadFile } = await import('$lib/services');
-			const { createTempFilePath, registerTempFile, startWatching } =
-				await import('$lib/services');
+			const { createTempFilePath, registerTempFile, startWatching } = await import('$lib/services');
 
 			const tempFilePath = await createTempFilePath(file.path, file.name);
 			await downloadFile(sessionId, file.path, tempFilePath, crypto.randomUUID());

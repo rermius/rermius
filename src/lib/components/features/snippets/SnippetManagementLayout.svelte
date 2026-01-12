@@ -2,7 +2,13 @@
 	import { ContentWithPanel } from '$lib/components/layout';
 	import SnippetPanel from './SnippetPanel.svelte';
 	import SnippetPageList from './SnippetPageList.svelte';
-	import { deleteSnippet, duplicateSnippet, snippetsStore, getUiSettings, updateUiSettings } from '$lib/services';
+	import {
+		deleteSnippet,
+		duplicateSnippet,
+		snippetsStore,
+		getUiSettings,
+		updateUiSettings
+	} from '$lib/services';
 	import { useToast } from '$lib/composables';
 	import { Modal, ModalHeader, ModalBody, ModalFooter } from '$lib/components/ui/Modal';
 	import {

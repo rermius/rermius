@@ -2,7 +2,7 @@
  * Composable for key scanning and import operations
  * Handles folder scanning, file selection, and batch import with progress tracking
  */
-	import { tauriFs, tauriDialog, importKeyFromFile } from '$lib/services';
+import { tauriFs, tauriDialog, importKeyFromFile } from '$lib/services';
 
 /**
  * Detect SSH key type from private key content

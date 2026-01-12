@@ -5,11 +5,30 @@
 	import { goto } from '$app/navigation';
 	import { Tab } from '$lib/components/ui/Tab';
 	import { tabsStore, terminalStore } from '$lib/stores';
-	import { createLocalTerminal, hostsStore, terminalCommands, closeFileSession, getHostById as getHostByIdService } from '$lib/services';
+	import {
+		createLocalTerminal,
+		hostsStore,
+		terminalCommands,
+		closeFileSession,
+		getHostById as getHostByIdService
+	} from '$lib/services';
 	import { handleHostConnect } from '$lib/composables';
 	import { ContextMenu } from '$lib/components/ui/ContextMenu';
 	import { NewTabDropdown } from '$lib/components/ui/NewTabDropdown';
-	import { Menu, Minus, Square, X, Plus, Files, Sun, Moon, Copy, RefreshCw, XCircle, Columns } from 'lucide-svelte';
+	import {
+		Menu,
+		Minus,
+		Square,
+		X,
+		Plus,
+		Files,
+		Sun,
+		Moon,
+		Copy,
+		RefreshCw,
+		XCircle,
+		Columns
+	} from 'lucide-svelte';
 	import { themeStore, updateStore } from '$lib/stores';
 	import AppMenu from './AppMenu.svelte';
 	import { SettingsModal } from '$lib/components/features/settings';
@@ -452,11 +471,7 @@
 		{/if}
 
 		<div bind:this={newTabButtonRef}>
-			<Tab
-				iconComponent={Plus}
-				size={15}
-				onclick={toggleNewTabDropdown}
-			/>
+			<Tab iconComponent={Plus} size={15} onclick={toggleNewTabDropdown} />
 		</div>
 	</div>
 

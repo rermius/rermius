@@ -2,7 +2,15 @@
  * Composable for SSH config scanning and import operations
  * Handles SSH config parsing, key auto-import, and host import with progress tracking
  */
-import { parseSSHConfig, importKeyFromFile, findDuplicateKey, addHost, getHosts, tauriDialog, tauriFs } from '$lib/services';
+import {
+	parseSSHConfig,
+	importKeyFromFile,
+	findDuplicateKey,
+	addHost,
+	getHosts,
+	tauriDialog,
+	tauriFs
+} from '$lib/services';
 import { serializeChain } from '$lib/utils';
 
 /**

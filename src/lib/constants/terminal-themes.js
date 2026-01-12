@@ -245,7 +245,7 @@ export const terminalThemes = [
 ];
 
 export function getThemeById(themeId) {
-	return terminalThemes.find((t) => t.id === themeId);
+	return terminalThemes.find(t => t.id === themeId);
 }
 
 export function getDefaultTheme() {

@@ -1,6 +1,12 @@
 <script>
 	import { tabsStore } from '$lib/stores';
-	import { hostsStore, connectionFactory, closeFileSession, connectFileTransfer, appSettingsStore } from '$lib/services';
+	import {
+		hostsStore,
+		connectionFactory,
+		closeFileSession,
+		connectFileTransfer,
+		appSettingsStore
+	} from '$lib/services';
 	import { terminalStore } from '$lib/stores/terminal.store';
 	import { getThemeById } from '$lib/constants/terminal-themes';
 	import { defaultFontFamily } from '$lib/constants/terminal-fonts';

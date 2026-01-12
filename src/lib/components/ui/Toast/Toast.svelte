@@ -50,7 +50,7 @@
 		<button
 			type="button"
 			class="shrink-0 px-3 py-1 text-xs font-medium rounded bg-white/20 hover:bg-white/30 transition-colors"
-			onclick={(e) => {
+			onclick={e => {
 				e.stopPropagation();
 				action.onClick();
 			}}

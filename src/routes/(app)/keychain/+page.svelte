@@ -12,7 +12,13 @@
 		ContextMenu
 	} from '$lib/components/ui';
 	import { KeyPanel, KeyScanModal } from '$lib/components/features/keychain';
-	import { keychainStore, deleteKey, exportKey, getUiSettings, updateUiSettings } from '$lib/services';
+	import {
+		keychainStore,
+		deleteKey,
+		exportKey,
+		getUiSettings,
+		updateUiSettings
+	} from '$lib/services';
 	import { panelStore } from '$lib/stores';
 	import { FolderOpen, Pencil, Download, Trash2 } from 'lucide-svelte';
 	import { useToast } from '$lib/composables';

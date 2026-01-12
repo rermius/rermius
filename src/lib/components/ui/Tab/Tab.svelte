@@ -71,8 +71,8 @@
 		class="tab-item flex rounded-lg items-center gap-1 py-1 cursor-pointer! select-none {active
 			? 'tab-active'
 			: 'bg-(--color-bg-tertiary) hover:bg-(--color-bg-hover)'}"
-		style:padding-left='0.75rem'
-		style:padding-right='0.75rem'
+		style:padding-left="0.75rem"
+		style:padding-right="0.75rem"
 		style:background-color={active ? bgColor : undefined}
 		style:--tab-bg={bgColor}
 		role="button"
@@ -104,7 +104,7 @@
 		{/if}
 		{#if closeable}
 			<button
-				class="ml-1 p-1  transition-all  hover:bg-(--color-bg-tertiary) rounded cursor-pointer flex items-center {active
+				class="ml-1 p-1 transition-all hover:bg-(--color-bg-tertiary) rounded cursor-pointer flex items-center {active
 					? 'text-tab-active-icon'
 					: 'text-text-secondary'}"
 				style:margin-left={active ? 'calc(0.75rem * 3	)' : '0.75rem'}

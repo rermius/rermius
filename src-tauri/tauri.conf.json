@@ -27,10 +27,7 @@
 			"capabilities": [
 				{
 					"identifier": "main-capability",
-					"windows": [
-						"main",
-						"window-*"
-					],
+					"windows": ["main", "window-*"],
 					"permissions": [
 						"core:window:allow-close",
 						"core:window:allow-minimize",
@@ -92,9 +89,7 @@
 	},
 	"plugins": {
 		"updater": {
-			"endpoints": [
-				"https://github.com/rermius/rermius/releases/latest/download/latest.json"
-			],
+			"endpoints": ["https://github.com/rermius/rermius/releases/latest/download/latest.json"],
 			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZENDM2NkYwMTExNThGREYKUldUZmp4VVI4R1pEL2R4bXp2K2krWCtodS9UbHZITjVGc3c2QWR5dDZaRE1nc3BiTk8vNjBrZk4K"
 		}
 	},

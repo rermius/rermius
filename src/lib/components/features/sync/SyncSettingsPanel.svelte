@@ -853,10 +853,8 @@
 				if (stats.groupsUpdated > 0) details.push(`${stats.groupsUpdated} group(s) updated`);
 
 				// Snippets
-				if (stats.snippetsAdded > 0)
-					details.push(`${stats.snippetsAdded} snippet(s) created`);
-				if (stats.snippetsUpdated > 0)
-					details.push(`${stats.snippetsUpdated} snippet(s) updated`);
+				if (stats.snippetsAdded > 0) details.push(`${stats.snippetsAdded} snippet(s) created`);
+				if (stats.snippetsUpdated > 0) details.push(`${stats.snippetsUpdated} snippet(s) updated`);
 
 				// Keys
 				if (stats.keysAdded > 0) details.push(`${stats.keysAdded} key(s) created`);
@@ -1242,15 +1240,13 @@
 					<li>Sync options configuration</li>
 				</ul>
 				<p class="text-sm text-red-400 mt-3">
-					⚠️ Your synced data (hosts, snippets, keys) will NOT be affected - only sync
-					configuration will be cleared.
+					⚠️ Your synced data (hosts, snippets, keys) will NOT be affected - only sync configuration
+					will be cleared.
 				</p>
 			</ModalBody>
 			<ModalFooter>
 				<Button variant="danger" onclick={handleClearSyncSettings}>Clear Settings</Button>
-				<Button variant="secondary" onclick={() => (showClearConfirmModal = false)}>
-					Cancel
-				</Button>
+				<Button variant="secondary" onclick={() => (showClearConfirmModal = false)}>Cancel</Button>
 			</ModalFooter>
 		</Modal>
 	{/if}

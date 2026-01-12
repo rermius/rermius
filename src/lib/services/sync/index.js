@@ -23,14 +23,9 @@ export {
 	forceSync as triggerManualSync
 } from './auto.js';
 
-export {
-	exportSyncData,
-	generateExportFilename
-} from './export.js';
+export { exportSyncData, generateExportFilename } from './export.js';
 
-export {
-	importSyncData
-} from './import.js';
+export { importSyncData } from './import.js';
 
 export {
 	createSyncDriver as syncCheckerFactory,

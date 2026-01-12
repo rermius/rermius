@@ -46,6 +46,4 @@ export {
 	getAllAppPreferences
 } from './app-preference.js';
 
-export {
-	initFileTransferProgressListener
-} from './events.js';
+export { initFileTransferProgressListener } from './events.js';

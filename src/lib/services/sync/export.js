@@ -75,9 +75,7 @@ export async function exportSyncData({ destinationFolder, syncOptions }) {
 
 		// 2. Get workspace info
 		const workspace = get(workspaceStore);
-		const currentWorkspace = workspace.workspaces.find(
-			w => w.id === workspace.currentWorkspaceId
-		);
+		const currentWorkspace = workspace.workspaces.find(w => w.id === workspace.currentWorkspaceId);
 
 		// 3. Build export payload
 		const payload = {

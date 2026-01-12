@@ -77,7 +77,6 @@
 		}
 	});
 
-
 	// Click outside detection
 	$effect(() => {
 		if (open) {
@@ -204,11 +203,7 @@
 
 			<!-- Search Box -->
 			<div class="px-3 py-2 border-b border-border">
-				<SearchInput
-					bind:value={hostSearchQuery}
-					placeholder="Search hosts..."
-					class="w-full"
-				/>
+				<SearchInput bind:value={hostSearchQuery} placeholder="Search hosts..." class="w-full" />
 			</div>
 
 			<!-- Hosts List -->
@@ -258,4 +253,3 @@
 		</div>
 	</div>
 {/if}
-
