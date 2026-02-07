@@ -28,6 +28,9 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 	import { FilePanel } from '$lib/components/features/file-browser';
 	import { createFileService, getUiSettings, updateUiSettings } from '$lib/services';
 	import { SnippetSidebar } from '$lib/components/features/snippets';
+	import { statusBarStore } from '$lib/stores/status-bar';
+	import { toastStore } from '$lib/stores/toast.store';
+	import { generateUniqueLocalPath } from '$lib/utils';
 	import { browser } from '$app/environment';
 
 	const { tab, activeTabId, host = null, onRetry, onEdit, onClose } = $props();
@@ -156,6 +159,67 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 		// Persist final width without debounce
 		saveWidth(terminalWidth);
 	}
+
+	// Handle transfer requests from SFTP FilePanel (download with folder picker)
+	async function handleTransferRequest(action, files) {
+		if (action !== 'transfer' && action !== 'download') return;
+		if (!files || files.length === 0) return;
+
+		const { downloadFile } = await import('$lib/services');
+		const { join } = await import('@tauri-apps/api/path');
+		const { open: openDialog } = await import('@tauri-apps/plugin-dialog');
+
+		// Show folder picker dialog once for all files
+		const selectedFolder = await openDialog({
+			directory: true,
+			title: 'Choose download folder'
+		});
+
+		if (!selectedFolder) return;
+
+		for (const file of Array.isArray(files) ? files : [files]) {
+			if (file.isDirectory) continue; // Skip directories for now
+
+			const transferId = crypto.randomUUID();
+			let uniqueFileName = file.name;
+			let uniqueLocalPath = '';
+
+			try {
+				const result = await generateUniqueLocalPath(selectedFolder, file.name);
+				uniqueLocalPath = result.path;
+				uniqueFileName = result.newName;
+				if (result.renamed) {
+					toastStore.info(`"${result.originalName}" already exists, using "${result.newName}"`);
+				}
+			} catch {
+				uniqueLocalPath = await join(selectedFolder, file.name);
+			}
+
+			statusBarStore.showDownload({
+				id: transferId,
+				fileName: uniqueFileName,
+				progress: 0,
+				status: 'downloading',
+				fromPath: file.path,
+				toPath: uniqueLocalPath
+			});
+
+			downloadFile(tab.fileSessionId, file.path, uniqueLocalPath, transferId)
+				.then(() => console.log('[Transfer] Download completed:', uniqueFileName))
+				.catch(error => {
+					console.error('[Transfer] Download failed:', error);
+					statusBarStore.showDownload({
+						id: transferId,
+						fileName: uniqueFileName,
+						progress: 0,
+						status: 'error',
+						error: error?.message || String(error),
+						fromPath: file.path,
+						toPath: uniqueLocalPath
+					});
+				});
+		}
+	}
 </script>
 
 {#if tab.connectionState === 'CONNECTING' || tab.connectionState === 'FAILED' || tab.showProgressAnimation}
@@ -214,6 +278,7 @@ Orchestrates the terminal view, file manager split pane, and snippet sidebar.
 						initialPath="/"
 						homePath={null}
 						fileService={createFileService(tab.fileSessionId, false)}
+						onTransferRequest={handleTransferRequest}
 					/>
 				{:else}
 					<div class="h-full flex items-center justify-center text-white/60 text-sm">

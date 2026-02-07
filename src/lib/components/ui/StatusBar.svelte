@@ -7,7 +7,8 @@
 		Loader2,
 		X,
 		ChevronUp,
-		ChevronDown
+		ChevronDown,
+		FolderOpen
 	} from 'lucide-svelte';
 	import { ScrollArea } from '$lib/components/ui';
 	import { statusBarStore } from '$lib/stores/status-bar';
@@ -21,6 +22,15 @@
 
 	function handleCancelTransfer(id) {
 		statusBarStore.cancelTransfer(id);
+	}
+
+	async function handleOpenFolder(localPath) {
+		try {
+			const { revealItemInDir } = await import('@tauri-apps/plugin-opener');
+			await revealItemInDir(localPath);
+		} catch (e) {
+			console.error('[StatusBar] Failed to open folder:', e);
+		}
 	}
 
 	const statusConfig = {
@@ -126,6 +136,17 @@
 				>
 					<ChevronUp size={16} class="text-white" />
 				</button>
+
+				<!-- Close Button -->
+				<button
+					type="button"
+					class="p-1 hover:bg-white/20 rounded transition-colors"
+					onclick={() => statusBarStore.hide()}
+					title="Dismiss"
+					aria-label="Dismiss transfer bar"
+				>
+					<X size={16} class="text-white" />
+				</button>
 			</div>
 		{:else}
 			<!-- Expanded View: Full List -->
@@ -163,6 +184,17 @@
 						aria-label="Collapse transfer list"
 					>
 						<ChevronDown size={16} class="text-white" />
+					</button>
+
+					<!-- Close Button -->
+					<button
+						type="button"
+						class="p-1 hover:bg-white/20 rounded transition-colors"
+						onclick={() => statusBarStore.hide()}
+						title="Dismiss"
+						aria-label="Dismiss transfer bar"
+					>
+						<X size={16} class="text-white" />
 					</button>
 				</div>
 
@@ -216,6 +248,20 @@
 									aria-label="Cancel transfer"
 								>
 									<X size={14} class="text-white hover:text-white/80" />
+								</button>
+							{/if}
+
+							<!-- Open Folder Button (only for completed downloads) -->
+							{#if transfer.status === 'success' && transfer.action === 'download' && transfer.toPath}
+								<button
+									type="button"
+									class="flex items-center gap-1 px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded text-[10px] font-medium transition-colors"
+									onclick={() => handleOpenFolder(transfer.toPath)}
+									title="Open folder"
+									aria-label="Open download folder"
+								>
+									<FolderOpen size={12} />
+									Open Folder
 								</button>
 							{/if}
 

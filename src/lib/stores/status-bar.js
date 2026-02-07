@@ -134,7 +134,7 @@ function createStatusBarStore() {
 					clearTimers();
 					hideTimeout = setTimeout(() => {
 						set(initialState);
-					}, 3000);
+					}, 30000);
 					return {
 						...state,
 						transfers,
@@ -257,7 +257,7 @@ function createStatusBarStore() {
 						clearTimers();
 						hideTimeout = setTimeout(() => {
 							set(initialState);
-						}, 3000);
+						}, 30000);
 						return {
 							...state,
 							transfers,

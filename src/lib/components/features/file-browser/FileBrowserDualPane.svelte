@@ -183,7 +183,7 @@
 		};
 
 		// Import modules first (before using joinPath)
-		const [{ downloadFile, uploadFile, joinPath: joinPathFn }, { join, downloadDir }] =
+		const [{ downloadFile, uploadFile, joinPath: joinPathFn }, { join }] =
 			await Promise.all([import('$lib/services'), import('@tauri-apps/api/path')]);
 
 		// Get paths for transfer
@@ -286,73 +286,83 @@
 			let uniqueFileName = file.name; // Track uniqueFileName for error handling
 			let uniqueLocalPath = ''; // Track uniqueLocalPath for error handling
 
-			downloadDir()
-				.then(async downloadsFolder => {
-					// Check for duplicate and generate unique path if needed
-					try {
-						const result = await generateUniqueLocalPath(downloadsFolder, file.name);
-						uniqueLocalPath = result.path;
-						uniqueFileName = result.newName;
+			// Show folder picker dialog
+			const { open: openDialog } = await import('@tauri-apps/plugin-dialog');
+			const selectedFolder = await openDialog({
+				directory: true,
+				title: 'Choose download folder'
+			});
 
-						// Show toast if file was renamed
-						if (result.renamed) {
-							toastStore.info(`"${result.originalName}" already exists, using "${result.newName}"`);
-						}
-					} catch (error) {
-						console.error('[Transfer] Failed to check duplicate:', error);
-						// Fallback to original path
-						uniqueLocalPath = await join(downloadsFolder, file.name);
-						uniqueFileName = file.name;
+			// User cancelled the folder picker
+			if (!selectedFolder) {
+				cleanupTransfer(transferId);
+				return;
+			}
+
+			try {
+				// Check for duplicate and generate unique path if needed
+				try {
+					const result = await generateUniqueLocalPath(selectedFolder, file.name);
+					uniqueLocalPath = result.path;
+					uniqueFileName = result.newName;
+
+					// Show toast if file was renamed
+					if (result.renamed) {
+						toastStore.info(`"${result.originalName}" already exists, using "${result.newName}"`);
 					}
+				} catch (error) {
+					console.error('[Transfer] Failed to check duplicate:', error);
+					// Fallback to original path
+					uniqueLocalPath = await join(selectedFolder, file.name);
+					uniqueFileName = file.name;
+				}
 
-					const remotePath = file.path;
+				const remotePath = file.path;
 
-					if (abortController.signal.aborted) {
-						cleanupTransfer(transferId);
-						return;
-					}
-
-					// Update status bar with actual filename
-					statusBarStore.showDownload({
-						id: transferId,
-						fileName: uniqueFileName,
-						progress: 0,
-						status: 'downloading',
-						fromPath: remotePath,
-						toPath: uniqueLocalPath,
-						onCancel
-					});
-
-					console.log('[Transfer] Starting download:', {
-						fileName: uniqueFileName,
-						originalName: file.name,
-						fromPath: remotePath,
-						toPath: uniqueLocalPath
-					});
-					return downloadFile(sessionId, remotePath, uniqueLocalPath, transferId);
-				})
-				.then(() => {
-					console.log('[Transfer] Download completed:', uniqueFileName);
+				if (abortController.signal.aborted) {
 					cleanupTransfer(transferId);
-				})
-				.catch(error => {
-					console.error('[Transfer] Download error caught:', {
-						fileName: uniqueFileName,
-						fromPath: file.path,
-						toPath: uniqueLocalPath || 'downloads folder',
-						error: error?.message || String(error),
-						stack: error?.stack
-					});
-					handleTransferResult(
-						transferId,
-						abortController,
-						false,
-						uniqueFileName,
-						file.path,
-						uniqueLocalPath,
-						error
-					);
+					return;
+				}
+
+				// Update status bar with actual filename
+				statusBarStore.showDownload({
+					id: transferId,
+					fileName: uniqueFileName,
+					progress: 0,
+					status: 'downloading',
+					fromPath: remotePath,
+					toPath: uniqueLocalPath,
+					onCancel
 				});
+
+				console.log('[Transfer] Starting download:', {
+					fileName: uniqueFileName,
+					originalName: file.name,
+					fromPath: remotePath,
+					toPath: uniqueLocalPath
+				});
+
+				await downloadFile(sessionId, remotePath, uniqueLocalPath, transferId);
+				console.log('[Transfer] Download completed:', uniqueFileName);
+				cleanupTransfer(transferId);
+			} catch (error) {
+				console.error('[Transfer] Download error caught:', {
+					fileName: uniqueFileName,
+					fromPath: file.path,
+					toPath: uniqueLocalPath || 'selected folder',
+					error: error?.message || String(error),
+					stack: error?.stack
+				});
+				handleTransferResult(
+					transferId,
+					abortController,
+					false,
+					uniqueFileName,
+					file.path,
+					uniqueLocalPath,
+					error
+				);
+			}
 		}
 	}
 
