@@ -68,6 +68,10 @@
 	let localCurrentPath = $state('');
 	let remoteCurrentPath = $state('/');
 
+	// Refresh triggers - increment to force panel reload
+	let localRefreshKey = $state(0);
+	let remoteRefreshKey = $state(0);
+
 	// Create file services - use $effect to react to sessionId changes
 	let localFileService = $state(null);
 	let remoteFileService = $state(null);
@@ -157,15 +161,8 @@
 				error: error.message || String(error),
 				stack: error.stack
 			});
-			const updateFn = isUpload ? statusBarStore.showUpload : statusBarStore.showDownload;
-			updateFn({
-				fileName,
-				progress: 0,
-				status: 'error',
-				error: error.message,
-				fromPath,
-				toPath: isUpload ? remoteCurrentPath || '/' : localCurrentPath || ''
-			});
+			statusBarStore.removeTransfer(transferId);
+			toastStore.error(`Failed to ${action} "${fileName}": ${error.message || String(error)}`);
 		}
 	}
 
@@ -252,6 +249,7 @@
 				.then(() => {
 					console.log('[Transfer] Upload completed:', actualFileName);
 					cleanupTransfer(transferId);
+					remoteRefreshKey++;
 				})
 				.catch(error => {
 					console.error('[Transfer] Upload error caught:', {
@@ -462,6 +460,7 @@
 				title={host?.label || 'Remote'}
 				initialPath={remoteInitialPath}
 				fileService={remoteFileService}
+				refreshKey={remoteRefreshKey}
 				onTransferRequest={(action, files) => handleTransferRequest('remote', action, files)}
 				onPathChange={path => {
 					remoteCurrentPath = path;

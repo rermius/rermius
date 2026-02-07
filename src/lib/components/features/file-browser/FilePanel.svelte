@@ -53,6 +53,9 @@
 		onTransferRequest,
 		onPathChange,
 
+		// Refresh trigger - increment to force reload
+		refreshKey = 0,
+
 		// File service (injected)
 		fileService = null
 	} = $props();
@@ -242,6 +245,17 @@
 		if (currentPath && currentPath !== lastLoadedPath) {
 			lastLoadedPath = currentPath;
 			loadFiles(currentPath);
+		}
+	});
+
+	// Reload files when refreshKey changes (e.g. after upload)
+	let lastRefreshKey = $state(refreshKey);
+	$effect(() => {
+		if (refreshKey !== lastRefreshKey) {
+			lastRefreshKey = refreshKey;
+			if (currentPath) {
+				loadFiles(currentPath);
+			}
 		}
 	});
 

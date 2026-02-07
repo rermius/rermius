@@ -314,19 +314,8 @@ function createStatusBarStore() {
 			}));
 		},
 
-		cancelTransfer(id) {
+		removeTransfer(id) {
 			update(state => {
-				const transferIndex = state.transfers.findIndex(t => t.id === id);
-
-				if (transferIndex < 0) {
-					return state;
-				}
-
-				const transfer = state.transfers[transferIndex];
-				if (transfer?.onCancel) {
-					transfer.onCancel();
-				}
-
 				const transfers = state.transfers.filter(t => t.id !== id);
 
 				if (transfers.length === 0) {
@@ -360,6 +349,17 @@ function createStatusBarStore() {
 					isExpanded: state.isExpanded
 				};
 			});
+		},
+
+		cancelTransfer(id) {
+			update(state => {
+				const transfer = state.transfers.find(t => t.id === id);
+				if (transfer?.onCancel) {
+					transfer.onCancel();
+				}
+				return state;
+			});
+			this.removeTransfer(id);
 			clearTimers();
 		},
 
