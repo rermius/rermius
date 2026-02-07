@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { ItemCard } from '$lib/components/ui/Card';
 	import { FileText } from 'lucide-svelte';
-	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon } from '$lib/components/ui';
+	import { Button, SearchInput, TagFilterIcon, SortIcon, LayoutIcon, ContextMenu } from '$lib/components/ui';
+	import { Pencil, Trash2 } from 'lucide-svelte';
 	import {
 		ConfirmRemoveModal,
 		HostManagementLayout,
@@ -64,6 +65,17 @@
 	let searchQuery = $state('');
 	let selectedTags = $state([]);
 	let showSSHConfigModal = $state(false);
+
+	// Group context menu state
+	let groupContextMenuOpen = $state(false);
+	let groupContextMenuPosition = $state({ x: 0, y: 0 });
+	let groupContextMenuTarget = $state(null);
+
+	const groupMenuItems = [
+		{ id: 'edit', label: 'Edit', icon: Pencil, action: 'edit' },
+		{ id: 'divider-1', divider: true },
+		{ id: 'remove', label: 'Delete', icon: Trash2, action: 'remove', variant: 'danger' }
+	];
 
 	// Layout mode for hosts list in sidebar home: 'grid' | 'list' (own setting)
 	let layoutMode = $state(getUiSettings().hostLayoutMode || 'grid');
@@ -154,6 +166,32 @@
 		closePanel();
 	}
 
+	function handleGroupContextMenu(group, { x, y }) {
+		groupContextMenuTarget = group;
+		groupContextMenuPosition = { x, y };
+		groupContextMenuOpen = true;
+	}
+
+	function handleGroupContextAction(item) {
+		const group = groupContextMenuTarget;
+		if (!group) return;
+
+		switch (item.action) {
+			case 'edit':
+				handleEditGroup(group);
+				break;
+			case 'remove':
+				handleEditGroup(group);
+				requestRemoveGroup(group);
+				break;
+		}
+	}
+
+	function handleCloseGroupContextMenu() {
+		groupContextMenuOpen = false;
+		groupContextMenuTarget = null;
+	}
+
 	const handleClosePanel = closePanel;
 	const handleRemove = () => {
 		if ($panelType === 'group' && $editingGroup) {
@@ -232,9 +270,10 @@
 								icon="widgets-filled"
 								showEdit={true}
 								variant={layoutMode === 'list' ? 'list' : 'card'}
-								isActive={$editingGroup?.id === group.id}
+								isActive={$editingGroup?.id === group.id || groupContextMenuTarget?.id === group.id}
 								onclick={() => handleViewGroup(group)}
 								onedit={() => handleEditGroup(group)}
+								oncontextmenu={pos => handleGroupContextMenu(group, pos)}
 							/>
 						</div>
 					{/each}
@@ -254,3 +293,14 @@
 
 <!-- SSH Config Scan Modal -->
 <ImportScanModal bind:open={showSSHConfigModal} />
+
+<!-- Group Context Menu -->
+{#if groupContextMenuTarget}
+	<ContextMenu
+		open={groupContextMenuOpen}
+		position={groupContextMenuPosition}
+		items={groupMenuItems}
+		onSelect={handleGroupContextAction}
+		onClose={handleCloseGroupContextMenu}
+	/>
+{/if}
