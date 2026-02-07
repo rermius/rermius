@@ -888,7 +888,7 @@ export async function handleRenameFile(file, currentPath, type, sessionId, renam
 	renameInProgress.add(renameKey);
 
 	try {
-		const { renameLocalPath, renameRemotePath } = await import('$lib/services');
+		const { renameLocalFile: renameLocalPath, renameRemoteFile: renameRemotePath } = await import('$lib/services');
 		const oldPath = file.path;
 		const newName = file.newName;
 

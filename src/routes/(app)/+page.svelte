@@ -143,10 +143,10 @@
 	}
 
 	function handleHostSave(savedHost) {
-		// Update editingHost to the saved host (for auto-save tracking)
-		// Don't close panel - keep it open in edit mode
+		// Silently update editingHost for auto-save tracking
+		// Don't call openEditHost() as it re-triggers initFromEditingHost + saveQueue.reset()
 		if (savedHost) {
-			openEditHost(savedHost);
+			editingHost.set(savedHost);
 		}
 	}
 

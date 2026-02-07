@@ -122,7 +122,7 @@ export function createHostFormContext(options) {
 
 			const dataToSave = {
 				...data,
-				groupId: data.groupId || groups[0]?.id || defaultGroupId,
+				groupId: data.groupId != null ? data.groupId : (groups[0]?.id || defaultGroupId),
 				proxyJump: serializeChain(hostChainIds)
 			};
 

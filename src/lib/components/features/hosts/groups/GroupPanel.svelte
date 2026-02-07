@@ -37,7 +37,6 @@
 				if (!effectiveEditingGroup) {
 					createdGroup = result; // Store created entity
 					isEditMode = true; // Switch to edit mode
-					onsave?.(result); // Notify parent about created group
 				}
 			},
 			onManualSave: result => {
