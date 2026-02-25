@@ -7,7 +7,10 @@
 	import FilePermissionsModal from './FilePermissionsModal.svelte';
 	import InputNameModal from './InputNameModal.svelte';
 	import DeleteConfirmModal from './DeleteConfirmModal.svelte';
+	import QuickEditWindow from './QuickEditWindow.svelte';
+	import QuickEditTaskbar from './QuickEditTaskbar.svelte';
 	import { fileClipboardStore } from '$lib/stores/file-clipboard.store';
+	import { quickEditStore } from '$lib/stores/quick-edit.store';
 	import {
 		getHomeDirectory,
 		getParentPath,
@@ -117,6 +120,13 @@
 	// Delete confirm modal state
 	let showDeleteConfirmModal = $state(false);
 	let filesToDelete = $state([]);
+
+	// Quick edit - panelId for scoping
+	const panelId = $derived(sessionId || 'local');
+	const allQuickEditInstances = $derived($quickEditStore);
+	const panelQuickEdits = $derived(allQuickEditInstances.filter(i => i.panelId === panelId));
+	const maximizedEditor = $derived(panelQuickEdits.find(i => i.state === 'maximized'));
+	const hasQuickEdits = $derived(panelQuickEdits.length > 0);
 	let deleting = $state(false);
 
 	// Track rename operations to prevent duplicates
@@ -714,7 +724,12 @@
 				break;
 
 			case 'edit':
-				// TODO: Open file editor
+				quickEditStore.open(panelId, {
+					filePath: file.path,
+					fileName: file.name,
+					sessionId,
+					isLocal: type === 'local'
+				});
 				break;
 
 			case 'copyPath':
@@ -1000,7 +1015,7 @@
 	}
 </script>
 
-<div class="file-panel flex flex-col h-full border-r border-border">
+<div class="file-panel relative flex flex-col h-full border-r border-border">
 	<FilePanelHeader {title} {type} />
 
 	<AddressBar
@@ -1056,6 +1071,14 @@
 			}}
 		/>
 	{/if}
+
+	<!-- Quick Edit Taskbar (bottom strip) -->
+	<QuickEditTaskbar {panelId} />
+
+	<!-- Quick Edit Window (absolute overlay within panel) -->
+	{#if maximizedEditor}
+		<QuickEditWindow instance={maximizedEditor} />
+	{/if}
 </div>
 
 <FilePropertiesModal
@@ -1107,3 +1130,4 @@
 		}
 	}}
 />
+

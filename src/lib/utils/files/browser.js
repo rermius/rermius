@@ -124,8 +124,8 @@ export function getFileMenuItems(file, options = {}) {
 	if (isSmallFile && isRealFile && !isDirectory) {
 		items.push({
 			id: 'edit',
-			icon: LucideIcons.Edit,
-			label: 'Edit'
+			icon: LucideIcons.FileCode,
+			label: 'Quick Edit'
 		});
 	}
 
@@ -804,22 +804,27 @@ export async function handleOpenFile(file, type, sessionId) {
 		const extension = getFileExtension(file.name);
 		const preferredApp = getAppPreference(extension);
 
+		console.log('[handleOpenFile] extension:', extension, 'preferredApp:', preferredApp, 'filePath:', filePath);
+
 		if (preferredApp) {
 			// Use preferred app
+			console.log('[handleOpenFile] Using preferred app:', preferredApp);
 			await openFileWithApp(filePath, preferredApp);
 		} else {
-			// First time: show dialog to select app
+			// No preference: use native OS "Open with" dialog
+			// The dialog opens the file directly via the OS
+			console.log('[handleOpenFile] No preference, calling showOpenWithDialog');
 			try {
 				const selectedApp = await showOpenWithDialog(filePath);
+				console.log('[handleOpenFile] showOpenWithDialog returned:', selectedApp);
 				if (selectedApp) {
+					// Some platforms return the selected app path
 					setAppPreference(extension, selectedApp);
-					await openFileWithApp(filePath, selectedApp);
-				} else {
-					// User cancelled or no app selected, use system default
-					await openFileWithSystem(filePath);
 				}
+				// If null, OS already opened the file natively - no need to open again
 			} catch (dialogError) {
-				// Dialog cancelled or error, fallback to system default
+				console.error('[handleOpenFile] Dialog error:', dialogError);
+				// Dialog error, fallback to system default
 				await openFileWithSystem(filePath);
 			}
 		}
@@ -857,15 +862,18 @@ export async function handleOpenWithFile(file, type, sessionId) {
 		}
 
 		try {
+			console.log('[handleOpenWithFile] Calling showOpenWithDialog with:', filePath);
 			const selectedApp = await showOpenWithDialog(filePath);
+			console.log('[handleOpenWithFile] showOpenWithDialog returned:', selectedApp);
 			if (selectedApp) {
+				// Some platforms return the selected app path
 				const extension = getFileExtension(file.name);
 				setAppPreference(extension, selectedApp);
-				await openFileWithApp(filePath, selectedApp);
 			}
-			// If cancelled, do nothing (user explicitly cancelled)
+			// If null, OS already opened the file natively via the dialog
 		} catch (dialogError) {
-			// Dialog error, but don't show error to user (they cancelled)
+			// Dialog error, silently ignore
+			console.error('[handleOpenWithFile] Dialog error:', dialogError);
 		}
 	}
 }

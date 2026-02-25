@@ -225,10 +225,8 @@ pub async fn open_file_with_app(path: String, app_path: Option<String>) -> Resul
                 .spawn()
                 .map_err(|e| format!("Failed to open file with {}: {}", app, e))?;
         } else {
-            std::process::Command::new("rundll32.exe")
-                .args(&["shell32.dll", "OpenAs_RunDLL", &path])
-                .spawn()
-                .map_err(|e| format!("Failed to open file dialog: {}", e))?;
+            // No app specified: use system default
+            open::that(&path).map_err(|e| format!("Failed to open file: {}", e))?;
         }
     }
     
@@ -247,9 +245,8 @@ pub async fn open_file_with_app(path: String, app_path: Option<String>) -> Resul
     #[cfg(target_os = "linux")]
     {
         if let Some(app) = app_path {
-            std::process::Command::new("xdg-open")
+            std::process::Command::new(&app)
                 .arg(&path)
-                .env("DESKTOP_STARTUP_ID", "")
                 .spawn()
                 .map_err(|e| format!("Failed to open file with {}: {}", app, e))?;
         } else {
@@ -260,73 +257,86 @@ pub async fn open_file_with_app(path: String, app_path: Option<String>) -> Resul
     Ok(())
 }
 
-/// Show file picker dialog to select application
+/// Show native OS "Open with" dialog and open the file directly
+/// Windows: uses OpenAs_RunDLL (native app chooser with installed apps)
+/// macOS: uses Launch Services via `open` command
+/// Linux: uses xdg-open / gio open (desktop-aware)
 #[tauri::command]
 pub async fn show_open_with_dialog(
-    app_handle: AppHandle,
-    _path: String,
+    _app_handle: AppHandle,
+    path: String,
 ) -> Result<Option<String>, String> {
-    use tauri_plugin_dialog::DialogExt;
-    use std::sync::mpsc;
-    
-    let (tx, rx) = mpsc::channel();
-    
     #[cfg(target_os = "windows")]
     {
-        app_handle
-            .dialog()
-            .file()
-            .set_title("Select Application")
-            .add_filter("Executable", &["exe", "bat", "cmd"])
-            .pick_file(move |file_path_opt| {
-                let result = file_path_opt.and_then(|p| {
-                    p.as_path()
-                        .and_then(|path| path.to_str())
-                        .map(|s| s.to_string())
-                });
-                let _ = tx.send(result);
-            });
+        // Fix mixed path separators
+        let clean_path = path.replace('/', "\\").replace("\\\\", "\\");
+        log::info!("[show_open_with_dialog] Using SHOpenWithDialog: {}", clean_path);
+        
+        // Run on a blocking thread since SHOpenWithDialog is a modal dialog
+        let handle = std::thread::spawn(move || {
+            use windows::core::PCWSTR;
+            use windows::Win32::UI::Shell::{SHOpenWithDialog, OPENASINFO, OAIF_EXEC};
+            
+            let wide_path: Vec<u16> = clean_path.encode_utf16().chain(std::iter::once(0)).collect();
+            
+            let info = OPENASINFO {
+                pcszFile: PCWSTR(wide_path.as_ptr()),
+                pcszClass: PCWSTR::null(),
+                oaifInFlags: OAIF_EXEC, // Execute the file after user selects app
+            };
+            
+            unsafe {
+                match SHOpenWithDialog(None, &info) {
+                    Ok(_) => {
+                        log::info!("[show_open_with_dialog] SHOpenWithDialog succeeded");
+                        true
+                    }
+                    Err(e) => {
+                        log::error!("[show_open_with_dialog] SHOpenWithDialog failed: {}", e);
+                        false
+                    }
+                }
+            }
+        });
+        
+        // Don't block the async runtime - just spawn and return
+        // The dialog will show modally on its own thread
+        drop(handle);
+        return Ok(None);
     }
-    
+
     #[cfg(target_os = "macos")]
     {
-        app_handle
-            .dialog()
-            .file()
-            .set_title("Select Application")
-            .add_filter("Application", &["app"])
-            .pick_file(move |file_path_opt| {
-                let result = file_path_opt.and_then(|p| {
-                    p.as_path()
-                        .and_then(|path| path.to_str())
-                        .map(|s| s.to_string())
-                });
-                let _ = tx.send(result);
-            });
+        // macOS: Launch Services handles app selection
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+        return Ok(None);
     }
-    
+
     #[cfg(target_os = "linux")]
     {
-        app_handle
-            .dialog()
-            .file()
-            .set_title("Select Application")
-            .add_filter("Executable", &["bin", "sh", "run"])
-            .pick_file(move |file_path_opt| {
-                let result = file_path_opt.and_then(|p| {
-                    p.as_path()
-                        .and_then(|path| path.to_str())
-                        .map(|s| s.to_string())
-                });
-                let _ = tx.send(result);
-            });
+        // Linux: xdg-open respects desktop environment app associations
+        let result = std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn();
+        
+        match result {
+            Ok(_) => return Ok(None),
+            Err(_) => {
+                // Fallback: gio open
+                std::process::Command::new("gio")
+                    .args(&["open", &path])
+                    .spawn()
+                    .map_err(|e| format!("Failed to open file: {}", e))?;
+                return Ok(None);
+            }
+        }
     }
-    
-    use std::time::Duration;
-    match rx.recv_timeout(Duration::from_secs(300)) {
-        Ok(result) => Ok(result),
-        Err(_) => Ok(None),
-    }
+
+    #[allow(unreachable_code)]
+    Ok(None)
 }
 
 /// Show file in system file manager (local only)

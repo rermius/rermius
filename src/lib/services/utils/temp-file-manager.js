@@ -88,6 +88,20 @@ export async function unregisterTempFile(tempFilePath) {
  */
 export async function cleanupTempFile(tempFilePath, onCleanup = null) {
 	try {
+		// Don't cleanup if file is still being watched (user still editing)
+		const fileInfo = activeTempFiles.get(tempFilePath);
+		if (fileInfo && fileInfo.unlistenFn) {
+			console.log('[TempFileManager] Skipping cleanup - file still being watched:', tempFilePath);
+			// Reset timeout to check again later
+			if (fileInfo.timeoutId) {
+				clearTimeout(fileInfo.timeoutId);
+			}
+			fileInfo.timeoutId = setTimeout(async () => {
+				await cleanupTempFile(tempFilePath, onCleanup);
+			}, CLEANUP_TIMEOUT);
+			return;
+		}
+
 		// Call custom cleanup callback if provided
 		if (onCleanup) {
 			await onCleanup(tempFilePath);
@@ -210,6 +224,14 @@ async function handleFileChange(tempFilePath) {
 	if (!fileInfo) {
 		return;
 	}
+
+	// Reset cleanup timeout on every file change (user is still editing)
+	if (fileInfo.timeoutId) {
+		clearTimeout(fileInfo.timeoutId);
+	}
+	fileInfo.timeoutId = setTimeout(async () => {
+		await cleanupTempFile(tempFilePath, fileInfo.onCleanup);
+	}, CLEANUP_TIMEOUT);
 
 	const { remotePath, sessionId } = fileInfo;
 	const fileName = tempFilePath.split('/').pop() || tempFilePath.split('\\').pop() || 'file';

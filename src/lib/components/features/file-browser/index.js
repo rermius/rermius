@@ -6,3 +6,5 @@ export { default as FileList } from './FileList.svelte';
 export { default as FileListHeader } from './FileListHeader.svelte';
 export { default as FilePanelHeader } from './FilePanelHeader.svelte';
 export { default as Breadcrumb } from './Breadcrumb.svelte';
+export { default as QuickEditWindow } from './QuickEditWindow.svelte';
+export { default as QuickEditTaskbar } from './QuickEditTaskbar.svelte';
