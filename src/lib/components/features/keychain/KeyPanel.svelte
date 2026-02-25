@@ -5,6 +5,7 @@
 	import { tauriDialog, tauriFs, addKey, updateKey, findDuplicateKey } from '$lib/services';
 	import PanelLayout from '$lib/components/layout/PanelLayout.svelte';
 	import { useSaveQueue } from '$lib/composables';
+	import { panelStore } from '$lib/stores';
 
 	const dispatch = createEventDispatcher();
 
@@ -41,11 +42,12 @@
 		},
 		{
 			onAutoSave: result => {
-				// NEW: If this was a create (no editing entity), switch to edit mode
+				// If this was a create (no editing entity), switch to edit mode
 				if (!effectiveEditingKey) {
 					createdKey = result; // Store created entity
 					isEditMode = true; // Switch to edit mode
-					dispatch('import', result); // Notify parent about created key
+					// Update panelStore so parent knows about the created key
+					panelStore.updatePanel('keychain', { editingId: result.id });
 				}
 			},
 			onManualSave: result => {
