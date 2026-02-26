@@ -169,10 +169,10 @@ export function createHostFormContext(options) {
 	$effect(() => {
 		// Watch formData for changes (only trigger if there's meaningful content)
 		if (formData.label || formData.hostname) {
-			// Access hostChainIds to include it in reactivity tracking
-			// This ensures save is triggered when host chaining changes
-			const _ = hostChainIds;
-			saveQueue.save(formData); // Debounced auto-save
+			// Include proxyJump in the data passed to save queue
+			// so the queue's duplicate detection sees chain changes
+			const dataWithChain = { ...formData, proxyJump: serializeChain(hostChainIds) };
+			saveQueue.save(dataWithChain); // Debounced auto-save
 		}
 	});
 
@@ -457,6 +457,11 @@ export function createHostFormContext(options) {
 			originalData = { ...data, proxyJump: editingHost.proxyJump };
 			errors = { label: '', hostname: '' };
 			hostChainIds = parseChain(editingHost.proxyJump);
+
+			// Auto-open advanced section if any advanced field has a value
+			if (editingHost.proxyJump || editingHost.notes || editingHost.homeDirectory) {
+				showAdvanced = true;
+			}
 			saveQueue.reset();
 		} else if (!createdHost) {
 			// Only reset if no created entity
